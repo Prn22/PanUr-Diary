@@ -429,15 +429,19 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .ssechd .scount{font-size:11px;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:1px 7px;font-weight:500;}
 .ssechd .saddbtn{margin-left:auto;border:none;background:var(--rose);color:#fff;border-radius:9px;
   padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
-.notecard{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
-.notehead{display:flex;align-items:center;gap:8px;}
-.notecard .ntt{font-weight:600;font-size:14px;flex:1;}
-.notecard .nedit{border:none;background:none;color:var(--faint);cursor:pointer;font-size:14px;}
-.notecard .nmeta{display:flex;align-items:center;gap:7px;margin-top:3px;}
-.notecard .fbadge{font-size:10.5px;color:#fff;background:var(--lav);border-radius:7px;padding:1px 7px;font-weight:600;}
-.notecard .ndate{font-size:11px;color:var(--muted);}
-.notecard .nbody{font-size:12.5px;color:var(--ink-soft);margin-top:7px;white-space:pre-wrap;line-height:1.5;
-  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+/* 노트·학습기록: 게시판형 (제목 한 줄 → 클릭 시 본문 펼침) */
+.noteitem{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;margin-bottom:6px;overflow:hidden;}
+.noterow{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;}
+.noterow:hover{background:var(--panel);}
+.noterow .ncaret{flex:none;width:12px;font-size:11px;color:var(--muted);}
+.noterow .nrtitle{flex:1;min-width:0;font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.noterow .fbadge{flex:none;font-size:10px;color:#fff;background:var(--lav);border-radius:7px;padding:1px 7px;font-weight:600;}
+.noterow .ndate{flex:none;font-size:11px;color:var(--muted);}
+.noterow .nedit{flex:none;border:none;background:none;color:var(--faint);cursor:pointer;font-size:14px;}
+.notebody{padding:0 12px 12px 31px;}
+.notebody .nbody{font-size:12.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.55;}
+.notebody .cardimgs{flex-wrap:wrap;}
+.notebody .cardimgs img{width:72px;height:72px;}
 img.zoomable{cursor:zoom-in;}
 /* 이미지 라이트박스 */
 #imgLightbox .lbwrap{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:100%;}
@@ -1154,6 +1158,7 @@ let habitOffset=0; // 습관 주 이동(0=이번 주, 음수=과거)
 let studyField="전체"; // 공부 분야 필터 ("전체"|"__none"|분야명)
 let studySort=jload("panur_studysort","added"); // 자료 정렬
 let studyFold=jload("panur_studyfold",{}); // 섹션 접힘 {src,note,log}
+let noteSort=jload("panur_notesort","new"); // 노트·학습기록 정렬
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -2034,16 +2039,18 @@ function renderPlannerBody(){
     }
     h+=`</div>`;
     // 노트 / 학습 기록 (기능 동일, 용도 분류만 다름)
-    const byDate=(a,b)=>{const ka=a.date||(a.ts?ymd(new Date(a.ts)):""),kb=b.date||(b.ts?ymd(new Date(b.ts)):"");
-      if(ka!==kb)return kb.localeCompare(ka); return (b.ts||0)-(a.ts||0);};
     const filtered=notes.filter(inField);
+    const nSortOpts=[["new","최신순"],["old","오래된순"],["title","제목순"]]
+      .map(o=>`<option value="${o[0]}"${noteSort===o[0]?" selected":""}>${o[1]}</option>`).join("");
     const buckets=[
       {kind:"note", icon:"📝", label:"노트", add:"sAddNote", empty:"기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)"},
       {kind:"log",  icon:"📖", label:"학습 기록", add:"sAddLog", empty:"오늘 공부한 내용을 기록으로 남겨보세요"}
     ];
     buckets.forEach(bk=>{
-      const arr=filtered.filter(n=>(n.kind||"note")===bk.kind).sort(byDate);
-      h+=`<div class="ssec"><div class="ssechd" data-fold="${bk.kind}"><span class="scaret">${caret(bk.kind)}</span>${bk.icon} ${bk.label}<span class="scount">${arr.length}</span><button class="saddbtn" data-addnote="${bk.kind}" id="${bk.add}" onclick="event.stopPropagation()">＋ ${bk.label}</button></div>`;
+      const arr=sortNotes(filtered.filter(n=>(n.kind||"note")===bk.kind),noteSort);
+      h+=`<div class="ssec"><div class="ssechd" data-fold="${bk.kind}"><span class="scaret">${caret(bk.kind)}</span>${bk.icon} ${bk.label}<span class="scount">${arr.length}</span>
+        <select class="ssort" data-notesort onclick="event.stopPropagation()">${nSortOpts}</select>
+        <button class="saddbtn" data-addnote="${bk.kind}" id="${bk.add}" onclick="event.stopPropagation()">＋ ${bk.label}</button></div>`;
       if(!studyFold[bk.kind]){
         if(!arr.length)h+=emptyP(bk.empty);
         else arr.forEach(n=>{h+=noteCard(n);});
@@ -2122,15 +2129,34 @@ function sourceCard(lec){
       </div>`:`<button class="lectoggle" data-lecimport="${lec.id}">${isBook?"목차 가져오기":"커리큘럼 가져오기"}</button>`}
   </div>`;
 }
+function noteDateKey(n){return n.date||(n.ts?ymd(new Date(n.ts)):"");}
+function sortNotes(list,mode){
+  const a=list.slice();
+  if(mode==="title")a.sort((x,y)=>String(x.title||"").localeCompare(String(y.title||"")));
+  else{ // new(최신순, 기본) / old(오래된순)
+    a.sort((x,y)=>{const kx=noteDateKey(x),ky=noteDateKey(y);
+      if(kx!==ky)return mode==="old"?kx.localeCompare(ky):ky.localeCompare(kx);
+      return mode==="old"?((x.ts||0)-(y.ts||0)):((y.ts||0)-(x.ts||0));});
+  }
+  return a;
+}
 function noteCard(n){
   let ds="";
   if(n.date){const d=parseYmd(n.date);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())} (${WEEK[d.getDay()]})`;}
   else if(n.ts){const d=new Date(n.ts);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}`;}
-  return `<div class="notecard" data-noteopen="${n.id}">
-    <div class="notehead"><div class="ntt">${esc(n.title||"(제목 없음)")}</div><button class="nedit" data-noteedit="${n.id}">✎</button></div>
-    <div class="nmeta">${n.field?`<span class="fbadge">${esc(n.field)}</span>`:""}${ds?`<span class="ndate">${ds}</span>`:""}</div>
-    ${n.body?`<div class="nbody">${esc(n.body)}</div>`:""}
-    ${(n.images&&n.images.length)?`<div class="cardimgs">${n.images.slice(0,3).map(src=>`<img class="zoomable" src="${src}">`).join("")}${n.images.length>3?`<span class="imore">+${n.images.length-3}</span>`:""}</div>`:""}
+  const hasBody=!!(n.body||(n.images&&n.images.length));
+  return `<div class="noteitem" data-noteid="${n.id}">
+    <div class="noterow" data-notetoggle="${n.id}">
+      <span class="ncaret">${hasBody?"▸":"·"}</span>
+      <span class="nrtitle">${esc(n.title||"(제목 없음)")}</span>
+      ${n.field?`<span class="fbadge">${esc(n.field)}</span>`:""}
+      ${ds?`<span class="ndate">${ds}</span>`:""}
+      <button class="nedit" data-noteedit="${n.id}">✎</button>
+    </div>
+    <div class="notebody" style="display:none;">
+      ${n.body?`<div class="nbody">${esc(n.body)}</div>`:""}
+      ${(n.images&&n.images.length)?`<div class="cardimgs">${n.images.map(src=>`<img class="zoomable" src="${src}">`).join("")}</div>`:""}
+    </div>
   </div>`;
 }
 function addStudyField(){
@@ -2178,8 +2204,14 @@ function bindPlannerForms(){
     if(e.target.closest("button,select"))return; // 안쪽 버튼·드롭다운 클릭은 접기 아님
     const k=el.dataset.fold;studyFold[k]=!studyFold[k];jsave("panur_studyfold",studyFold);renderPlannerBody();});
   document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;renderPlannerBody();});
-  document.querySelectorAll("[data-noteopen]").forEach(el=>el.onclick=e=>{if(e.target.closest("[data-noteedit]"))return;openNoteModal(el.dataset.noteopen);});
+  document.querySelectorAll("[data-notetoggle]").forEach(row=>row.onclick=e=>{
+    if(e.target.closest("[data-noteedit]"))return;
+    const item=row.closest(".noteitem"), body=item.querySelector(".notebody"), car=row.querySelector(".ncaret");
+    if(!body||car.textContent==="·")return; // 본문 없으면 펼칠 것 없음
+    const open=body.style.display==="none"; body.style.display=open?"block":"none"; car.textContent=open?"▾":"▸";
+  });
   document.querySelectorAll("[data-noteedit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openNoteModal(b.dataset.noteedit);});
+  document.querySelectorAll("[data-notesort]").forEach(sel=>{sel.onchange=()=>{noteSort=sel.value;jsave("panur_notesort",noteSort);renderPlannerBody();};});
   if(g("wAdd"))g("wAdd").onclick=()=>openWork(null);
   document.querySelectorAll("[data-wedit]").forEach(b=>b.onclick=()=>openWork(b.dataset.wedit));
   document.querySelectorAll("[data-wstatus]").forEach(b=>b.onclick=()=>{
