@@ -168,6 +168,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .pitem input[type=checkbox]{width:19px;height:19px;accent-color:var(--lav);cursor:pointer;flex:none;}
 .pitem .txt{flex:1;font-size:13.5px;} .pitem.done .txt{text-decoration:line-through;color:var(--faint);}
 .pitem .pmain{flex:1;display:flex;flex-direction:column;gap:2px;}
+.pitem .pmain[data-pedit]{cursor:pointer;}
 .pitem .pmain .txt{flex:none;}
 .pitem .pmemo{font-size:12px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.45;background:var(--panel);border-radius:7px;padding:5px 8px;margin-top:2px;}
 .pitem.done .pmemo{color:var(--faint);}
@@ -827,6 +828,30 @@ body{
       <button class="btn danger" id="workDelete" style="display:none;">삭제</button>
       <button class="btn ghost" id="workCancel">취소</button>
       <button class="btn primary" id="workSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Appt/Todo edit modal -->
+<div class="overlay" id="ptOverlay">
+  <div class="modal">
+    <h2 id="ptTitle2">✦ 편집</h2>
+    <div class="field"><label id="ptLbl">제목</label><input id="ptText" placeholder="제목"></div>
+    <div class="row2" id="ptApptRow">
+      <div class="field"><label>날짜</label><input type="date" id="ptDate"></div>
+      <div class="field"><label>시간</label><input type="time" id="ptTime"></div>
+    </div>
+    <div class="row2" id="ptApptRow2">
+      <div class="field"><label>상대</label><input id="ptWho" placeholder="상대"></div>
+      <div class="field"><label>장소</label><input id="ptPlace" placeholder="장소"></div>
+    </div>
+    <div class="field" id="ptTodoDateRow"><label>날짜 (선택)</label><input type="date" id="ptTodoDate"></div>
+    <div class="field"><label>메모</label><textarea id="ptMemo" placeholder="메모" style="min-height:70px;"></textarea></div>
+    <div class="field"><label>🔔 알림</label><select id="ptRemind"></select></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="ptDelete">삭제</button>
+      <button class="btn ghost" id="ptCancel">취소</button>
+      <button class="btn primary" id="ptSave">저장</button>
     </div>
   </div>
 </div>
@@ -1551,9 +1576,10 @@ function bindMM(ds){
     G2("mmVidTitle").value="";G2("mmVidUrl").value="";persist();renderVids();toast("영상을 저장했어요");};
 }
 function pRow(type,a,meta){
+  const editable=(type==="appts"||type==="todos");
   return `<div class="pitem ${a.done?"done":""}" data-ptype="${type}" data-pid="${a.id}">
     <input type="checkbox" data-pcheck ${a.done?"checked":""}>
-    <div class="pmain"><span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
+    <div class="pmain" ${editable?'data-pedit="1"':""}><span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
       ${meta?`<span class="meta">${esc(meta)}</span>`:""}
       ${a.memo?`<div class="pmemo">${esc(a.memo)}</div>`:""}</div>
     <button class="del" data-pdel>✕</button></div>`;
@@ -1567,6 +1593,7 @@ function bindDayPlanner(ds){
     const cb=row.querySelector("[data-pcheck]"), del=row.querySelector("[data-pdel]");
     if(cb)cb.onclick=()=>{const it=arr.find(x=>x.id===id);if(it){it.done=cb.checked;persist();row.classList.toggle("done",it.done);}};
     if(del)del.onclick=()=>{const i=arr.findIndex(x=>x.id===id);if(i>=0){arr.splice(i,1);persist();renderDay();}};
+    const ed=row.querySelector("[data-pedit]"); if(ed)ed.onclick=()=>openPtEdit(type,id);
   });
 }
 function diaryFirstText(dia){const b=(dia.blocks||[]).find(x=>x.type==="text"&&x.v&&x.v.trim());return b?b.v.trim():"";}
@@ -1722,9 +1749,10 @@ function renderPlannerBody(){
   bindPlannerForms();
 }
 function plCard(type,a,meta){
+  const editable=(type==="appts"||type==="todos");
   return `<div class="pitem ${a.done?"done":""}" data-ptype="${type}" data-pid="${a.id}">
     <input type="checkbox" data-pcheck ${a.done?"checked":""}>
-    <div class="pmain"><span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
+    <div class="pmain" ${editable?'data-pedit="1"':""}><span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
       <span class="meta">${esc(meta)}</span>
       ${a.memo?`<div class="pmemo">${esc(a.memo)}</div>`:""}</div>
     <button class="del" data-pdel>✕</button></div>`;
@@ -1765,6 +1793,7 @@ function bindPlannerForms(){
     const cb=row.querySelector("[data-pcheck]"),del=row.querySelector("[data-pdel]");
     if(cb)cb.onclick=()=>{const it=arr.find(x=>x.id===id);if(it){it.done=cb.checked;persist();row.classList.toggle("done",it.done);}};
     if(del)del.onclick=()=>{const i=arr.findIndex(x=>x.id===id);if(i>=0){arr.splice(i,1);persist();renderPlannerBody();}};
+    const ed=row.querySelector("[data-pedit]"); if(ed)ed.onclick=()=>openPtEdit(type,id);
   });
   document.querySelectorAll("[data-hid]").forEach(el=>el.onclick=()=>{
     const hb=data.planner.habits.find(x=>x.id===el.dataset.hid);if(!hb)return;
@@ -2495,6 +2524,37 @@ G("workSave").onclick=()=>{
 };
 G("workDelete").onclick=()=>{if(workEditId)data.planner.work=data.planner.work.filter(x=>x.id!==workEditId);persist();closeWork();if(view==="planner")renderPlannerBody();toast("삭제했어요");};
 G("workCancel").onclick=closeWork; workOverlay.onclick=e=>{if(e.target===workOverlay)closeWork();};
+
+/* ============ Appt/Todo edit modal ============ */
+const ptOverlay=G("ptOverlay"); let ptEditType=null, ptEditId=null;
+function openPtEdit(type,id){
+  const arr=data.planner[type]; const a=arr.find(x=>x.id===id); if(!a)return;
+  ptEditType=type; ptEditId=id;
+  const isAppt=type==="appts";
+  G("ptTitle2").textContent=isAppt?"✦ 약속 편집":"✦ 할 일 편집";
+  G("ptLbl").textContent=isAppt?"약속 제목":"할 일";
+  G("ptText").value=a.title||a.text||"";
+  G("ptApptRow").style.display=isAppt?"":"none";
+  G("ptApptRow2").style.display=isAppt?"":"none";
+  G("ptTodoDateRow").style.display=isAppt?"none":"";
+  if(isAppt){G("ptDate").value=a.date||"";G("ptTime").value=a.time||"";G("ptWho").value=a.who||"";G("ptPlace").value=a.place||"";}
+  else{G("ptTodoDate").value=a.date||"";}
+  G("ptMemo").value=a.memo||"";
+  G("ptRemind").innerHTML=remindOptions(a.remind??"", !isAppt); G("ptRemind").value=a.remind??"";
+  ptOverlay.classList.add("show");
+}
+function closePtEdit(){ptOverlay.classList.remove("show");}
+G("ptSave").onclick=()=>{
+  const arr=data.planner[ptEditType]; const a=arr.find(x=>x.id===ptEditId); if(!a)return closePtEdit();
+  const txt=G("ptText").value.trim(); if(!txt)return toast("내용을 입력해요");
+  if(ptEditType==="appts"){a.title=txt;a.date=G("ptDate").value||a.date;a.time=G("ptTime").value;a.who=G("ptWho").value.trim();a.place=G("ptPlace").value.trim();}
+  else{a.text=txt;a.date=G("ptTodoDate").value||null;}
+  a.memo=G("ptMemo").value.trim(); a.remind=G("ptRemind").value||null;
+  persist(); closePtEdit(); render(); toast("수정했어요 ✦");
+};
+G("ptDelete").onclick=()=>{const arr=data.planner[ptEditType];const i=arr.findIndex(x=>x.id===ptEditId);
+  if(i>=0){arr.splice(i,1);persist();closePtEdit();render();toast("삭제했어요");}};
+G("ptCancel").onclick=closePtEdit; ptOverlay.onclick=e=>{if(e.target===ptOverlay)closePtEdit();};
 
 /* ============ Anniversary modal ============ */
 const annivOverlay=G("annivOverlay"); let annivEditId=null; let annivDraftEmoji="🎀"; let annivCal="solar";
