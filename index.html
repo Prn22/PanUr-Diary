@@ -1216,7 +1216,41 @@ _money.forEach(a=>{if(!data.affirmations.includes(a))data.affirmations.push(a);}
 
 let sync=jload(LS_SYNC,{owner:"",repo:"",branch:"main",path:"data.json",token:"",auto:false,sha:null});
 
-function persist(){ jsave(LS_DATA,data); if(sync.auto&&sync.token) scheduleAuto(); }
+function persist(){ jsave(LS_DATA,data); maybeBackup(); if(sync.auto&&sync.token) scheduleAuto(); }
+
+/* ============ 자동 백업 (최대 5개, 약 15분 간격 순환) ============ */
+const BK_KEY="panur_backups", BK_MAX=5, BK_GAP=15*60*1000;
+function loadBackups(){ try{return JSON.parse(localStorage.getItem(BK_KEY)||"[]");}catch(e){return [];} }
+function writeBackups(arr){
+  let a=arr.slice(-BK_MAX);
+  for(let i=0;i<=BK_MAX;i++){
+    try{ localStorage.setItem(BK_KEY, JSON.stringify(a)); return true; }
+    catch(e){ if(a.length<=1){ try{localStorage.removeItem(BK_KEY);}catch(_){} return false; } a=a.slice(1); } // 용량 초과 시 오래된 것부터 버리고 재시도
+  }
+  return false;
+}
+function makeBackup(force){
+  const arr=loadBackups(), last=arr[arr.length-1], now=Date.now();
+  if(!force && last && (now-last.ts)<BK_GAP) return false; // 간격 유지
+  let snap; try{ snap=JSON.stringify(data); }catch(e){ return false; }
+  if(last && last.data===snap) return false; // 직전과 동일하면 스킵
+  arr.push({ts:now,size:snap.length,data:snap});
+  writeBackups(arr); return true;
+}
+let _bkT=0;
+function maybeBackup(){ const n=Date.now(); if(n-_bkT<20000)return; _bkT=n; makeBackup(false); } // persist 폭주 방지(20초 최소 간격 후 15분 규칙)
+function restoreBackup(ts){
+  const arr=loadBackups(), b=arr.find(x=>x.ts===ts); if(!b)return;
+  if(!window.confirm(fmtBkTime(ts)+" 시점으로 되돌릴까요?\n(되돌리기 전 현재 상태도 백업돼요)"))return;
+  makeBackup(true); // 복원 직전 상태 보관
+  let obj; try{ obj=JSON.parse(b.data); }catch(e){ return toast("백업을 읽지 못했어요"); }
+  data=obj;
+  if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
+  persist(); applyTheme(jload("panur_theme","rose")); applyFont(jload("panur_font","dodum")); render();
+  toast("백업을 복원했어요");
+}
+function fmtBkTime(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,"0");
+  return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }
 
 /* ============ Date helpers ============ */
 const pad=n=>String(n).padStart(2,"0");
@@ -1882,7 +1916,7 @@ function saveMM(ds,patch){
   const m=cur.mm, empty=!m.cond&&!m.affirm&&!m.visual&&!m.reading&&!m.note&&!m.bed&&!m.wake
     &&!(m.grat||[]).some(x=>x)&&!Object.values(m.savers||{}).some(Boolean);
   if(empty)delete cur.mm;
-  data.diary[ds]=cur; persist();
+  data.diary[ds]=cur; pruneDiary(ds); persist();
 }
 function moveMM(ds){
   const src=data.diary[ds]; if(!src||!src.mm){toast("옮길 미라클 기록이 없어요");return;}
@@ -3176,6 +3210,11 @@ function optionsBodyHTML(){
       </div>
       <button class="btn" id="moodImgAdd" style="margin-top:8px;">＋ 아이콘 추가</button>
     </div>
+    <div class="optblk"><div class="optlbl">🛟 자동 백업 (최대 5개)</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">사용 중 약 15분 간격 + 앱 시작 시 자동 저장돼요. 실수로 지웠을 때 되돌릴 수 있어요.</div>
+      <div id="bkList" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <button class="btn" id="bkNow" style="margin-top:8px;">지금 백업</button>
+    </div>
   </div>`;
 }
 function renderUserHols(){
@@ -3223,6 +3262,16 @@ function bindOptions(){
     Object.values(data.diary).forEach(dd=>{if(dd.mood==="img:"+mid)dd.mood="";});
     persist(); renderEtc(); toast("아이콘을 삭제했어요");
   });
+  renderBackups();
+  const bkNow=document.getElementById("bkNow");
+  if(bkNow)bkNow.onclick=()=>{ makeBackup(true); renderBackups(); toast("지금 상태를 백업했어요"); };
+}
+function renderBackups(){
+  const el=document.getElementById("bkList"); if(!el)return;
+  const arr=loadBackups().slice().reverse(); // 최신 먼저
+  el.innerHTML=arr.length?arr.map(b=>`<div class="affrow"><span>💾 ${fmtBkTime(b.ts)} <span style="color:var(--faint);font-size:11px;">(${Math.round((b.size||0)/1024)}KB)</span></span><button class="btn" data-bkrestore="${b.ts}" style="padding:5px 12px;font-size:12px;">복원</button></div>`).join("")
+    :'<div style="font-size:12px;color:var(--muted)">백업이 아직 없어요</div>';
+  el.querySelectorAll("[data-bkrestore]").forEach(b=>b.onclick=()=>restoreBackup(Number(b.dataset.bkrestore)));
 }
 function weatherBodyHTML(){
   return `<div class="etcsec"><h3>🌤️ 날씨 <span style="font-size:11px;color:var(--muted);font-weight:400;">Open-Meteo · 참고용</span></h3>
@@ -3901,6 +3950,7 @@ buildSwatches();
 setDot(sync.token?"ok":"");
 render();
 checkReminders();
+makeBackup(true);   // 세션 시작 시점 백업 1개
 upcomingSummary();
 function upcomingSummary(){
   const now=new Date(), t0=ymd(now);
