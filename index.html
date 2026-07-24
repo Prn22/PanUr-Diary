@@ -231,6 +231,30 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 /* 다꾸 스티커 */
 .decobar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
 .decochk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);font-family:var(--disp);}
+.annivemos{display:flex;flex-wrap:wrap;gap:6px;}
+.anemo{font-size:20px;border:1px solid var(--line-2);background:var(--panel-2);border-radius:10px;padding:4px 8px;cursor:pointer;line-height:1;}
+.anemo.on{background:var(--rose);border-color:transparent;}
+.ev.anniv{border-left-color:var(--rose);}
+.anivcal{display:flex;gap:8px;}
+.acb{flex:1;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:10px;padding:9px 0;font-family:var(--disp);font-weight:600;font-size:13px;cursor:pointer;}
+.acb.on{background:var(--lav);color:#fff;border-color:transparent;}
+.blocks{display:flex;flex-direction:column;gap:10px;margin:4px 0 10px;}
+.blk{position:relative;border:1px solid var(--line-2);border-radius:12px;padding:10px;background:var(--panel-2);}
+.blk .bctrl{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:2;}
+.blk .bctrl button{width:26px;height:26px;border:none;border-radius:8px;background:var(--panel);color:var(--ink-soft);box-shadow:var(--shadow-sm);cursor:pointer;font-size:13px;}
+.blk .bctrl button[data-bdel]{color:var(--rose);}
+.blk-text textarea{width:100%;border:none;background:transparent;color:var(--ink);font-family:var(--body);font-size:14.5px;line-height:1.65;resize:vertical;min-height:70px;padding-right:90px;box-sizing:border-box;}
+.blk-text textarea:focus{outline:none;}
+.blk-img{padding:6px;}
+.blk-img img{width:100%;border-radius:8px;display:block;}
+.blockadd{display:flex;gap:8px;}
+.fxcalc h3{font-size:14px;color:var(--ink);margin:0 0 8px;}
+.fxcalcrow{display:flex;gap:8px;}
+.fxcalcrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:15px;}
+.fxcalcrow select{flex:0 0 auto;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--panel-2);color:var(--ink);}
+.fxout{margin-top:8px;background:var(--panel-2);border-radius:10px;padding:11px 13px;font-size:15px;font-weight:600;color:var(--lav-d);font-family:var(--disp);}
+.fxout.ok{color:#3a9e78;background:rgba(140,203,180,.16);}
+.fxout.warn{color:#c0392b;background:rgba(228,166,188,.18);}
 .calwrap{position:relative;}
 .decolayer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;}
 .decolayer.edit{pointer-events:auto;}
@@ -245,6 +269,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .sh-del{top:-12px;right:-12px;color:var(--rose);}
 .sh-rot{top:-12px;left:-12px;cursor:grab;}
 .sh-size{bottom:-12px;right:-12px;background:var(--lav);cursor:nwse-resize;}
+.cell:not(.other) .num,.cell:not(.other) .dnumrow{position:relative;z-index:6;}
+.decotgt{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);}
+.dtbtn{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:12px;font-family:var(--disp);cursor:pointer;}
+.dtbtn.on{background:var(--lav);color:#fff;border-color:transparent;font-weight:600;}
 .minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
 .mmsumtop{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .mmstat{flex:1 1 calc(50% - 5px);background:var(--panel-2);border-radius:12px;padding:12px;text-align:center;}
@@ -775,6 +803,29 @@ body{
   </div>
 </div>
 
+<!-- Anniversary modal -->
+<div class="overlay" id="annivOverlay">
+  <div class="modal">
+    <h2 id="annivTitle2">🎀 기념일</h2>
+    <div class="field"><label>제목</label><input id="anTitle" placeholder="예: 생일, 1주년"></div>
+    <div class="field"><label>달력 종류</label>
+      <div class="anivcal"><button type="button" class="acb on" data-acal="solar">양력</button><button type="button" class="acb" data-acal="lunar">음력</button></div></div>
+    <div class="row2">
+      <div class="field"><label>날짜 (월/일)</label><input type="date" id="anDate"></div>
+      <div class="field"><label>시작 연도 (선택)</label><input id="anFrom" type="number" inputmode="numeric" placeholder="예: 2020"></div>
+    </div>
+    <div class="field"><label>이모지</label>
+      <div class="annivemos" id="anEmos"></div>
+      <input id="anEmoji" placeholder="직접 입력" maxlength="4" style="margin-top:6px;"></div>
+    <div style="font-size:11px;color:var(--muted);">매년 이 날짜에 연간·월간·일간에 표시돼요. 시작 연도를 넣으면 주년이 계산돼요.</div>
+    <div class="modal-actions">
+      <button class="btn danger" id="annivDelete" style="display:none;">삭제</button>
+      <button class="btn ghost" id="annivCancel">취소</button>
+      <button class="btn primary" id="annivSave">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -805,13 +856,14 @@ const DEFAULT_DATA={
   videos:[],         // 참고 영상 [{title,url}]
   wxPresets:[],      // 날씨 위치 프리셋 [{label,q}]
   deco:{},           // 다꾸 스티커 {"YYYY-M":[{id,img,x,y,w,rot}]}
+  annivs:[],         // 기념일 [{id,title,mmdd,fromYear,emoji}]
   mmEmoji:{},        // 미라클모닝 단계별 이모지 {t1,t3,t5,t6}
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
-if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={};
+if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[];
 if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];
 if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};
 const MM_EMO_DEF={t1:"🌱",t3:"☀️",t5:"🌟",t6:"👑"}; for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
@@ -836,6 +888,7 @@ let etcSub=jload("panur_etcsub","memo"); // memo | material | fx
 let daySub=jload("panur_daysub","plan"); // morning | plan | diary
 let summarySub=jload("panur_sumsub","month"); // month | miracle | mini
 let decoSelId=null; // 선택된 스티커
+let decoTarget=jload("panur_decotarget","plan"); // 꾸미기 대상: plan|diary|morning
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -860,6 +913,43 @@ function sleepMinutes(bed,wake){ if(!bed||!wake)return null;
   const [bh,bm]=bed.split(":").map(Number),[wh,wm]=wake.split(":").map(Number);
   let mins=(wh*60+wm)-(bh*60+bm); if(mins<=0)mins+=24*60; return mins; }
 function sleepFmt(mins){ if(mins==null)return"-"; return Math.floor(mins/60)+"시간 "+(mins%60)+"분"; }
+/* 기념일 */
+const lunarInfo=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,0x0d520];
+function lunLeapMonth(y){return lunarInfo[y-1900]&0xf;}
+function lunLeapDays(y){if(lunLeapMonth(y))return (lunarInfo[y-1900]&0x10000)?30:29;return 0;}
+function lunMonthDays(y,mo){return (lunarInfo[y-1900]&(0x10000>>mo))?30:29;}
+function lunYearDays(y){let sum=348;for(let i=0x8000;i>0x8;i>>=1)sum+=(lunarInfo[y-1900]&i)?1:0;return sum+lunLeapDays(y);}
+function lunar2solar(y,m,d,isLeap){
+  if(y<1900||y>2100)return null;
+  let offset=0; for(let i=1900;i<y;i++)offset+=lunYearDays(i);
+  const leap=lunLeapMonth(y);
+  for(let i=1;i<m;i++){offset+=lunMonthDays(y,i); if(leap===i)offset+=lunLeapDays(y);}
+  if(isLeap&&leap===m)offset+=lunMonthDays(y,m);
+  offset+=d-1;
+  return new Date(Date.UTC(1900,0,31)+offset*86400000);
+}
+function annivSolarMMDD(a,year){
+  if(a.cal==="lunar"){
+    const dt=lunar2solar(year,a.lm,a.ld,false);
+    if(!dt)return null;
+    return String(dt.getUTCMonth()+1).padStart(2,"0")+"-"+String(dt.getUTCDate()).padStart(2,"0");
+  }
+  return a.mmdd;
+}
+function annivsOn(ds){const key=ds.slice(5), yr=+ds.slice(0,4);
+  return (data.annivs||[]).filter(a=>annivSolarMMDD(a,yr)===key);}
+function annivNextDate(a){
+  const today=new Date(); today.setHours(0,0,0,0); const ty=today.getFullYear();
+  for(let y=ty;y<=ty+2;y++){const md=annivSolarMMDD(a,y); if(!md)continue;
+    const [mo,da]=md.split("-").map(Number); const dt=new Date(y,mo-1,da);
+    if(dt>=today)return dt;}
+  return null;
+}
+function annivDdayObj(a){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dt=annivNextDate(a); if(!dt)return {dday:null,nextY:null};
+  return {dday:Math.round((dt-today)/86400000), nextY:dt.getFullYear()};
+}
 function moodHtml(val){
   if(!val)return"";
   if(typeof val==="string"&&val.startsWith("img:")){
@@ -910,17 +1000,18 @@ function buildYearBlock(y,mStart,mEnd){
       const days=new Date(y,m+1,0).getDate();
       if(dnum>days){body+=`<div class="ycell empty"></div>`;continue;}
       const dt=new Date(y,m,dnum), ds=ymd(dt);
-      const evs=eventsOn(dt), dia=data.diary[ds], note=data.yearNotes[ds];
+      const evs=eventsOn(dt), dia=data.diary[ds], note=data.yearNotes[ds], anv=annivsOn(ds);
       const cls=["ycell"]; if(isToday(dt))cls.push("today");
       if(dt.getDay()===0)cls.push("sun"); if(dt.getDay()===6)cls.push("sat");
       let kw="";
-      if(note)kw=esc(note);
+      if(anv.length)kw=(anv[0].emoji||"🎀")+esc(anv[0].title);
+      else if(note)kw=esc(note);
       else if(evs.length)kw=esc(evs[0].title);
-      else if(dia&&(dia.title||dia.body))kw=esc(dia.title||dia.body);
+      else if(dia&&(dia.title||diaryFirstText(dia)))kw=esc(dia.title||diaryFirstText(dia));
       let dots="";
-      const set=new Set(evs.map(e=>e.color)); if(dia)set.add("_d");
+      const set=new Set(evs.map(e=>e.color)); if(dia)set.add("_d"); if(anv.length)set.add("_a");
       if(set.size){dots='<div class="ydot">'+[...set].slice(0,4).map(k=>
-        `<i style="background:${k==="_d"?"var(--mint)":(CATMAP[k]?CATMAP[k].c:"var(--lav)")}"></i>`).join("")+'</div>';}
+        `<i style="background:${k==="_d"?"var(--mint)":k==="_a"?"var(--rose)":(CATMAP[k]?CATMAP[k].c:"var(--lav)")}"></i>`).join("")+'</div>';}
       body+=`<div class="${cls.join(" ")}${note?" noted":""}" data-date="${ds}"><span class="yn">${WEEK[dt.getDay()]}</span>
         ${kw?`<span class="yk">${kw}</span>`:""}${dots}</div>`;
     }
@@ -971,11 +1062,15 @@ function renderMonth(){
   const first=new Date(y,m,1), start=new Date(y,m,1-first.getDay());
   let html='<div class="card">';
   if(monthMode==="morning")html+=mmLegendHTML();
-  if(monthMode==="deco")html+=`<div class="decobar"><button class="btn primary" id="decoAdd">🖼️ 스티커 추가</button>
-    <label class="decochk"><input type="checkbox" id="decoRmbg"> 흰 배경 지우기</label>
-    <span style="font-size:11px;color:var(--muted);width:100%;">스티커를 끌어 이동 · 선택 후 모서리로 크기/회전 · ✕ 삭제</span>
+  if(monthMode==="deco"){
+    const tg=[["plan","플랜"],["diary","일기"],["morning","미라클"]];
+    html+=`<div class="decobar"><button class="btn primary" id="decoAdd">🖼️ 스티커 추가</button>
+    <span class="decotgt">꾸밀 화면: ${tg.map(([k,n])=>`<button class="dtbtn ${decoTarget===k?"on":""}" data-dtg="${k}">${n}</button>`).join("")}</span>
+    <span style="font-size:11px;color:var(--muted);width:100%;">스티커를 끌어 이동 · 선택 후 모서리로 크기/회전 · ✕ 삭제 · 화면(플랜/일기/미라클)별로 따로 저장돼요</span>
     <input type="file" id="decoInput" accept="image/*" style="display:none;"></div>`;
-  const effMode = monthMode==="deco" ? "plan" : monthMode;
+  }
+  const effMode = monthMode==="deco" ? decoTarget : monthMode;
+  const decoMode = monthMode==="deco" ? decoTarget : monthMode;
   html+='<div class="calwrap">';
   html+='<div class="dow">'+WEEK.map(w=>`<div>${w}</div>`).join("")+'</div><div class="grid">';
   for(let i=0;i<42;i++){
@@ -996,7 +1091,7 @@ function renderMonth(){
         }
         let bottom="";
         if(dia.mood)bottom+=`<span class="dmood">${moodHtml(dia.mood)}</span>`;
-        if(dia.photos&&dia.photos.length)bottom+=`<img class="thumb" src="${dia.photos[0]}">`;
+        {const fimg=diaryFirstImg(dia); if(fimg)bottom+=`<img class="thumb" src="${fimg}">`;}
         if(bottom)inner+=`<div class="dbottom">${bottom}</div>`;
       }
       html+=`<div class="${cls.join(" ")}" data-date="${ds}">${inner}</div>`;
@@ -1014,25 +1109,27 @@ function renderMonth(){
         return `<div class="chip" style="background:${c.c}">${ev.time?ev.time+" ":""}${esc(ev.title)}</div>`;}).join("");
       if(evs.length>2)chips+=`<div class="more">+${evs.length-2}</div>`;
       const tCount=countPlannerOn(ds), hasM=data.memos.some(mm=>mm.date===ds);
+      const anv=annivsOn(ds);
       let foot="";
-      if(tCount||hasM){foot='<div class="dcount">'+
+      if(tCount||hasM||anv.length){foot='<div class="dcount">'+
+        (anv.length?`<span>${anv[0].emoji||"🎀"}</span>`:"")+
         (tCount?`<span>✓ ${tCount}</span>`:"")+(hasM?`<span style="color:var(--lav-d)">📌</span>`:"")+'</div>';}
       html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="num">${d.getDate()}</div>${chips}${foot}</div>`;
     }
   }
   html+="</div>"; // .grid
-  html+=decoLayerHTML(y,m);
+  html+=decoLayerHTML(y,m,decoMode);
   html+="</div>"; // .calwrap
   html+="</div>"; // .card
   main.innerHTML=html;
   if(monthMode!=="deco")
     main.querySelectorAll(".cell[data-date]").forEach(c=>c.onclick=()=>{cursor=parseYmd(c.dataset.date);view="day";render();});
   if(monthMode==="morning")bindMmLegend();
-  if(monthMode==="deco")bindDeco(y,m);
+  if(monthMode==="deco")bindDeco(y,m,decoTarget);
 }
-function decoKey(y,m){return `${y}-${m}`;}
-function decoLayerHTML(y,m){
-  const list=(data.deco&&data.deco[decoKey(y,m)])||[];
+function decoKey(y,m,mode){return `${y}-${m}-${mode||"plan"}`;}
+function decoLayerHTML(y,m,mode){
+  const list=(data.deco&&data.deco[decoKey(y,m,mode)])||[];
   const editable=monthMode==="deco";
   let h=`<div class="decolayer ${editable?"edit":""}" id="decoLayer">`;
   list.forEach(s=>{
@@ -1047,18 +1144,18 @@ function decoLayerHTML(y,m){
   h+=`</div>`;
   return h;
 }
-function bindDeco(y,m){
-  const key=decoKey(y,m);
+function bindDeco(y,m,mode){
+  const key=decoKey(y,m,mode);
   data.deco[key]=data.deco[key]||[];
   const layer=document.getElementById("decoLayer");
+  document.querySelectorAll("[data-dtg]").forEach(b=>b.onclick=()=>{decoTarget=b.dataset.dtg;jsave("panur_decotarget",decoTarget);decoSelId=null;renderMonth();});
   const addBtn=document.getElementById("decoAdd"), input=document.getElementById("decoInput");
   addBtn.onclick=()=>input.click();
   input.onchange=e=>{const f=e.target.files[0]; if(!f)return;
-    const rmbg=document.getElementById("decoRmbg")&&document.getElementById("decoRmbg").checked;
     optimizeToDataURL(f,600,"image/png",undefined,durl=>{
       const s={id:uid(),img:durl,x:50,y:35,w:110,rot:0};
-      data.deco[key].push(s); decoSelId=s.id; persist(); renderMonth(); toast(rmbg?"스티커 추가(배경 제거) ✦":"스티커 추가 ✦");
-    }, rmbg);};
+      data.deco[key].push(s); decoSelId=s.id; persist(); renderMonth(); toast("스티커 추가 ✦");
+    });};
   // 빈 곳 탭 → 선택 해제
   layer.onclick=e=>{ if(e.target===layer){decoSelId=null;renderMonth();} };
   layer.querySelectorAll(".sticker").forEach(st=>{
@@ -1206,6 +1303,17 @@ function renderDay(){
           <div class="ttl">${esc(ev.title)}</div>${ev.memo?`<div class="mm">${esc(ev.memo)}</div>`:""}</div>`;}).join("")
       : `<div class="empty">일정이 없어요</div>`;
     h+=`</div>`;
+    // 기념일
+    const dayAnnivs=annivsOn(ds);
+    h+=`<div class="section"><h3>🎀 기념일 <button class="add" id="annivAdd">+</button></h3>`;
+    h+= dayAnnivs.length? dayAnnivs.map(a=>{
+        const info=annivDdayObj(a); const yrs=a.fromYear&&info.nextY?` · ${info.nextY-a.fromYear}주년`:"";
+        const dtxt=info.dday===0?"D-DAY":(info.dday!=null?"D-"+info.dday:"");
+        const base=a.cal==="lunar"?`음력 ${a.lm}/${a.ld}`:`매년 ${a.mmdd.replace("-","/")}`;
+        return `<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"🎀"} ${esc(a.title)} <span class="dbadge">${dtxt}</span></div>
+          <div class="mm">${base}${yrs}</div></div>`;}).join("")
+      : `<div class="empty">이 날의 기념일이 없어요</div>`;
+    h+=`</div>`;
     // 플래너(그 날)
     const pAll=[...appts,...study,...todos];
     h+=`<div class="section"><h3>플래너</h3>`;
@@ -1239,11 +1347,11 @@ function renderDay(){
           ${(data.moods||[]).map(m=>`<span class="mcustom"><button data-m="img:${m.id}" class="mbtn ${dia.mood==="img:"+m.id?"sel":""}"><img src="${m.img}"></button><i class="mdel" data-mdel="${m.id}" title="삭제">✕</i></span>`).join("")}
           <button class="maddbtn" id="addMood" title="png 아이콘 추가">＋</button>
         </div>
-        <input class="dt" id="diaTitle" placeholder="오늘의 제목" value="${esc(dia.title)}">
-        <textarea id="diaBody" placeholder="오늘은 어땠나요…">${esc(dia.body)}</textarea>
-        <div class="photos" id="photos">
-          ${(dia.photos||[]).map((p,i)=>`<div class="ph"><img src="${p}"><button data-ph="${i}">✕</button></div>`).join("")}
-          <button class="addph" id="addPhoto">＋</button>
+        <input class="dt" id="diaTitle" placeholder="오늘의 제목" value="${esc(dia.title||"")}">
+        <div class="blocks" id="diaBlocks">${diaryBlocksHTML(dia)}</div>
+        <div class="blockadd">
+          <button class="addchip" id="addTextBlock">＋ 문단</button>
+          <button class="addchip" id="addImgBlock">＋ 이미지</button>
         </div>
         <div class="savehint" id="saveHint"></div>
       </div></div>`;
@@ -1255,9 +1363,9 @@ function renderDay(){
   main.querySelectorAll("[data-memoopen]").forEach(e=>e.onclick=()=>openMemo(e.dataset.memoopen));
   main.querySelectorAll("#condDots i").forEach(el=>el.onclick=()=>{
     const n=Number(el.dataset.cond);
-    const cur=data.diary[ds]||{photos:[]};
+    const cur=data.diary[ds]||{};
     cur.cond=(cur.cond===n)?0:n;
-    if(!cur.title&&!cur.body&&!cur.mood&&!cur.cond&&(!cur.photos||!cur.photos.length))delete data.diary[ds];
+    if(!diaryHasContent(cur))delete data.diary[ds];
     else data.diary[ds]=cur;
     persist();
     document.querySelectorAll("#condDots i").forEach(x=>x.classList.toggle("on",(cur.cond||0)>=Number(x.dataset.cond)));
@@ -1375,6 +1483,8 @@ function pRow(type,a,meta){
     <button class="del" data-pdel>✕</button></div>`;
 }
 function bindDayPlanner(ds){
+  const _aa=document.getElementById("annivAdd"); if(_aa)_aa.onclick=()=>openAnniv(null,ds);
+  main.querySelectorAll("[data-annivedit]").forEach(el=>el.onclick=()=>openAnniv(el.dataset.annivedit,ds));
   main.querySelectorAll(".pitem[data-pid]").forEach(row=>{
     const type=row.dataset.ptype,id=row.dataset.pid;
     const arr=data.planner[type];
@@ -1383,38 +1493,61 @@ function bindDayPlanner(ds){
     if(del)del.onclick=()=>{const i=arr.findIndex(x=>x.id===id);if(i>=0){arr.splice(i,1);persist();renderDay();}};
   });
 }
+function diaryFirstText(dia){const b=(dia.blocks||[]).find(x=>x.type==="text"&&x.v&&x.v.trim());return b?b.v.trim():"";}
+function diaryFirstImg(dia){const b=(dia.blocks||[]).find(x=>x.type==="img");return b?b.v:(dia.photos&&dia.photos[0])||"";}
+function diaryHasContent(dia){return !!(dia&&(dia.title||dia.mood||dia.cond||(dia.blocks&&dia.blocks.length)||dia.body||(dia.photos&&dia.photos.length)));}
+function diaryBlocksHTML(dia){
+  const blocks=dia.blocks||[];
+  if(!blocks.length)return `<div class="empty" style="margin:6px 0;">아래 ＋문단 · ＋이미지로 글과 사진을 순서대로 넣어보세요</div>`;
+  return blocks.map((b,i)=>{
+    const ctrl=`<div class="bctrl">
+      ${i>0?`<button data-bup="${i}">↑</button>`:""}
+      ${i<blocks.length-1?`<button data-bdown="${i}">↓</button>`:""}
+      <button data-bdel="${i}">✕</button></div>`;
+    if(b.type==="img")return `<div class="blk blk-img">${ctrl}<img src="${b.v}"></div>`;
+    return `<div class="blk blk-text">${ctrl}<textarea class="btext" data-bi="${i}" placeholder="내용을 입력하세요…">${esc(b.v||"")}</textarea></div>`;
+  }).join("");
+}
 function bindDiary(ds){
-  const title=document.getElementById("diaTitle"), body=document.getElementById("diaBody");
+  const title=document.getElementById("diaTitle");
   const hint=document.getElementById("saveHint");
-  function saveDiary(){
-    const cur=data.diary[ds]||{photos:[]};
-    cur.title=title.value; cur.body=body.value;
-    if(!cur.title&&!cur.body&&!cur.mood&&!cur.cond&&(!cur.photos||!cur.photos.length)) delete data.diary[ds];
-    else data.diary[ds]=cur;
+  const getCur=()=>data.diary[ds]||{};
+  function persistCur(cur){
+    const empty=!cur.title&&!cur.mood&&!cur.cond&&(!cur.blocks||!cur.blocks.length);
+    if(empty)delete data.diary[ds]; else data.diary[ds]=cur;
     persist(); if(hint){hint.textContent="저장됨 ✓";setTimeout(()=>hint.textContent="",1200);}
   }
-  let t; const deb=()=>{clearTimeout(t);t=setTimeout(saveDiary,500);};
-  title.oninput=deb; body.oninput=deb; title.onblur=saveDiary; body.onblur=saveDiary;
+  function saveTitle(){const cur=getCur();cur.title=title.value;persistCur(cur);}
+  let t; title.oninput=()=>{clearTimeout(t);t=setTimeout(saveTitle,500);}; title.onblur=saveTitle;
+  // 텍스트 블록 자동저장(리렌더 없이)
+  main.querySelectorAll(".btext").forEach(ta=>{
+    let tt; const save=()=>{const cur=getCur();cur.blocks=cur.blocks||[];const i=Number(ta.dataset.bi);
+      if(cur.blocks[i]){cur.blocks[i].v=ta.value;persistCur(cur);}};
+    ta.oninput=()=>{clearTimeout(tt);tt=setTimeout(save,500);}; ta.onblur=save;
+  });
+  // 블록 이동/삭제
+  main.querySelectorAll("[data-bup]").forEach(b=>b.onclick=()=>{const cur=getCur();const i=Number(b.dataset.bup);
+    [cur.blocks[i-1],cur.blocks[i]]=[cur.blocks[i],cur.blocks[i-1]];persistCur(cur);renderDay();});
+  main.querySelectorAll("[data-bdown]").forEach(b=>b.onclick=()=>{const cur=getCur();const i=Number(b.dataset.bdown);
+    [cur.blocks[i+1],cur.blocks[i]]=[cur.blocks[i],cur.blocks[i+1]];persistCur(cur);renderDay();});
+  main.querySelectorAll("[data-bdel]").forEach(b=>b.onclick=()=>{const cur=getCur();cur.blocks.splice(Number(b.dataset.bdel),1);persistCur(cur);renderDay();});
+  // 블록 추가
+  const addT=document.getElementById("addTextBlock"), addI=document.getElementById("addImgBlock");
+  if(addT)addT.onclick=()=>{const cur=getCur();cur.blocks=cur.blocks||[];cur.blocks.push({type:"text",v:""});persistCur(cur);renderDay();
+    setTimeout(()=>{const tas=main.querySelectorAll(".btext");if(tas.length)tas[tas.length-1].focus();},60);};
+  if(addI)addI.onclick=()=>{ photoTargetDate=ds; document.getElementById("photoInput").click(); };
+  // 기분 선택
   document.querySelectorAll("#moodpick .mbtn").forEach(b=>b.onclick=()=>{
-    const cur=data.diary[ds]||{photos:[]};
-    cur.mood=(cur.mood===b.dataset.m)?"":b.dataset.m;
-    data.diary[ds]=cur; persist();
+    const cur=getCur(); cur.mood=(cur.mood===b.dataset.m)?"":b.dataset.m; persistCur(cur);
     document.querySelectorAll("#moodpick .mbtn").forEach(x=>x.classList.toggle("sel",x.dataset.m===cur.mood&&!!cur.mood));
   });
   const addMood=document.getElementById("addMood");
   if(addMood)addMood.onclick=()=>{ moodTargetDate=ds; document.getElementById("moodInput").click(); };
   document.querySelectorAll("[data-mdel]").forEach(x=>x.onclick=e=>{
-    e.stopPropagation();
-    const mid=x.dataset.mdel;
+    e.stopPropagation(); const mid=x.dataset.mdel;
     data.moods=(data.moods||[]).filter(m=>m.id!==mid);
-    // 이 아이콘을 쓰던 일기의 기분값 정리
     Object.values(data.diary).forEach(dd=>{if(dd.mood==="img:"+mid)dd.mood="";});
     persist(); renderDay();
-  });
-  document.getElementById("addPhoto").onclick=()=>{ photoTargetDate=ds; document.getElementById("photoInput").click(); };
-  main.querySelectorAll("[data-ph]").forEach(btn=>btn.onclick=()=>{
-    const cur=data.diary[ds]; if(!cur||!cur.photos)return;
-    cur.photos.splice(Number(btn.dataset.ph),1); persist(); renderDay();
   });
 }
 
@@ -1644,9 +1777,9 @@ G("moodInput").onchange=e=>{
 G("photoInput").onchange=e=>{
   const file=e.target.files[0]; e.target.value=""; if(!file||!photoTargetDate)return;
   optimizeToDataURL(file,1280,"image/jpeg",0.7,durl=>{
-    const cur=data.diary[photoTargetDate]||{photos:[]}; cur.photos=cur.photos||[]; cur.photos.push(durl);
+    const cur=data.diary[photoTargetDate]||{}; cur.blocks=cur.blocks||[]; cur.blocks.push({type:"img",v:durl});
     data.diary[photoTargetDate]=cur; persist();
-    if(view==="day")renderDay(); toast("사진을 추가했어요 (최적화됨)");
+    if(view==="day")renderDay(); toast("이미지 블록을 추가했어요 (최적화됨)");
   });
 };
 
@@ -1829,7 +1962,7 @@ function renderEtc(){
   else if(etcSub==="material"){ box.innerHTML=materialBodyHTML(); bindMaterialBody(); }
   else if(etcSub==="summary"){ box.innerHTML=summaryBodyHTML(); bindSummaryBody(); }
   else if(etcSub==="weather"){ box.innerHTML=weatherBodyHTML(); bindWeather(); }
-  else { box.innerHTML=fxBodyHTML(); document.getElementById("fxRefresh").onclick=fetchFx; }
+  else { box.innerHTML=fxBodyHTML(); document.getElementById("fxRefresh").onclick=fetchFx; bindFxCalc(); }
 }
 /* ---- 날씨 ---- */
 const WX_CODE={0:["맑음","☀️"],1:["대체로 맑음","🌤️"],2:["구름 조금","⛅"],3:["흐림","☁️"],45:["안개","🌫️"],48:["짙은 안개","🌫️"],51:["약한 이슬비","🌦️"],53:["이슬비","🌦️"],55:["강한 이슬비","🌧️"],61:["약한 비","🌦️"],63:["비","🌧️"],65:["강한 비","🌧️"],66:["언 비","🌧️"],67:["강한 언 비","🌧️"],71:["약한 눈","🌨️"],73:["눈","🌨️"],75:["강한 눈","❄️"],77:["싸락눈","🌨️"],80:["소나기","🌦️"],81:["소나기","🌧️"],82:["강한 소나기","⛈️"],85:["눈 소나기","🌨️"],86:["강한 눈 소나기","❄️"],95:["뇌우","⛈️"],96:["우박 뇌우","⛈️"],99:["강한 우박 뇌우","⛈️"]};
@@ -1941,7 +2074,53 @@ function fxBodyHTML(){
     <button class="btn primary" id="fxRefresh" style="margin-bottom:10px;">지금 환율 불러오기 ↻</button>
     <div style="font-size:12px;color:var(--lav-d);font-weight:600;margin:6px 0 4px;font-family:var(--disp);">기록</div>
     <div class="fxhist" id="fxHist">${hist.slice(-12).reverse().map(x=>`<div><span>${x.ts}</span><span>100엔 ${x.jpy100} · 1달러 ${x.usd1}</span></div>`).join("")||'<div style="color:var(--muted)">기록이 없어요</div>'}</div>
+    <div class="fxcalc">
+      <h3 style="margin-top:16px;">🧮 환율 계산기</h3>
+      <div class="fxcalcrow">
+        <input id="fxAmt" type="number" inputmode="decimal" placeholder="금액">
+        <select id="fxCur"><option value="usd">달러 $</option><option value="jpy">엔 ¥</option><option value="krw">원 ₩</option></select>
+      </div>
+      <div class="fxout" id="fxOut">금액을 입력하세요</div>
+      <h3 style="margin-top:16px;">📦 해외직구 면세 판정 <span style="font-size:11px;color:var(--muted);font-weight:400;">참고용(2026.1 기준)</span></h3>
+      <div class="fxcalcrow">
+        <input id="dutyAmt" type="number" inputmode="decimal" placeholder="물품가격">
+        <select id="dutyCur"><option value="jpy">엔 ¥</option><option value="usd">달러 $</option><option value="krw">원 ₩</option></select>
+        <select id="dutyLimit"><option value="150">일반 150$</option><option value="200">미국발 200$</option></select>
+      </div>
+      <div class="fxout" id="dutyOut">금액을 입력하세요</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">면세 한도는 미화(USD) 기준이라, 엔·원으로 넣으면 현재 시세로 달러 환산해 비교해요. 한도 이하면 관세·부가세 면제(목록통관), 초과 시 전체 금액에 세금이 붙어요. 품목별 세율은 다르고 규정은 바뀔 수 있어요(관세청 확인 권장).</div>
+    </div>
   </div>`;
+}
+function bindFxCalc(){
+  const hist=(data.fx&&data.fx.history)||[]; const last=hist[hist.length-1];
+  const amt=document.getElementById("fxAmt"), cur=document.getElementById("fxCur"), out=document.getElementById("fxOut");
+  const calc=()=>{
+    const v=parseFloat(amt.value); if(isNaN(v)){out.textContent="금액을 입력하세요";return;}
+    if(!last){out.textContent="먼저 '환율 불러오기'를 눌러 시세를 받아오세요";return;}
+    const perJpy=last.jpy100/100, perUsd=last.usd1;
+    const fmt=n=>Math.round(n).toLocaleString("ko-KR");
+    if(cur.value==="usd")out.textContent=`$${v} = ${fmt(v*perUsd)}원`;
+    else if(cur.value==="jpy")out.textContent=`¥${v} = ${fmt(v*perJpy)}원`;
+    else{ out.textContent=`₩${fmt(v)} = $${(v/perUsd).toFixed(2)} · ¥${(v/perJpy).toFixed(0)}`; }
+  };
+  amt.oninput=calc; cur.onchange=calc;
+  const dAmt=document.getElementById("dutyAmt"), dCur=document.getElementById("dutyCur"), dLim=document.getElementById("dutyLimit"), dOut=document.getElementById("dutyOut");
+  const dcalc=()=>{
+    const v=parseFloat(dAmt.value); const lim=Number(dLim.value);
+    if(isNaN(v)){dOut.textContent="금액을 입력하세요";dOut.className="fxout";return;}
+    let usd=v;
+    if(dCur.value!=="usd"){
+      if(!last){dOut.textContent="먼저 '환율 불러오기'로 시세를 받아오세요";dOut.className="fxout";return;}
+      const perJpy=last.jpy100/100, perUsd=last.usd1;
+      const krw = dCur.value==="jpy" ? v*perJpy : v; // krw or from jpy
+      usd = krw/perUsd;
+    }
+    const usdTxt=`≈ $${usd.toFixed(2)}`;
+    if(usd<=lim){dOut.textContent=`✅ 면세 통과 (${usdTxt}) · 한도까지 $${(lim-usd).toFixed(2)} 여유`;dOut.className="fxout ok";}
+    else{dOut.textContent=`⚠️ 한도 초과 (${usdTxt}, +$${(usd-lim).toFixed(2)}) · 관세·부가세 대상`;dOut.className="fxout warn";}
+  };
+  dAmt.oninput=dcalc; dCur.onchange=dcalc; dLim.onchange=dcalc;
 }
 /* ---- 연간 요약 ---- */
 function planStatsInMonth(y,m){
@@ -1979,7 +2158,7 @@ function summaryBodyHTML(){
     for(let dnum=1;dnum<=dim;dnum++){
       const d=new Date(y,m,dnum), ds=ymd(d);
       if(eventsOn(d).length)evDays++;
-      const di=data.diary[ds]; if(di&&(di.title||di.body||di.mood||di.cond))diaDays++;
+      const di=data.diary[ds]; if(diaryHasContent(di))diaDays++;
       if(di&&di.mm&&di.mm.bed&&di.mm.wake){const s=sleepMinutes(di.mm.bed,di.mm.wake);if(s){slSum+=s;slDays++;}}
     }
     const ps=planStatsInMonth(y,m);
@@ -2036,7 +2215,7 @@ function summaryBodyHTML(){
     for(let dnum=1;dnum<=dim;dnum++){
       const d=new Date(y,m,dnum), ds=ymd(d);
       const hasEv=eventsOn(d).length>0;
-      const di=data.diary[ds], hasDia=di&&(di.title||di.body||di.mood||di.cond);
+      const di=data.diary[ds], hasDia=diaryHasContent(di);
       const hasPlan=countPlannerOn(ds)>0;
       const dots=[hasEv?'<i style="background:var(--lav)"></i>':'',hasDia?'<i style="background:var(--mint)"></i>':'',hasPlan?'<i style="background:var(--gold)"></i>':''].join("");
       const tdy=isToday(d)?" mini-today":"";
@@ -2161,6 +2340,45 @@ G("workSave").onclick=()=>{
 G("workDelete").onclick=()=>{if(workEditId)data.planner.work=data.planner.work.filter(x=>x.id!==workEditId);persist();closeWork();if(view==="planner")renderPlannerBody();toast("삭제했어요");};
 G("workCancel").onclick=closeWork; workOverlay.onclick=e=>{if(e.target===workOverlay)closeWork();};
 
+/* ============ Anniversary modal ============ */
+const annivOverlay=G("annivOverlay"); let annivEditId=null; let annivDraftEmoji="🎀"; let annivCal="solar";
+const ANNIV_EMOS=["🎀","🎂","💐","💖","💍","🎉","🌸","⭐","🥳","👶","🐣","🎓"];
+function openAnniv(id, ds){
+  annivEditId=id||null;
+  const a=id?data.annivs.find(x=>x.id===id):null;
+  G("annivTitle2").textContent=a?"🎀 기념일 편집":"🎀 기념일 등록";
+  G("anTitle").value=a?a.title:"";
+  annivCal=a?(a.cal||"solar"):"solar";
+  if(a&&a.cal==="lunar"){ G("anDate").value=`${cursor.getFullYear()}-${String(a.lm).padStart(2,"0")}-${String(a.ld).padStart(2,"0")}`; }
+  else { G("anDate").value=a?(`${cursor.getFullYear()}-${a.mmdd}`):(ds||ymd(cursor)); }
+  G("anFrom").value=a&&a.fromYear?a.fromYear:"";
+  annivDraftEmoji=a&&a.emoji?a.emoji:"🎀"; G("anEmoji").value="";
+  G("anEmos").innerHTML=ANNIV_EMOS.map(e=>`<button type="button" class="anemo ${e===annivDraftEmoji?"on":""}" data-e="${e}">${e}</button>`).join("");
+  G("anEmos").querySelectorAll(".anemo").forEach(b=>b.onclick=()=>{annivDraftEmoji=b.dataset.e;G("anEmoji").value="";
+    G("anEmos").querySelectorAll(".anemo").forEach(x=>x.classList.toggle("on",x===b));});
+  document.querySelectorAll("[data-acal]").forEach(b=>{b.classList.toggle("on",b.dataset.acal===annivCal);
+    b.onclick=()=>{annivCal=b.dataset.acal;document.querySelectorAll("[data-acal]").forEach(x=>x.classList.toggle("on",x===b));};});
+  G("annivDelete").style.display=id?"inline-block":"none";
+  annivOverlay.classList.add("show"); setTimeout(()=>G("anTitle").focus(),50);
+}
+function closeAnniv(){annivOverlay.classList.remove("show");}
+G("annivSave").onclick=()=>{
+  const title=G("anTitle").value.trim(); if(!title)return toast("제목을 입력해요");
+  const dv=G("anDate").value; if(!dv)return toast("날짜를 선택해요");
+  const emoji=G("anEmoji").value.trim()||annivDraftEmoji||"🎀";
+  const fromYear=G("anFrom").value?Number(G("anFrom").value):null;
+  const mo=Number(dv.slice(5,7)), da=Number(dv.slice(8,10));
+  const obj = annivCal==="lunar"
+    ? {title,cal:"lunar",lm:mo,ld:da,fromYear,emoji}
+    : {title,cal:"solar",mmdd:dv.slice(5),fromYear,emoji};
+  if(annivEditId){const ex=data.annivs.find(x=>x.id===annivEditId);
+    ["mmdd","lm","ld"].forEach(k=>delete ex[k]); Object.assign(ex,obj);}
+  else{obj.id=uid();data.annivs.push(obj);}
+  persist(); closeAnniv(); render(); toast("기념일을 저장했어요 🎀");
+};
+G("annivDelete").onclick=()=>{if(annivEditId)data.annivs=data.annivs.filter(x=>x.id!==annivEditId);persist();closeAnniv();render();toast("삭제했어요");};
+G("annivCancel").onclick=closeAnniv; annivOverlay.onclick=e=>{if(e.target===annivOverlay)closeAnniv();};
+
 /* ============ Nav ============ */
 G("prev").onclick=()=>shift(-1); G("next").onclick=()=>shift(1);
 G("todayBtn").onclick=()=>{cursor=new Date();cursor.setHours(0,0,0,0);render();};
@@ -2222,7 +2440,7 @@ async function pull(verbose){
     const remote=JSON.parse(b64decode(j.content.replace(/\n/g,"")));
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
-    if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
+    if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
     jsave(LS_DATA,data); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
