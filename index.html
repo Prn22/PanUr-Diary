@@ -206,7 +206,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .dvrow{font-size:13.5px;color:var(--ink-soft);line-height:1.5;padding:2px 0;}
 .dvrow b{color:var(--ink);font-weight:700;margin-right:4px;}
 .dvmemo{font-size:12px;color:var(--muted);margin-top:2px;}
-.dvtitle{font-weight:700;font-size:15px;color:var(--ink);margin:4px 0 6px;}
+.dvtitle{font-weight:700;font-size:15px;color:var(--ink);margin:14px 0 10px;}
 .dvpara{font-size:13.5px;color:var(--ink-soft);line-height:1.6;white-space:pre-wrap;margin-bottom:8px;}
 .dvimg{width:100%;border-radius:12px;margin-bottom:8px;box-shadow:var(--shadow-sm);}
 .dvempty{color:var(--muted);font-size:13.5px;text-align:center;padding:24px 0;}
@@ -1466,7 +1466,7 @@ function renderYear(){
   const block = yearRange==="h1"?buildYearBlock(y,0,6) : yearRange==="h2"?buildYearBlock(y,6,12) : buildYearBlock(y,0,12);
   main.innerHTML=`<div class="card yearcard">
     ${block}
-    <div style="font-size:11px;color:var(--muted);margin-top:10px;">짧게 누르면 그 날 일간으로 · <b>길게 누르면</b> 칸에 단어 메모 · <span style="color:var(--mint)">●</span> 일기</div></div>`;
+    <div style="font-size:11px;color:var(--muted);margin-top:10px;">짧게 누르면 그 날 미리보기 · <b>길게 누르면</b> 칸에 단어 메모 · <span style="color:var(--mint)">●</span> 일기</div></div>`;
   bindYearCells();
 }
 // 롱프레스(입력) vs 짧은 탭(일간 이동)
@@ -1476,7 +1476,7 @@ function bindYearCells(){
     const startPress=()=>{longFired=false;timer=setTimeout(()=>{longFired=true;editYearNote(c);},480);};
     const cancel=()=>{clearTimeout(timer);};
     c.addEventListener("pointerdown",startPress);
-    c.addEventListener("pointerup",()=>{cancel();if(!longFired){cursor=parseYmd(c.dataset.date);view="day";render();}});
+    c.addEventListener("pointerup",()=>{cancel();if(!longFired){openDayViewer(c.dataset.date);}});
     c.addEventListener("pointerleave",cancel);
     c.addEventListener("pointercancel",cancel);
   });
@@ -1853,8 +1853,7 @@ function renderDay(){
     const n=Number(el.dataset.cond);
     const cur=data.diary[ds]||{};
     cur.cond=(cur.cond===n)?0:n;
-    if(!diaryHasContent(cur))delete data.diary[ds];
-    else data.diary[ds]=cur;
+    data.diary[ds]=cur; pruneDiary(ds);
     persist();
     document.querySelectorAll("#condDots i").forEach(x=>x.classList.toggle("on",(cur.cond||0)>=Number(x.dataset.cond)));
   });
@@ -2022,6 +2021,13 @@ function bindDayPlanner(ds){
 function diaryFirstText(dia){const b=(dia.blocks||[]).find(x=>x.type==="text"&&x.v&&x.v.trim());return b?b.v.trim():"";}
 function diaryFirstImg(dia){const b=(dia.blocks||[]).find(x=>x.type==="img");return b?b.v:(dia.photos&&dia.photos[0])||"";}
 function diaryHasContent(dia){return !!(dia&&(dia.title||dia.mood||dia.cond||(dia.blocks&&dia.blocks.length)||dia.body||(dia.photos&&dia.photos.length)));}
+// 일기가 비어도 미라클(mm)이 있으면 날짜 객체를 지우지 않고 일기 필드만 정리 (미라클 보존)
+function pruneDiary(ds){
+  const d=data.diary[ds]; if(!d)return;
+  if(diaryHasContent(d))return;
+  if(d.mm){ ["title","mood","cond","blocks","body","photos"].forEach(k=>delete d[k]); data.diary[ds]=d; }
+  else delete data.diary[ds];
+}
 function diaryBlocksHTML(dia){
   const blocks=dia.blocks||[];
   if(!blocks.length)return `<div class="empty" style="margin:6px 0;">아래 ＋문단 · ＋이미지로 글과 사진을 순서대로 넣어보세요</div>`;
@@ -2039,8 +2045,7 @@ function bindDiary(ds){
   const hint=document.getElementById("saveHint");
   const getCur=()=>data.diary[ds]||{};
   function persistCur(cur){
-    const empty=!cur.title&&!cur.mood&&!cur.cond&&(!cur.blocks||!cur.blocks.length);
-    if(empty)delete data.diary[ds]; else data.diary[ds]=cur;
+    data.diary[ds]=cur; pruneDiary(ds);
     persist(); if(hint){hint.textContent="저장됨 ✓";setTimeout(()=>hint.textContent="",1200);}
   }
   function saveTitle(){const cur=getCur();cur.title=title.value;persistCur(cur);}
