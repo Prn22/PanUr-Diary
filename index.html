@@ -2091,8 +2091,14 @@ function emptyP(msg){return `<div class="empty">${msg}</div>`;}
 function srcProg(lec){const t=(lec.lessons||[]).filter(x=>!x.sec).length,d=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;return t?d/t:0;}
 function sortSources(list,mode){
   const a=list.slice();
-  if(mode==="progA")a.sort((x,y)=>srcProg(x)-srcProg(y));
-  else if(mode==="progD")a.sort((x,y)=>srcProg(y)-srcProg(x));
+  if(mode==="progA"||mode==="progD"){
+    const done=x=>srcProg(x)>=1; // 100% 완료
+    a.sort((x,y)=>{
+      const dx=done(x),dy=done(y);
+      if(dx!==dy)return dx?1:-1;                       // 완료는 무조건 최하단
+      return mode==="progA"?srcProg(x)-srcProg(y):srcProg(y)-srcProg(x);
+    });
+  }
   else if(mode==="name")a.sort((x,y)=>String(x.name||"").localeCompare(String(y.name||"")));
   return a; // added: 추가(저장) 순서 유지
 }
