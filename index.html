@@ -137,9 +137,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .dcount span{display:flex;align-items:center;gap:2px;}
 /* diary thumbnail mode */
 .cell.diary{align-items:stretch;justify-content:flex-start;}
-.cell.diary .dnumrow{display:flex;align-items:center;gap:4px;min-width:0;}
+.dnumrow{display:flex;align-items:center;gap:3px;}
+.cell.diary .dnumrow{display:flex;align-items:center;gap:3px;min-width:0;}
 .cell.diary .dnumrow .num{flex:none;}
-.cell.diary .mcond{flex:none;width:14px;height:14px;border-radius:50%;color:#fff;font-size:9px;font-weight:700;
+.cell.diary .dnumrow .danv{flex:none;font-size:10px;}
+.cell.diary .mcond{flex:none;margin-left:auto;width:14px;height:14px;border-radius:50%;color:#fff;font-size:9px;font-weight:700;
   display:flex;align-items:center;justify-content:center;font-family:var(--disp);line-height:1;}
 .cell .dtitle{color:var(--ink);width:100%;text-align:center;line-height:1.3;margin-top:3px;
   word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;}
@@ -242,6 +244,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .anemo.on{background:var(--rose);border-color:transparent;}
 .ev.anniv{border-left-color:var(--rose);}
 .danv{font-size:11px;line-height:1;margin-left:2px;}
+.miletag{font-size:9px;color:var(--rose);font-weight:700;margin-left:2px;}
+.mileline{font-size:9px;color:var(--rose);font-weight:700;text-align:center;line-height:1.2;margin-top:1px;}
+.chip.mile{background:var(--rose)!important;}
 .holname{font-size:8.5px;color:var(--rose);font-weight:600;line-height:1.1;display:block;}
 .cell.hol .num{color:var(--rose);}
 .ycell.hol .yn{color:var(--rose);}
@@ -1065,6 +1070,27 @@ function annivMilestone(a){
   const pick=cand[0]; const dday=Math.round((pick.date-today)/86400000);
   return {elapsed, label:pick.label, dday};
 }
+// 특정 날짜(ds)가 누적 기념일(100일 단위·주년) 도래일인지
+function milestonesOn(ds){
+  const out=[];
+  const [ty,tm,td]=ds.split("-").map(Number);
+  const day=new Date(ty,tm-1,td); day.setHours(0,0,0,0);
+  (data.annivs||[]).forEach(a=>{
+    if(!a.milestone||!a.fromYear)return;
+    let start;
+    if(a.cal==="lunar"){const s=lunar2solar(a.fromYear,a.lm,a.ld,false); if(!s)return; start=new Date(a.fromYear,s.getUTCMonth(),s.getUTCDate());}
+    else{const [mo,da]=a.mmdd.split("-").map(Number); start=new Date(a.fromYear,mo-1,da);}
+    start.setHours(0,0,0,0);
+    if(day<start)return;
+    const count=Math.round((day-start)/86400000)+1; // 시작일=1일째
+    if(count>=100 && count%100===0) out.push({emoji:a.emoji||"💗", label:count+"일"});
+    let annMatch=false, years=0;
+    if(a.cal==="lunar"){const s2=lunar2solar(ty,a.lm,a.ld,false); if(s2&&s2.getUTCMonth()===tm-1&&s2.getUTCDate()===td){annMatch=true; years=ty-a.fromYear;}}
+    else{ if(tm-1===start.getMonth()&&td===start.getDate()){annMatch=true; years=ty-a.fromYear;} }
+    if(annMatch&&years>=1) out.push({emoji:a.emoji||"💗", label:years+"주년"});
+  });
+  return out;
+}
 function moodHtml(val){
   if(!val)return"";
   if(typeof val==="string"&&val.startsWith("img:")){
@@ -1116,18 +1142,19 @@ function buildYearBlock(y,mStart,mEnd){
       if(dnum>days){body+=`<div class="ycell empty"></div>`;continue;}
       const dt=new Date(y,m,dnum), ds=ymd(dt);
       const evs=eventsOn(dt), dia=data.diary[ds], note=data.yearNotes[ds], anv=annivsOn(ds);
-      const holN=holidayName(ds);
+      const holN=holidayName(ds), mileY=milestonesOn(ds);
       const cls=["ycell"]; if(isToday(dt))cls.push("today");
       if(dt.getDay()===0)cls.push("sun"); if(dt.getDay()===6)cls.push("sat");
       if(holN)cls.push("hol");
       let kw="";
-      if(anv.length)kw=(anv[0].emoji||"🎀")+esc(anv[0].title);
+      if(mileY.length)kw="💗"+mileY[0].label;
+      else if(anv.length)kw=(anv[0].emoji||"🎀")+esc(anv[0].title);
       else if(holN)kw=esc(holN);
       else if(note)kw=esc(note);
       else if(evs.length)kw=esc(evs[0].title);
       else if(dia&&(dia.title||diaryFirstText(dia)))kw=esc(dia.title||diaryFirstText(dia));
       let dots="";
-      const set=new Set(evs.map(e=>e.color)); if(dia)set.add("_d"); if(anv.length)set.add("_a");
+      const set=new Set(evs.map(e=>e.color)); if(dia)set.add("_d"); if(anv.length||mileY.length)set.add("_a");
       if(set.size){dots='<div class="ydot">'+[...set].slice(0,4).map(k=>
         `<i style="background:${k==="_d"?"var(--mint)":k==="_a"?"var(--rose)":(CATMAP[k]?CATMAP[k].c:"var(--lav)")}"></i>`).join("")+'</div>';}
       body+=`<div class="${cls.join(" ")}${note?" noted":""}" data-date="${ds}"><span class="yn">${WEEK[dt.getDay()]}</span>
@@ -1198,6 +1225,8 @@ function renderMonth(){
     if(d.getDay()===0)cls.push("sun"); if(d.getDay()===6)cls.push("sat");
     const anvCell=annivsOn(ds);
     const anvMark=anvCell.length?`<span class="danv">${anvCell[0].emoji||"🎀"}</span>`:"";
+    const mileCell=milestonesOn(ds);
+    const mileMark=mileCell.length?`<span class="miletag">💗${mileCell[0].label}</span>`:"";
     const holName=holidayName(ds);
     if(holName)cls.push("hol");
     const holMark=holName?`<span class="holname">${holName}</span>`:"";
@@ -1206,6 +1235,7 @@ function renderMonth(){
       const condColors={1:"#C7C0CB",2:"#8DBEDC",3:"#83C9B2",4:"#E6C282",5:"#E4A0B6"};
       const condMark=dia&&dia.cond?`<span class="mcond" style="background:${condColors[dia.cond]}">${dia.cond}</span>`:"";
       let inner=`<div class="dnumrow"><span class="num">${d.getDate()}</span>${anvMark}${holMark}${condMark}</div>`;
+      if(mileCell.length)inner+=`<div class="mileline">💗${mileCell[0].label}</div>`;
       if(dia){
         if(dia.title){
           const len=[...dia.title].length;
@@ -1224,20 +1254,19 @@ function renderMonth(){
       const cnt=mm?Object.values(mm.savers||{}).filter(Boolean).length:0;
       const tier=mmTier(cnt);
       let inner=`<div class="dnumrow"><span class="num">${d.getDate()}</span>${anvMark}${holMark}</div>`;
+      if(mileCell.length)inner+=`<div class="mileline">💗${mileCell[0].label}</div>`;
       if(tier)inner+=`<div class="mmcell">${mmEmojiHtml(data.mmEmoji[tier])}<span class="mmcnt">${cnt}/6</span></div>`;
       html+=`<div class="${cls.join(" ")}" data-date="${ds}">${inner}</div>`;
     }else{
       const evs=eventsOn(d);
       let chips=evs.slice(0,2).map(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
-        return `<div class="chip" style="background:${c.c}">${ev.time?ev.time+" ":""}${esc(ev.title)}</div>`;}).join("");
+        return `<div class="chip" style="background:${c.c}">${esc(ev.title)}</div>`;}).join("");
       if(evs.length>2)chips+=`<div class="more">+${evs.length-2}</div>`;
       const tCount=countPlannerOn(ds), hasM=data.memos.some(mm=>mm.date===ds);
-      const anv=annivsOn(ds);
       let foot="";
-      if(tCount||hasM||anv.length){foot='<div class="dcount">'+
-        (anv.length?`<span>${anv[0].emoji||"🎀"}</span>`:"")+
+      if(tCount||hasM){foot='<div class="dcount">'+
         (tCount?`<span>✓ ${tCount}</span>`:"")+(hasM?`<span style="color:var(--lav-d)">📌</span>`:"")+'</div>';}
-      html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="num">${d.getDate()}</div>${holMark}${chips}${foot}</div>`;
+      html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="dnumrow"><span class="num">${d.getDate()}</span>${anvMark}</div>${holMark}${mileCell.length?`<div class="chip mile">💗${mileCell[0].label}</div>`:""}${chips}${foot}</div>`;
     }
   }
   html+="</div>"; // .grid
