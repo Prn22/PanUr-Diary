@@ -16,7 +16,7 @@
 <title>💛파뉴땅🤍</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Gowun+Dodum&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F7F0F3; --bg2:#F1E7EC; --ink:#544A54; --ink-soft:#756A75; --muted:#A99EAA; --faint:#CBC2CC;
@@ -235,6 +235,20 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .anemo{font-size:20px;border:1px solid var(--line-2);background:var(--panel-2);border-radius:10px;padding:4px 8px;cursor:pointer;line-height:1;}
 .anemo.on{background:var(--rose);border-color:transparent;}
 .ev.anniv{border-left-color:var(--rose);}
+.danv{font-size:11px;line-height:1;margin-left:2px;}
+.holname{font-size:8.5px;color:var(--rose);font-weight:600;line-height:1.1;display:block;}
+.cell.hol .num{color:var(--rose);}
+.ycell.hol .yn{color:var(--rose);}
+.dayhol{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--rose);}
+.optblk{margin-bottom:18px;}
+.optlbl{font-family:var(--disp);font-weight:600;font-size:13px;color:var(--ink);margin-bottom:8px;}
+.optrow{display:flex;flex-wrap:wrap;gap:8px;}
+.themebtn{width:64px;height:52px;border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;position:relative;box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;justify-content:flex-end;padding:5px;}
+.themebtn em{position:absolute;left:0;right:0;bottom:5px;text-align:center;font-style:normal;font-size:10px;font-family:var(--disp);text-shadow:0 1px 2px rgba(0,0,0,.2);}
+.themebtn.on{outline:2.5px solid var(--ink-soft);outline-offset:2px;}
+.fontbtn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:8px 14px;font-size:15px;cursor:pointer;color:var(--ink);}
+.fontbtn.on{background:var(--lav);color:#fff;border-color:transparent;}
+.opttoggle{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft);}
 .anivcal{display:flex;gap:8px;}
 .acb{flex:1;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:10px;padding:9px 0;font-family:var(--disp);font-weight:600;font-size:13px;cursor:pointer;}
 .acb.on{background:var(--lav);color:#fff;border-color:transparent;}
@@ -623,6 +637,7 @@ body{
       <button data-etc="summary">요약</button>
       <button data-etc="weather">날씨</button>
       <button data-etc="fx">환율</button>
+      <button data-etc="options">옵션</button>
     </div>
   </div>
 
@@ -865,13 +880,14 @@ const DEFAULT_DATA={
   wxPresets:[],      // 날씨 위치 프리셋 [{label,q}]
   deco:{},           // 다꾸 스티커 {"YYYY-M":[{id,img,x,y,w,rot}]}
   annivs:[],         // 기념일 [{id,title,mmdd,fromYear,emoji}]
+  userHols:[],       // 사용자 공휴일 [{date:"YYYY-MM-DD",name}]
   mmEmoji:{},        // 미라클모닝 단계별 이모지 {t1,t3,t5,t6}
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
-if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[];
+if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
 if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];
 if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};
 const MM_EMO_DEF={t1:"🌱",t3:"☀️",t5:"🌟",t6:"👑"}; for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
@@ -936,6 +952,42 @@ function lunar2solar(y,m,d,isLeap){
   if(isLeap&&leap===m)offset+=lunMonthDays(y,m);
   offset+=d-1;
   return new Date(Date.UTC(1900,0,31)+offset*86400000);
+}
+/* 공휴일 (양력 고정 + 음력 자동 + 대체공휴일 추정 + 사용자 추가) */
+const _holCache={};
+function holidaysOf(year){
+  if(_holCache[year])return _holCache[year];
+  const pad2=n=>String(n).padStart(2,"0");
+  const base={}, sub={};
+  const set=(mo,da,name)=>{base[pad2(mo)+"-"+pad2(da)]=name;};
+  set(1,1,"신정"); set(3,1,"삼일절"); set(5,5,"어린이날"); set(6,6,"현충일");
+  set(8,15,"광복절"); set(10,3,"개천절"); set(10,9,"한글날"); set(12,25,"성탄절");
+  const seol=lunar2solar(year,1,1,false), chu=lunar2solar(year,8,15,false), bud=lunar2solar(year,4,8,false);
+  const seolDays=[], chuDays=[];
+  if(seol)[-1,0,1].forEach(k=>{const d=new Date(seol.getTime()+k*86400000);set(d.getUTCMonth()+1,d.getUTCDate(),"설날");seolDays.push(new Date(year,d.getUTCMonth(),d.getUTCDate()));});
+  if(chu)[-1,0,1].forEach(k=>{const d=new Date(chu.getTime()+k*86400000);set(d.getUTCMonth()+1,d.getUTCDate(),"추석");chuDays.push(new Date(year,d.getUTCMonth(),d.getUTCDate()));});
+  let budLocal=null;
+  if(bud){budLocal=new Date(year,bud.getUTCMonth(),bud.getUTCDate());set(bud.getUTCMonth()+1,bud.getUTCDate(),"부처님오신날");}
+  // 대체공휴일(예상) — 규칙 기반 추정
+  const inAny=d=>base[pad2(d.getMonth()+1)+"-"+pad2(d.getDate())]||sub[pad2(d.getMonth()+1)+"-"+pad2(d.getDate())];
+  const addSubAfter=(lastDate,name)=>{const d=new Date(lastDate);
+    do{d.setDate(d.getDate()+1);}while(d.getDay()===0||d.getDay()===6||inAny(d));
+    sub[pad2(d.getMonth()+1)+"-"+pad2(d.getDate())]=name+" 대체";};
+  if(seolDays.some(d=>d.getDay()===0||d.getDay()===6))addSubAfter(seolDays[seolDays.length-1],"설날");
+  if(chuDays.some(d=>d.getDay()===0||d.getDay()===6))addSubAfter(chuDays[chuDays.length-1],"추석");
+  {const c=new Date(year,4,5); if(c.getDay()===0||c.getDay()===6)addSubAfter(c,"어린이날");}
+  [[2,1,"삼일절"],[7,15,"광복절"],[9,3,"개천절"],[9,9,"한글날"],[11,25,"성탄절"]].forEach(([mo,da,nm])=>{
+    const d=new Date(year,mo,da); if(d.getDay()===0)addSubAfter(d,nm);});
+  if(budLocal&&budLocal.getDay()===0)addSubAfter(budLocal,"부처님오신날");
+  _holCache[year]={base,sub}; return _holCache[year];
+}
+function holidayName(ds){
+  const yr=+ds.slice(0,4), key=ds.slice(5);
+  const h=holidaysOf(yr);
+  if(h.base[key])return h.base[key];
+  if(jload("panur_showsub",true)&&h.sub[key])return h.sub[key];
+  const u=(data.userHols||[]).find(x=>x.date===ds); if(u)return u.name;
+  return null;
 }
 function annivSolarMMDD(a,year){
   if(a.cal==="lunar"){
@@ -1010,10 +1062,13 @@ function buildYearBlock(y,mStart,mEnd){
       if(dnum>days){body+=`<div class="ycell empty"></div>`;continue;}
       const dt=new Date(y,m,dnum), ds=ymd(dt);
       const evs=eventsOn(dt), dia=data.diary[ds], note=data.yearNotes[ds], anv=annivsOn(ds);
+      const holN=holidayName(ds);
       const cls=["ycell"]; if(isToday(dt))cls.push("today");
       if(dt.getDay()===0)cls.push("sun"); if(dt.getDay()===6)cls.push("sat");
+      if(holN)cls.push("hol");
       let kw="";
       if(anv.length)kw=(anv[0].emoji||"🎀")+esc(anv[0].title);
+      else if(holN)kw=esc(holN);
       else if(note)kw=esc(note);
       else if(evs.length)kw=esc(evs[0].title);
       else if(dia&&(dia.title||diaryFirstText(dia)))kw=esc(dia.title||diaryFirstText(dia));
@@ -1087,11 +1142,16 @@ function renderMonth(){
     const other=d.getMonth()!==m, cls=["cell"];
     if(other)cls.push("other"); if(isToday(d))cls.push("today");
     if(d.getDay()===0)cls.push("sun"); if(d.getDay()===6)cls.push("sat");
+    const anvCell=annivsOn(ds);
+    const anvMark=anvCell.length?`<span class="danv">${anvCell[0].emoji||"🎀"}</span>`:"";
+    const holName=holidayName(ds);
+    if(holName)cls.push("hol");
+    const holMark=holName?`<span class="holname">${holName}</span>`:"";
     if(effMode==="diary"){
       cls.push("diary"); const dia=data.diary[ds];
       const condColors={1:"#C7C0CB",2:"#8DBEDC",3:"#83C9B2",4:"#E6C282",5:"#E4A0B6"};
       const condMark=dia&&dia.cond?`<span class="mcond" style="background:${condColors[dia.cond]}">${dia.cond}</span>`:"";
-      let inner=`<div class="dnumrow"><span class="num">${d.getDate()}</span>${condMark}</div>`;
+      let inner=`<div class="dnumrow"><span class="num">${d.getDate()}</span>${anvMark}${holMark}${condMark}</div>`;
       if(dia){
         if(dia.title){
           const len=[...dia.title].length;
@@ -1109,7 +1169,7 @@ function renderMonth(){
       const dia=data.diary[ds]; const mm=dia&&dia.mm;
       const cnt=mm?Object.values(mm.savers||{}).filter(Boolean).length:0;
       const tier=mmTier(cnt);
-      let inner=`<div class="dnumrow"><span class="num">${d.getDate()}</span></div>`;
+      let inner=`<div class="dnumrow"><span class="num">${d.getDate()}</span>${anvMark}${holMark}</div>`;
       if(tier)inner+=`<div class="mmcell">${mmEmojiHtml(data.mmEmoji[tier])}<span class="mmcnt">${cnt}/6</span></div>`;
       html+=`<div class="${cls.join(" ")}" data-date="${ds}">${inner}</div>`;
     }else{
@@ -1123,7 +1183,7 @@ function renderMonth(){
       if(tCount||hasM||anv.length){foot='<div class="dcount">'+
         (anv.length?`<span>${anv[0].emoji||"🎀"}</span>`:"")+
         (tCount?`<span>✓ ${tCount}</span>`:"")+(hasM?`<span style="color:var(--lav-d)">📌</span>`:"")+'</div>';}
-      html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="num">${d.getDate()}</div>${chips}${foot}</div>`;
+      html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="num">${d.getDate()}</div>${holMark}${chips}${foot}</div>`;
     }
   }
   html+="</div>"; // .grid
@@ -1299,7 +1359,8 @@ function renderDay(){
 
   let h=`<div class="card">
     <div class="dayhead"><span class="big">${cursor.getDate()}</span>
-      <span class="sub">${cursor.getFullYear()}. ${pad(cursor.getMonth()+1)} · ${WEEK[cursor.getDay()]}요일</span></div>`;
+      <span class="sub">${cursor.getFullYear()}. ${pad(cursor.getMonth()+1)} · ${WEEK[cursor.getDay()]}요일</span>
+      ${holidayName(ds)?`<span class="dayhol">🎌 ${holidayName(ds)}</span>`:""}</div>`;
 
   if(daySub==="morning"){
     h+=mmSectionHTML(ds);
@@ -1317,9 +1378,9 @@ function renderDay(){
     h+=`<div class="section"><h3>🎀 기념일 <button class="add" id="annivAdd">+</button></h3>`;
     h+= dayAnnivs.length? dayAnnivs.map(a=>{
         const info=annivDdayObj(a); const yrs=a.fromYear&&info.nextY?` · ${info.nextY-a.fromYear}주년`:"";
-        const dtxt=info.dday===0?"D-DAY":(info.dday!=null?"D-"+info.dday:"");
+        const dtxt=(jload("panur_dday",true)&&info.dday!=null)?`<span class="dbadge">${info.dday===0?"D-DAY":"D-"+info.dday}</span>`:"";
         const base=a.cal==="lunar"?`음력 ${a.lm}/${a.ld}`:`매년 ${a.mmdd.replace("-","/")}`;
-        return `<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"🎀"} ${esc(a.title)} <span class="dbadge">${dtxt}</span></div>
+        return `<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"🎀"} ${esc(a.title)} ${dtxt}</div>
           <div class="mm">${base}${yrs}</div></div>`;}).join("")
       : `<div class="empty">이 날의 기념일이 없어요</div>`;
     h+=`</div>`;
@@ -1627,7 +1688,7 @@ function renderPlannerBody(){
     });
   }else if(t==="todos"){
     h+=`<div class="pform"><div class="row"><input id="tDate" type="date"><input id="tText" placeholder="할 일 (날짜 비우면 미정)"></div>
-      <div class="row"><label class="rlbl">🔔 알림<select id="tRemind">${remindOptions("")}</select></label></div>
+      <div class="row"><label class="rlbl">🔔 알림<select id="tRemind">${remindOptions("",true)}</select></label></div>
       <button class="btn primary" id="tAdd">할 일 추가</button></div>`;
     const list=[...data.planner.todos].sort((a,b)=>((a.date||"9999")).localeCompare(b.date||"9999"));
     h+= list.length? list.map(a=>plCard("todos",a,a.date||"미정")).join(""):emptyP("할 일을 추가해보세요");
@@ -1976,10 +2037,81 @@ function renderEtc(){
   else if(etcSub==="material"){ box.innerHTML=materialBodyHTML(); bindMaterialBody(); }
   else if(etcSub==="summary"){ box.innerHTML=summaryBodyHTML(); bindSummaryBody(); }
   else if(etcSub==="weather"){ box.innerHTML=weatherBodyHTML(); bindWeather(); }
+  else if(etcSub==="options"){ box.innerHTML=optionsBodyHTML(); bindOptions(); }
   else { box.innerHTML=fxBodyHTML(); document.getElementById("fxRefresh").onclick=fetchFx; bindFxCalc(); }
 }
 /* ---- 날씨 ---- */
 const WX_CODE={0:["맑음","☀️"],1:["대체로 맑음","🌤️"],2:["구름 조금","⛅"],3:["흐림","☁️"],45:["안개","🌫️"],48:["짙은 안개","🌫️"],51:["약한 이슬비","🌦️"],53:["이슬비","🌦️"],55:["강한 이슬비","🌧️"],61:["약한 비","🌦️"],63:["비","🌧️"],65:["강한 비","🌧️"],66:["언 비","🌧️"],67:["강한 언 비","🌧️"],71:["약한 눈","🌨️"],73:["눈","🌨️"],75:["강한 눈","❄️"],77:["싸락눈","🌨️"],80:["소나기","🌦️"],81:["소나기","🌧️"],82:["강한 소나기","⛈️"],85:["눈 소나기","🌨️"],86:["강한 눈 소나기","❄️"],95:["뇌우","⛈️"],96:["우박 뇌우","⛈️"],99:["강한 우박 뇌우","⛈️"]};
+/* ---- 옵션(설정) ---- */
+const THEMES={
+  rose:{n:"로즈핑크",lav:"#C79BD0",lavd:"#A876B4",rose:"#E4A6BC",mint:"#8CCBB4",gold:"#E6C889",ice:"#8FC7D6",bg:"#F7F0F3",bg2:"#F1E7EC",tc:"#F3DCE6",grad:"linear-gradient(165deg,#EFD0DF 0%,#E9DCEC 30%,#EBE6F0 55%,#F1EEF2 78%,#F6F3F5 100%)"},
+  lav:{n:"라벤더",lav:"#A99BE0",lavd:"#7E6BC4",rose:"#B8A6E4",mint:"#9CC7E0",gold:"#D6C0EC",ice:"#9FB6E8",bg:"#F1EFF9",bg2:"#E9E5F5",tc:"#E4DEF3",grad:"linear-gradient(165deg,#D9D0EF 0%,#DCDCEC 35%,#E6E6F2 60%,#EEEEF6 100%)"},
+  mint:{n:"민트",lav:"#7FC9B4",lavd:"#4FA891",rose:"#8CD0BE",mint:"#83C9B2",gold:"#BEE0C0",ice:"#8FD6CE",bg:"#EEF6F2",bg2:"#E5F1EC",tc:"#DCF0E8",grad:"linear-gradient(165deg,#CFEFE2 0%,#DCECE6 40%,#E6F2EE 70%,#EEF6F3 100%)"},
+  sky:{n:"하늘",lav:"#8FB8E0",lavd:"#5F8FC4",rose:"#A6C4E4",mint:"#8CC7CB",gold:"#C0D6EC",ice:"#8FC0E8",bg:"#EEF3F9",bg2:"#E5ECF5",tc:"#DCE8F3",grad:"linear-gradient(165deg,#D0E0EF 0%,#DCE6EC 40%,#E6EEF2 70%,#EEF3F6 100%)"},
+  apricot:{n:"살구",lav:"#E0A98F",lavd:"#C4805F",rose:"#E4B6A6",mint:"#CBC78C",gold:"#E6C889",ice:"#E0C08F",bg:"#F9F3EE",bg2:"#F5ECE5",tc:"#F3E8DC",grad:"linear-gradient(165deg,#EFDFD0 0%,#ECE6DC 40%,#F2EEE6 70%,#F6F3EE 100%)"}
+};
+const FONTS={
+  default:{n:"기본",disp:"'Outfit','Apple SD Gothic Neo','Malgun Gothic',sans-serif",body:"'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"},
+  dodum:{n:"깔끔",disp:"'Gowun Dodum','Apple SD Gothic Neo',sans-serif",body:"'Gowun Dodum','Apple SD Gothic Neo',sans-serif"},
+  gaegu:{n:"손글씨",disp:"'Gaegu','Apple SD Gothic Neo',sans-serif",body:"'Gaegu','Apple SD Gothic Neo',sans-serif"},
+  pen:{n:"펜글씨",disp:"'Nanum Pen Script','Apple SD Gothic Neo',sans-serif",body:"'Nanum Pen Script','Apple SD Gothic Neo',sans-serif"},
+  serif:{n:"명조",disp:"'Nanum Myeongjo',serif",body:"'Nanum Myeongjo',serif"}
+};
+function applyTheme(key){
+  const t=THEMES[key]||THEMES.rose; const r=document.documentElement.style;
+  r.setProperty("--lav",t.lav); r.setProperty("--lav-d",t.lavd); r.setProperty("--rose",t.rose);
+  r.setProperty("--mint",t.mint); r.setProperty("--gold",t.gold); r.setProperty("--ice",t.ice);
+  r.setProperty("--bg",t.bg); r.setProperty("--bg2",t.bg2);
+  document.body.style.background=t.grad;
+  const meta=document.querySelector('meta[name=theme-color]'); if(meta)meta.setAttribute("content",t.tc);
+}
+function applyFont(key){
+  const f=FONTS[key]||FONTS.default; const r=document.documentElement.style;
+  r.setProperty("--disp",f.disp); r.setProperty("--body",f.body);
+}
+function optionsBodyHTML(){
+  const theme=jload("panur_theme","rose"), font=jload("panur_font","default");
+  const showSub=jload("panur_showsub",true), showDday=jload("panur_dday",true);
+  return `<div class="etcsec"><h3>⚙️ 옵션</h3>
+    <div class="optblk"><div class="optlbl">🎨 테마 색</div><div class="optrow" id="optThemes">
+      ${Object.entries(THEMES).map(([k,t])=>`<button class="themebtn ${theme===k?"on":""}" data-theme="${k}" style="background:${t.lav}">${theme===k?"✓":""}<em>${t.n}</em></button>`).join("")}
+    </div></div>
+    <div class="optblk"><div class="optlbl">🔤 폰트</div><div class="optrow" id="optFonts">
+      ${Object.entries(FONTS).map(([k,f])=>`<button class="fontbtn ${font===k?"on":""}" data-font="${k}" style="font-family:${f.body}">${f.n}</button>`).join("")}
+    </div><div style="font-size:11px;color:var(--muted);margin-top:4px;">일부 글꼴은 인터넷 연결 시 적용돼요.</div></div>
+    <div class="optblk"><div class="optlbl">🎀 기념일 D-day 표시</div>
+      <label class="opttoggle"><input type="checkbox" id="optDday" ${showDday?"checked":""}> 일간 기념일에 D-day 표시</label></div>
+    <div class="optblk"><div class="optlbl">📅 대체공휴일(예상) 표시</div>
+      <label class="opttoggle"><input type="checkbox" id="optSub" ${showSub?"checked":""}> 규칙 기반 대체공휴일 자동 표시</label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">추정이라 부정확할 수 있어요. 정확한 임시·대체공휴일은 아래에서 직접 추가하세요.</div></div>
+    <div class="optblk"><div class="optlbl">➕ 임시·대체공휴일 직접 추가</div>
+      <div class="wxcityrow"><input type="date" id="uhDate"><input id="uhName" placeholder="이름 (예: 임시공휴일)"><button class="btn" id="uhAdd">추가</button></div>
+      <div id="uhList" style="margin-top:8px;display:flex;flex-direction:column;gap:5px;"></div></div>
+  </div>`;
+}
+function renderUserHols(){
+  const el=document.getElementById("uhList"); if(!el)return;
+  const arr=[...(data.userHols||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  el.innerHTML=arr.length?arr.map(u=>`<div class="affrow"><span>🔴 ${u.date.replace(/-/g,"/")} · ${esc(u.name)}</span><b data-uhdel="${u.date}|${esc(u.name)}">✕</b></div>`).join("")
+    :'<div style="font-size:12px;color:var(--muted)">추가한 공휴일이 없어요</div>';
+  el.querySelectorAll("[data-uhdel]").forEach(b=>b.onclick=()=>{
+    const [dt,nm]=b.dataset.uhdel.split("|");
+    data.userHols=data.userHols.filter(x=>!(x.date===dt&&x.name===nm)); persist(); renderUserHols(); _holClear(); render();
+  });
+}
+function _holClear(){for(const k in _holCache)delete _holCache[k];}
+function bindOptions(){
+  document.querySelectorAll("[data-theme]").forEach(b=>b.onclick=()=>{const k=b.dataset.theme;jsave("panur_theme",k);applyTheme(k);renderEtc();});
+  document.querySelectorAll("[data-font]").forEach(b=>b.onclick=()=>{const k=b.dataset.font;jsave("panur_font",k);applyFont(k);renderEtc();});
+  const dday=document.getElementById("optDday"); if(dday)dday.onchange=()=>jsave("panur_dday",dday.checked);
+  const sub=document.getElementById("optSub"); if(sub)sub.onchange=()=>{jsave("panur_showsub",sub.checked);_holClear();};
+  const add=document.getElementById("uhAdd");
+  if(add)add.onclick=()=>{const dt=document.getElementById("uhDate").value, nm=document.getElementById("uhName").value.trim();
+    if(!dt)return toast("날짜를 선택해요"); if(!nm)return toast("이름을 입력해요");
+    data.userHols=data.userHols||[]; if(!data.userHols.some(x=>x.date===dt&&x.name===nm))data.userHols.push({date:dt,name:nm});
+    persist(); document.getElementById("uhName").value=""; renderUserHols(); _holClear(); toast("공휴일을 추가했어요");};
+  renderUserHols();
+}
 function weatherBodyHTML(){
   return `<div class="etcsec"><h3>🌤️ 날씨 <span style="font-size:11px;color:var(--muted);font-weight:400;">Open-Meteo · 참고용</span></h3>
     <div class="wxloc" id="wxLoc">📍 위치 확인 중…</div>
@@ -2404,7 +2536,7 @@ function shift(dir){
     const order=["appts","work","study","todos","habits"];
     let i=order.indexOf(plannerType); i=(i+dir+order.length)%order.length; plannerType=order[i];
   }else if(view==="etc"){
-    const order=["memo","material","summary","weather","fx"];
+    const order=["memo","material","summary","weather","fx","options"];
     let i=order.indexOf(etcSub); i=(i+dir+order.length)%order.length; etcSub=order[i]; jsave("panur_etcsub",etcSub);
   }
   render();
@@ -2454,7 +2586,7 @@ async function pull(verbose){
     const remote=JSON.parse(b64decode(j.content.replace(/\n/g,"")));
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
-    if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
+    if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!Array.isArray(data.userHols))data.userHols=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
     jsave(LS_DATA,data); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
@@ -2509,7 +2641,11 @@ installBtn.onclick=async()=>{
 };
 const fired=new Set();
 const REMIND_OPTS=[["","끔"],["0","정각"],["5","5분 전"],["10","10분 전"],["30","30분 전"],["60","1시간 전"],["1440","1일 전"]];
-function remindOptions(sel){return REMIND_OPTS.map(([v,n])=>`<option value="${v}" ${String(sel??"")===v?"selected":""}>${n}</option>`).join("");}
+function remindOptions(sel,withMorning){
+  let opts=REMIND_OPTS.slice();
+  if(withMorning)opts=[["","끔"],["morning","당일 아침 (오전 8시)"]].concat(REMIND_OPTS.slice(1));
+  return opts.map(([v,n])=>`<option value="${v}" ${String(sel??"")===v?"selected":""}>${n}</option>`).join("");
+}
 function notify(body){try{new Notification("PanUr 🌙",{body,icon:"icon-192.png"});}catch(e){}toast("🔔 "+body);}
 function checkReminders(){
   if(!("Notification"in window)||Notification.permission!=="granted")return;
@@ -2525,6 +2661,7 @@ function checkReminders(){
   const add=(id,dateStr,timeStr,remind,body)=>{
     if(remind==null||remind===""||!dateStr)return;
     const [y,mo,da]=dateStr.split("-").map(Number);
+    if(remind==="morning"){ const base=new Date(y,mo-1,da,8,0,0,0); fire(id+"_plm",base,now,"🌅 오늘 · "+body); return; }
     let hh=9,mm=0; if(timeStr){const p=timeStr.split(":").map(Number);hh=p[0];mm=p[1];}
     const base=new Date(y,mo-1,da,hh,mm,0,0);
     fire(id+"_pl"+remind, new Date(base.getTime()-Number(remind)*60000), now, body);
@@ -2550,6 +2687,8 @@ function setupPWA(){
 setupPWA();
 
 /* ============ Boot ============ */
+applyTheme(jload("panur_theme","rose"));
+applyFont(jload("panur_font","default"));
 buildSwatches();
 setDot(sync.token?"ok":"");
 render();
