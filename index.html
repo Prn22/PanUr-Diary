@@ -16,7 +16,7 @@
 <title>💛파뉴땅🤍</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&family=Gowun+Dodum&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&family=Nanum+Myeongjo:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Gowun+Dodum&family=Gowun+Batang:wght@400;700&family=Nanum+Gothic:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&family=Song+Myung&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;600&family=Hahmlet:wght@400;600&family=Jua&family=Do+Hyeon&family=Dongle:wght@400;700&family=Gaegu:wght@400;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F7F0F3; --bg2:#F1E7EC; --ink:#544A54; --ink-soft:#756A75; --muted:#A99EAA; --faint:#CBC2CC;
@@ -59,11 +59,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   padding:9px 15px;border-radius:12px;font-family:var(--disp);font-weight:600;cursor:pointer;transition:transform .12s;}
 .today-btn:hover{transform:translateY(-1px);}
 
-.tabs{display:flex;gap:7px;padding:6px 20px 12px;flex-wrap:wrap;align-items:center;background:rgba(255,250,253,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(120,95,120,.22);box-shadow:0 8px 22px rgba(130,100,130,.16);}
-.tab{border:1px solid var(--line);cursor:pointer;font-family:var(--disp);font-weight:500;font-size:14px;color:var(--muted);
-  background:rgba(255,255,255,.10);padding:8px 17px;border-radius:13px;transition:all .14s;backdrop-filter:blur(8px);}
-.tab:hover{color:var(--ink);}
-.tab.active{color:#fff;background:var(--lav);border-color:transparent;font-weight:600;box-shadow:0 3px 10px rgba(130,100,130,.2);}
+.tabs{display:flex;gap:9px;padding:10px 20px 13px;flex-wrap:wrap;align-items:center;background:rgba(255,250,253,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(120,95,120,.22);box-shadow:0 8px 22px rgba(130,100,130,.16);}
+.tab{border:1.5px solid var(--line);cursor:pointer;font-family:var(--disp);font-weight:600;font-size:14px;color:var(--muted);
+  background:rgba(255,255,255,.55);padding:8px 18px;border-radius:999px;backdrop-filter:blur(8px);
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),background .18s,color .18s,box-shadow .18s,border-color .18s;}
+.tab:hover{color:var(--ink);transform:translateY(-1px);}
+.tab:active{transform:scale(.93);}
+.tab.active{color:#fff;border-color:transparent;font-weight:700;
+  background:linear-gradient(135deg,var(--rose),var(--lav));
+  box-shadow:0 4px 11px rgba(160,110,150,.32);transform:scale(1.03);}
 .seg{display:flex;background:var(--panel);border:1px solid var(--line-2);border-radius:12px;overflow:hidden;}
 .subbar{padding:12px 20px 12px;display:flex;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;}
 .subbar::-webkit-scrollbar{display:none;}
@@ -263,8 +267,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .optblk{margin-bottom:18px;}
 .optlbl{font-family:var(--disp);font-weight:600;font-size:13px;color:var(--ink);margin-bottom:8px;}
 .optrow{display:flex;flex-wrap:wrap;gap:8px;}
-.themebtn{width:64px;height:52px;border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;position:relative;box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;justify-content:flex-end;padding:5px;}
-.themebtn em{position:absolute;left:0;right:0;bottom:5px;text-align:center;font-style:normal;font-size:10px;font-family:var(--disp);text-shadow:0 1px 2px rgba(0,0,0,.2);}
+.themebtn{width:50px;height:42px;border:none;border-radius:11px;color:#fff;font-weight:700;cursor:pointer;position:relative;box-shadow:var(--shadow-sm);display:flex;align-items:flex-start;justify-content:flex-end;padding:4px;}
+.themebtn em{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-style:normal;font-size:9px;font-family:var(--disp);text-shadow:0 1px 2px rgba(0,0,0,.25);}
 .themebtn.on{outline:2.5px solid var(--ink-soft);outline-offset:2px;}
 .fontbtn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:8px 14px;font-size:15px;cursor:pointer;color:var(--ink);}
 .fontbtn.on{background:var(--lav);color:#fff;border-color:transparent;}
@@ -580,8 +584,9 @@ body{
 .wxtemp{font-family:var(--disp);font-weight:700;font-size:30px;color:var(--lav-d);}
 .wxdesc{font-size:13px;color:var(--ink-soft);margin-top:2px;}
 .wxsub{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;}
-.wxcityrow{display:flex;gap:8px;}
-.wxcityrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:13.5px;}
+.wxcityrow{display:flex;gap:8px;flex-wrap:wrap;}
+.wxcityrow input{flex:1 1 100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:13.5px;}
+.wxcityrow .btn{flex:1;white-space:nowrap;}
 .wxloc{font-family:var(--disp);font-weight:600;font-size:14px;color:var(--lav-d);margin-bottom:8px;}
 .wxhourly{display:flex;gap:6px;overflow-x:auto;padding:10px 0 6px;scrollbar-width:none;}
 .wxhourly::-webkit-scrollbar{display:none;}
@@ -637,7 +642,7 @@ body{
   .iconbtn{width:36px;height:36px;font-size:15px;}
   .period{min-width:0;flex:1;font-size:15px;}
   .today-btn{padding:8px 12px;font-size:13px;}
-  .tabs{padding:0 12px 10px;gap:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tabs{padding:9px 12px 13px;gap:9px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;}
   .tab{flex:0 0 auto;padding:8px 14px;font-size:13px;}
   .seg{margin-left:0;}
   .main{padding:2px 12px 20px;}
@@ -734,7 +739,7 @@ body{
       <button data-etc="summary">요약</button>
       <button data-etc="weather">날씨</button>
       <button data-etc="fx">환율</button>
-      <button data-etc="options">옵션</button>
+      <button data-etc="options" title="옵션">⚙️</button>
     </div>
   </div>
 
@@ -767,8 +772,9 @@ body{
         <select id="fBeforeMin" style="width:auto;padding:6px 8px;"><option value="5">5분</option>
         <option value="10" selected>10분</option><option value="30">30분</option><option value="60">1시간</option><option value="1440">1일</option></select><span>전</span></div>
     </div>
-    <div class="modal-actions">
+    <div class="modal-actions" style="flex-wrap:wrap;">
       <button class="btn danger" id="deleteThisBtn" style="display:none;">이 날만 삭제</button>
+      <button class="btn danger" id="deleteFutureBtn" style="display:none;">이후 삭제</button>
       <button class="btn danger" id="deleteBtn" style="display:none;">삭제</button>
       <button class="btn ghost" id="cancelBtn">취소</button>
       <button class="btn primary" id="saveBtn">저장</button>
@@ -1165,6 +1171,7 @@ const isToday=d=>ymd(d)===ymd(new Date());
 function occursOn(ev,d){
   const dsd=ymd(d);
   if(ev.exdates&&ev.exdates.includes(dsd))return false; // 이 날만 삭제된 회차
+  if(ev.repeatUntil&&dsd>ev.repeatUntil)return false;    // 이후 삭제(반복 중지) 경계
   if(ev.endDate&&ev.endDate>ev.date&&(!ev.repeat||ev.repeat==="none")){
     return dsd>=ev.date&&dsd<=ev.endDate;
   }
@@ -2266,7 +2273,7 @@ function buildSwatches(){const w=G("swatches");w.innerHTML="";CATS.forEach(c=>{
 let modalDate=null;
 function openModal(id,occDate){
   editingId=id||null; modalDate=occDate||null;
-  const del=G("deleteBtn"), delThis=G("deleteThisBtn");
+  const del=G("deleteBtn"), delThis=G("deleteThisBtn"), delFut=G("deleteFutureBtn");
   if(id){const ev=data.events.find(e=>e.id===id);if(!ev)return;
     G("modalTitle").textContent="✦ 일정 수정";
     G("fTitle").value=ev.title;G("fDate").value=ev.date;G("fTime").value=ev.time||"";G("fMemo").value=ev.memo||"";
@@ -2274,14 +2281,14 @@ function openModal(id,occDate){
     selColor=ev.color||"rose";G("fRepeat").value=ev.repeat||"none";
     G("fRemindAt").checked=!!ev.remindAt;G("fRemindBefore").checked=ev.remindBefore!=null;G("fBeforeMin").value=String(ev.remindBefore||10);
     const recurring=ev.repeat&&ev.repeat!=="none";
-    if(recurring&&modalDate){ delThis.style.display="inline-block"; del.textContent="전체 삭제"; }
-    else{ delThis.style.display="none"; del.textContent="삭제"; }
+    if(recurring&&modalDate){ delThis.style.display="inline-block"; delFut.style.display="inline-block"; del.textContent="전체 삭제"; }
+    else{ delThis.style.display="none"; delFut.style.display="none"; del.textContent="삭제"; }
     del.style.display="inline-block";
   }else{G("modalTitle").textContent="✦ 새 일정";
     G("fTitle").value="";G("fDate").value=ymd(cursor);G("fTime").value="";G("fMemo").value="";
     G("fEndDate").value="";G("fEndTime").value="";
     selColor="rose";G("fRepeat").value="none";G("fRemindAt").checked=false;G("fRemindBefore").checked=false;G("fBeforeMin").value="10";
-    del.style.display="none"; delThis.style.display="none"; del.textContent="삭제";}
+    del.style.display="none"; delThis.style.display="none"; delFut.style.display="none"; del.textContent="삭제";}
   buildSwatches();overlay.classList.add("show");setTimeout(()=>G("fTitle").focus(),50);
 }
 function closeModal(){overlay.classList.remove("show");}
@@ -2301,6 +2308,15 @@ G("deleteThisBtn").onclick=()=>{
   if(editingId&&modalDate){const ev=data.events.find(e=>e.id===editingId);
     if(ev){ev.exdates=ev.exdates||[]; if(!ev.exdates.includes(modalDate))ev.exdates.push(modalDate);}}
   persist();closeModal();render();toast("이 날짜만 삭제했어요");
+};
+G("deleteFutureBtn").onclick=()=>{
+  if(editingId&&modalDate){const ev=data.events.find(e=>e.id===editingId);
+    if(ev){
+      const d=parseYmd(modalDate); d.setDate(d.getDate()-1); const until=ymd(d); // 이 날 전날까지만 반복
+      if(until<ev.date){ data.events=data.events.filter(e=>e.id!==editingId); } // 첫 회차부터면 전체 삭제
+      else { ev.repeatUntil=until; }
+    }}
+  persist();closeModal();render();toast("이 날부터 이후 반복을 삭제했어요");
 };
 G("cancelBtn").onclick=closeModal; overlay.onclick=e=>{if(e.target===overlay)closeModal();};
 
@@ -2927,14 +2943,52 @@ const THEMES={
   lav:{n:"라벤더",lav:"#A99BE0",lavd:"#7E6BC4",rose:"#B8A6E4",mint:"#9CC7E0",gold:"#D6C0EC",ice:"#9FB6E8",bg:"#F1EFF9",bg2:"#E9E5F5",tc:"#E4DEF3",grad:"#D9D0EF 0%,#DCDCEC 35%,#E6E6F2 60%,#EEEEF6 100%"},
   mint:{n:"민트",lav:"#7FC9B4",lavd:"#4FA891",rose:"#8CD0BE",mint:"#83C9B2",gold:"#BEE0C0",ice:"#8FD6CE",bg:"#EEF6F2",bg2:"#E5F1EC",tc:"#DCF0E8",grad:"#CFEFE2 0%,#DCECE6 40%,#E6F2EE 70%,#EEF6F3 100%"},
   sky:{n:"하늘",lav:"#8FB8E0",lavd:"#5F8FC4",rose:"#A6C4E4",mint:"#8CC7CB",gold:"#C0D6EC",ice:"#8FC0E8",bg:"#EEF3F9",bg2:"#E5ECF5",tc:"#DCE8F3",grad:"#D0E0EF 0%,#DCE6EC 40%,#E6EEF2 70%,#EEF3F6 100%"},
-  apricot:{n:"살구",lav:"#E0A98F",lavd:"#C4805F",rose:"#E4B6A6",mint:"#CBC78C",gold:"#E6C889",ice:"#E0C08F",bg:"#F9F3EE",bg2:"#F5ECE5",tc:"#F3E8DC",grad:"#EFDFD0 0%,#ECE6DC 40%,#F2EEE6 70%,#F6F3EE 100%"}
+  apricot:{n:"살구",lav:"#E0A98F",lavd:"#C4805F",rose:"#E4B6A6",mint:"#CBC78C",gold:"#E6C889",ice:"#E0C08F",bg:"#F9F3EE",bg2:"#F5ECE5",tc:"#F3E8DC",grad:"#EFDFD0 0%,#ECE6DC 40%,#F2EEE6 70%,#F6F3EE 100%"},
+  peach:{n:"복숭아",lav:"#EC9DAE",lavd:"#D26E82",rose:"#F0AFBC",mint:"#F0C29D",gold:"#F2CFA0",ice:"#EFB0A0",bg:"#FBF1F2",bg2:"#F7E7E9",tc:"#F9DEE2",grad:"#F5D6DC 0%,#F3DFDA 40%,#F7EAE4 70%,#FBF2EF 100%"},
+  butter:{n:"버터",lav:"#E3C36A",lavd:"#BE9B3C",rose:"#EAD08A",mint:"#B9D08A",gold:"#EBD277",ice:"#D9CE8A",bg:"#FAF6EA",bg2:"#F4EEDB",tc:"#F5EDCE",grad:"#F1E6C0 0%,#EFEBCF 40%,#F5F0DD 70%,#FAF7EC 100%"},
+  grape:{n:"포도",lav:"#9B7FD0",lavd:"#7154B0",rose:"#B48FDE",mint:"#9C9CE0",gold:"#C9B0EC",ice:"#A490E8",bg:"#F2EFF9",bg2:"#E8E2F5",tc:"#E3DAF3",grad:"#DBD0EF 0%,#DDD5EE 40%,#E8E2F3 70%,#F0ECF7 100%"},
+  coral:{n:"코랄",lav:"#EE9A87",lavd:"#D26A54",rose:"#F2AD8E",mint:"#EFB48C",gold:"#F2C48A",ice:"#F0A48E",bg:"#FBF1EE",bg2:"#F7E7E1",tc:"#F9E0D8",grad:"#F5D8CE 0%,#F3DED4 40%,#F8EAE1 70%,#FBF2ED 100%"},
+  sage:{n:"세이지",lav:"#8FBFA0",lavd:"#5F9974",rose:"#A9CBA0",mint:"#8FC9AE",gold:"#C4CE96",ice:"#8FC7B0",bg:"#F0F5F0",bg2:"#E7F0E8",tc:"#DEEEE0",grad:"#D2ECD8 0%,#DCECDC 40%,#E6F2E6 70%,#EFF5EF 100%"},
+  cocoa:{n:"코코아",lav:"#B99A86",lavd:"#8F6E58",rose:"#CBAF9C",mint:"#B7BE96",gold:"#D6BE96",ice:"#C0A896",bg:"#F6F1EC",bg2:"#EFE7DE",tc:"#EBE0D5",grad:"#E7DACE 0%,#E6DDD2 40%,#EEE7DE 70%,#F5F0EA 100%"},
+  lilac:{n:"라일락",lav:"#C29ADB",lavd:"#9C6EBF",rose:"#D0A6E0",mint:"#A6B6E0",gold:"#D9C0EC",ice:"#B29AE8",bg:"#F4EFF9",bg2:"#ECE4F4",tc:"#E7DCF3",grad:"#E1D2EF 0%,#E2D6EE 40%,#EBE2F3 70%,#F2ECF7 100%"},
+  rosegold:{n:"로즈골드",lav:"#D9A38F",lavd:"#B87A62",rose:"#E0B4A0",mint:"#D9C29A",gold:"#E6CBA0",ice:"#DBB6A0",bg:"#F9F2EE",bg2:"#F4E9E2",tc:"#F3E5DC",grad:"#EFDCD0 0%,#ECE0D6 40%,#F2EAE2 70%,#F7F1EC 100%"},
+  slate:{n:"슬레이트",lav:"#8A9BB5",lavd:"#5F7191",rose:"#A0AEC4",mint:"#94B4B0",gold:"#B8BECC",ice:"#93A6C4",bg:"#EFF1F5",bg2:"#E6EAF0",tc:"#DEE3EC",grad:"#D5DBE6 0%,#DCE0E8 40%,#E6EAF0 70%,#EFF1F5 100%"},
+  lime:{n:"라임",lav:"#A6C86A",lavd:"#7FA23F",rose:"#BAD188",mint:"#9FCF8C",gold:"#D2D67C",ice:"#A6D08A",bg:"#F4F7EC",bg2:"#ECF2DE",tc:"#E9F0D2",grad:"#DFEEC4 0%,#E6EFD2 40%,#EEF4DE 70%,#F5F8EC 100%"},
+  dusty:{n:"더스티",lav:"#BE97A0",lavd:"#966872",rose:"#CBA6AE",mint:"#B6AEA0",gold:"#D2B6A6",ice:"#C0A0A6",bg:"#F6F0F1",bg2:"#EFE5E7",tc:"#EBDEE1",grad:"#E7D6DA 0%,#E6DAD8 40%,#EEE2E2 70%,#F5EEEE 100%"},
+  teal:{n:"청록",lav:"#5FB6B0",lavd:"#3C8F89",rose:"#7FC9C0",mint:"#8CCFC0",gold:"#A6D6C0",ice:"#7FC9D0",bg:"#EEF6F4",bg2:"#E2F0EC",tc:"#D8EEE8",grad:"#CFEEE6 0%,#DAECE8 40%,#E4F2EE 70%,#EEF6F4 100%"},
+  indigo:{n:"인디고",lav:"#7E86C4",lavd:"#565EA0",rose:"#9A9ED6",mint:"#8C9CD0",gold:"#B0B6E0",ice:"#8C96D6",bg:"#EFEFF7",bg2:"#E5E6F2",tc:"#DEDFF0",grad:"#D5D6EC 0%,#DBDCEC 40%,#E5E6F2 70%,#EFEFF7 100%"},
+  cherry:{n:"체리",lav:"#E08194",lavd:"#C25569",rose:"#EA9AAA",mint:"#E0A6A0",gold:"#EEBCA0",ice:"#E893A0",bg:"#FBEFF1",bg2:"#F7E4E8",tc:"#F9DBE0",grad:"#F5D2DA 0%,#F3DAD8 40%,#F8E6E4 70%,#FBF0EE 100%"},
+  mustard:{n:"머스타드",lav:"#CBA84E",lavd:"#A6832E",rose:"#D9BE7A",mint:"#BEC87A",gold:"#D6B84A",ice:"#CFBE7A",bg:"#F8F3E6",bg2:"#F2EAD5",tc:"#F2E8C8",grad:"#EDE2BC 0%,#ECE6C8 40%,#F3EED8 70%,#F8F4E8 100%"},
+  forest:{n:"포레스트",lav:"#6FA97F",lavd:"#4C8058",rose:"#8CC29A",mint:"#7FBF96",gold:"#B6C88A",ice:"#7FC0A0",bg:"#EEF4EE",bg2:"#E4EEE4",tc:"#DBEADD",grad:"#CFE8D4 0%,#DBEBDA 40%,#E4F0E2 70%,#EEF4EC 100%"},
+  ocean:{n:"오션",lav:"#5F9FC4",lavd:"#3C79A0",rose:"#8CBCDE",mint:"#7FC0CB",gold:"#A6C8DE",ice:"#6FB0D6",bg:"#EDF3F7",bg2:"#E1EBF2",tc:"#D8E6F0",grad:"#CFE2EF 0%,#DAE6EC 40%,#E4EEF3 70%,#EDF3F7 100%"},
+  vanilla:{n:"바닐라",lav:"#D9C7A0",lavd:"#B49E6E",rose:"#E4D2A6",mint:"#CBD2A0",gold:"#E6D29A",ice:"#DBCBA0",bg:"#FAF6EC",bg2:"#F4EEDD",tc:"#F3EBD5",grad:"#EFE6C8 0%,#EEE8D2 40%,#F4EFDE 70%,#FAF6EC 100%"},
+  mono:{n:"모노",lav:"#9A96A0",lavd:"#6E6A76",rose:"#B0AAB4",mint:"#A6ABA6",gold:"#BCB6AA",ice:"#A0A6AE",bg:"#F3F2F4",bg2:"#E9E7EC",tc:"#E2E0E6",grad:"#DAD8DE 0%,#DEDCE2 40%,#E6E4EA 70%,#F1F0F3 100%"},
+  hotpink:{n:"비비드핑크",lav:"#E5379A",lavd:"#C21B7E",rose:"#F25CB0",mint:"#F27FC0",gold:"#F2A0C8",ice:"#EC5CA6",bg:"#FBEBF3",bg2:"#F7DCEB",tc:"#F9CFE2",grad:"#F5C0DC 0%,#F3CCE0 40%,#F8DCEC 70%,#FBECF4 100%"},
+  neonpurple:{n:"네온퍼플",lav:"#8B2FE0",lavd:"#6A1BB4",rose:"#A64FE8",mint:"#9C6FE0",gold:"#BE96EC",ice:"#9450E8",bg:"#F2EAFB",bg2:"#E7D8F7",tc:"#E0CCF9",grad:"#DCC0F5 0%,#DECCF3 40%,#E8DCF8 70%,#F1ECFB 100%"},
+  cobalt:{n:"코발트",lav:"#2F5FE0",lavd:"#1B42B4",rose:"#4F7FE8",mint:"#6F9CE0",gold:"#96B6EC",ice:"#5088E8",bg:"#EAEFFB",bg2:"#D8E2F7",tc:"#CCD8F9",grad:"#C0D2F5 0%,#CCD8F3 40%,#DCE4F8 70%,#ECF0FB 100%"},
+  emerald:{n:"에메랄드",lav:"#0FA968",lavd:"#0A8050",rose:"#3FC98C",mint:"#2FBF7C",gold:"#7FD6A0",ice:"#2FC9A0",bg:"#E8F6EE",bg2:"#D6F0E2",tc:"#CCEEDC",grad:"#C0EED6 0%,#CCECDC 40%,#DCF2E6 70%,#E8F6EE 100%"},
+  tangerine:{n:"탠저린",lav:"#F26A1B",lavd:"#C24E0A",rose:"#F5904F",mint:"#F2B47F",gold:"#F5B44A",ice:"#F27F4F",bg:"#FCF0E8",bg2:"#F9E2D6",tc:"#F9DACC",grad:"#F5D2C0 0%,#F3DAD0 40%,#F8E6DC 70%,#FCF0E8 100%"},
+  ruby:{n:"루비",lav:"#D91E48",lavd:"#A61134",rose:"#E84F72",mint:"#E87F94",gold:"#F2A0B0",ice:"#E84F60",bg:"#FBEAEE",bg2:"#F7D8DF",tc:"#F9CCD5",grad:"#F5C0CC 0%,#F3CCD4 40%,#F8DCE2 70%,#FBECEF 100%"},
+  sunset:{n:"선셋",lav:"#F2557F",lavd:"#C23A5F",rose:"#F58AA0",mint:"#F5A67F",gold:"#F5C46A",ice:"#F27F90",bg:"#FCEDF0",bg2:"#F9DEE4",tc:"#F9D4DC",grad:"#F7C8B0 0%,#F5CCC4 40%,#F8DCDC 70%,#FCECEC 100%"},
+  cyan:{n:"시안",lav:"#0FB4C4",lavd:"#0A8A96",rose:"#3FCBDA",mint:"#2FC9C0",gold:"#7FD6D6",ice:"#2FBFDA",bg:"#E8F6F8",bg2:"#D6F0F2",tc:"#CCEEF2",grad:"#C0EEF2 0%,#CCECEE 40%,#DCF2F4 70%,#E8F6F8 100%"},
+  limepunch:{n:"라임펀치",lav:"#8FD11E",lavd:"#6EA611",rose:"#A6E04F",mint:"#9CD62F",gold:"#C4E04F",ice:"#A6E02F",bg:"#F2F8E8",bg2:"#E7F2D6",tc:"#E0F0CC",grad:"#D8F0C0 0%,#E2F2CC 40%,#EAF6DC 70%,#F2F8E8 100%"},
+  grapesoda:{n:"그레이프소다",lav:"#B41EC4",lavd:"#8A1196",rose:"#CB3FDA",mint:"#B46FE0",gold:"#D696EC",ice:"#C42FDA",bg:"#F6EAF8",bg2:"#F0D6F2",tc:"#EECCF2",grad:"#EEC0F2 0%,#ECCCEE 40%,#F2DCF4 70%,#F6EAF8 100%"}
 };
 const FONTS={
-  default:{n:"기본",disp:"'Outfit','Apple SD Gothic Neo','Malgun Gothic',sans-serif",body:"'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"},
   dodum:{n:"깔끔",disp:"'Gowun Dodum','Apple SD Gothic Neo',sans-serif",body:"'Gowun Dodum','Apple SD Gothic Neo',sans-serif"},
+  nanumg:{n:"나눔고딕",disp:"'Nanum Gothic','Apple SD Gothic Neo',sans-serif",body:"'Nanum Gothic','Apple SD Gothic Neo',sans-serif"},
+  notosans:{n:"노토산스",disp:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif",body:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif"},
+  plex:{n:"플렉스",disp:"'IBM Plex Sans KR','Apple SD Gothic Neo',sans-serif",body:"'IBM Plex Sans KR','Apple SD Gothic Neo',sans-serif"},
+  jua:{n:"주아",disp:"'Jua','Apple SD Gothic Neo',sans-serif",body:"'Jua','Apple SD Gothic Neo',sans-serif"},
+  dohyeon:{n:"도현",disp:"'Do Hyeon','Apple SD Gothic Neo',sans-serif",body:"'Do Hyeon','Apple SD Gothic Neo',sans-serif"},
+  dongle:{n:"동글",disp:"'Dongle','Apple SD Gothic Neo',sans-serif",body:"'Dongle','Apple SD Gothic Neo',sans-serif"},
   gaegu:{n:"손글씨",disp:"'Gaegu','Apple SD Gothic Neo',sans-serif",body:"'Gaegu','Apple SD Gothic Neo',sans-serif"},
   pen:{n:"펜글씨",disp:"'Nanum Pen Script','Apple SD Gothic Neo',sans-serif",body:"'Nanum Pen Script','Apple SD Gothic Neo',sans-serif"},
-  serif:{n:"명조",disp:"'Nanum Myeongjo',serif",body:"'Nanum Myeongjo',serif"}
+  batang:{n:"고운바탕",disp:"'Gowun Batang','Apple SD Gothic Neo',serif",body:"'Gowun Batang','Apple SD Gothic Neo',serif"},
+  songmyung:{n:"송명",disp:"'Song Myung','Apple SD Gothic Neo',serif",body:"'Song Myung','Apple SD Gothic Neo',serif"},
+  myeongjo:{n:"나눔명조",disp:"'Nanum Myeongjo',serif",body:"'Nanum Myeongjo',serif"},
+  notoserif:{n:"노토명조",disp:"'Noto Serif KR',serif",body:"'Noto Serif KR',serif"},
+  hahmlet:{n:"함렛",disp:"'Hahmlet',serif",body:"'Hahmlet',serif"}
 };
 function applyTheme(key){
   const t=THEMES[key]||THEMES.rose; const r=document.documentElement.style;
@@ -2945,11 +2999,11 @@ function applyTheme(key){
   const meta=document.querySelector('meta[name=theme-color]'); if(meta)meta.setAttribute("content",t.tc);
 }
 function applyFont(key){
-  const f=FONTS[key]||FONTS.default; const r=document.documentElement.style;
+  const f=FONTS[key]||FONTS.dodum; const r=document.documentElement.style;
   r.setProperty("--disp",f.disp); r.setProperty("--body",f.body);
 }
 function optionsBodyHTML(){
-  const theme=jload("panur_theme","rose"), font=jload("panur_font","default");
+  const theme=jload("panur_theme","rose"), font=jload("panur_font","dodum");
   const showSub=jload("panur_showsub",true), showDday=jload("panur_dday",true);
   return `<div class="etcsec"><h3>⚙️ 옵션</h3>
     <div class="optblk"><div class="optlbl">🎨 테마 색</div><div class="optrow" id="optThemes">
@@ -3597,7 +3651,7 @@ setupPWA();
 
 /* ============ Boot ============ */
 applyTheme(jload("panur_theme","rose"));
-applyFont(jload("panur_font","default"));
+applyFont(jload("panur_font","dodum"));
 buildSwatches();
 setDot(sync.token?"ok":"");
 render();
