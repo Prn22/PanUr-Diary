@@ -128,6 +128,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .chip{font-size:11px;line-height:1.25;padding:2px 7px;border-radius:8px;color:#fff;font-weight:600;
   word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 .more{font-size:10px;color:var(--muted);padding-left:3px;}
+.spanbar{font-size:11px;line-height:1.3;padding:2px 5px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-left:-7px;margin-right:-7px;border-radius:0;}
+.spanbar.s-start{border-top-left-radius:8px;border-bottom-left-radius:8px;margin-left:0;padding-left:7px;}
+.spanbar.s-end{border-top-right-radius:8px;border-bottom-right-radius:8px;margin-right:0;padding-right:7px;}
 .dcount{display:flex;gap:5px;font-size:10px;color:var(--muted);margin-top:auto;}
 .mdiatitle{font-size:10px;color:var(--ink-soft);line-height:1.35;word-break:break-word;
   overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;margin-top:1px;}
@@ -392,6 +396,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .lesson{display:flex;align-items:center;gap:9px;padding:5px 4px;font-size:13px;border-radius:8px;cursor:pointer;}
 .lesson:hover{background:var(--panel);}
 .lesson input{width:17px;height:17px;accent-color:var(--lav);flex:none;}
+.lesson.sechd{cursor:default;font-family:var(--disp);font-weight:600;font-size:12px;color:var(--lav);
+  margin-top:8px;padding:5px 4px 3px;border-top:1px dashed var(--line);gap:6px;}
+.lesson.sechd:first-child{margin-top:0;border-top:none;}
+.lesson.sechd:hover{background:transparent;}
 .impbtns{display:flex;gap:8px;flex-wrap:wrap;}
 .impbtns .btn{flex:1;}
 .preview-lines{white-space:pre;font-size:12px;}
@@ -665,9 +673,14 @@ body{
     <h2 id="modalTitle">✦ 새 일정</h2>
     <div class="field"><label>제목</label><input id="fTitle" placeholder="무슨 일정인가요?"></div>
     <div class="row2">
-      <div class="field"><label>날짜</label><input type="date" id="fDate"></div>
-      <div class="field"><label>시간</label><input type="time" id="fTime"></div>
+      <div class="field"><label>시작 날짜</label><input type="date" id="fDate"></div>
+      <div class="field"><label>시작 시간</label><input type="time" id="fTime"></div>
     </div>
+    <div class="row2">
+      <div class="field"><label>종료 날짜 (선택)</label><input type="date" id="fEndDate"></div>
+      <div class="field"><label>종료 시간 (선택)</label><input type="time" id="fEndTime"></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:-4px 0 8px;">여러 날 일정(여행·심야대여 등)은 종료 날짜를 지정하면 달력에 띠로 이어져요.</div>
     <div class="field"><label>메모</label><textarea id="fMemo" placeholder="자유롭게"></textarea></div>
     <div class="field"><label>색상</label><div class="swatches" id="swatches"></div></div>
     <div class="field"><label>반복</label>
@@ -744,7 +757,7 @@ body{
     <div class="field" id="lecPreviewWrap" style="display:none;">
       <label>미리보기 (한 줄 = 1강, 자유롭게 수정/삭제)</label>
       <textarea id="lecPreview" style="min-height:120px;" class="preview-lines"></textarea>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;"><span id="lecCount">0</span>강</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;"><span id="lecCount">0</span>강 · <span style="color:var(--lav);">#</span> 로 시작하면 섹션 제목</div>
     </div>
     <div class="modal-actions">
       <button class="btn ghost" id="studyCancel">취소</button>
@@ -956,13 +969,17 @@ let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
 function occursOn(ev,d){
+  const dsd=ymd(d);
+  if(ev.endDate&&ev.endDate>ev.date&&(!ev.repeat||ev.repeat==="none")){
+    return dsd>=ev.date&&dsd<=ev.endDate;
+  }
   const base=parseYmd(ev.date); if(d<base)return false;
   switch(ev.repeat){
     case"daily":return true;
     case"weekly":return d.getDay()===base.getDay();
     case"monthly":return d.getDate()===base.getDate();
     case"yearly":return d.getDate()===base.getDate()&&d.getMonth()===base.getMonth();
-    default:return ymd(d)===ev.date;
+    default:return dsd===ev.date;
   }
 }
 function eventsOn(d){return data.events.filter(ev=>occursOn(ev,d)).sort((a,b)=>(a.time||"99").localeCompare(b.time||"99"));}
@@ -1259,9 +1276,17 @@ function renderMonth(){
       html+=`<div class="${cls.join(" ")}" data-date="${ds}">${inner}</div>`;
     }else{
       const evs=eventsOn(d);
-      let chips=evs.slice(0,2).map(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
-        return `<div class="chip" style="background:${c.c}">${esc(ev.title)}</div>`;}).join("");
-      if(evs.length>2)chips+=`<div class="more">+${evs.length-2}</div>`;
+      const spanEvs=evs.filter(e=>e.endDate&&e.endDate>e.date);
+      const singleEvs=evs.filter(e=>!(e.endDate&&e.endDate>e.date));
+      let chips="";
+      spanEvs.forEach(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
+        const isStart=ds===ev.date, isEnd=ds===ev.endDate, weekStart=d.getDay()===0;
+        const bcls=["spanbar"]; if(isStart)bcls.push("s-start"); if(isEnd)bcls.push("s-end");
+        const label=(isStart||weekStart)?esc(ev.title):"&nbsp;";
+        chips+=`<div class="${bcls.join(" ")}" style="background:${c.c}">${label}</div>`;});
+      singleEvs.slice(0,2).forEach(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
+        chips+=`<div class="chip" style="background:${c.c}">${esc(ev.title)}</div>`;});
+      if(singleEvs.length>2)chips+=`<div class="more">+${singleEvs.length-2}</div>`;
       const tCount=countPlannerOn(ds), hasM=data.memos.some(mm=>mm.date===ds);
       let foot="";
       if(tCount||hasM){foot='<div class="dcount">'+
@@ -1451,8 +1476,16 @@ function renderDay(){
     // 일정
     h+=`<div class="section"><h3>일정 <button class="add" id="addEv">+</button></h3>`;
     h+= evs.length? evs.map(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
+        let range="";
+        if(ev.endDate&&ev.endDate>ev.date){
+          const s=`${ev.date.replace(/-/g,".").slice(5)}${ev.time?" "+ev.time:""}`;
+          const e=`${ev.endDate.replace(/-/g,".").slice(5)}${ev.endTime?" "+ev.endTime:""}`;
+          range=`<div class="t">📆 ${s} ~ ${e}</div>`;
+        }else if(ev.time){
+          range=`<div class="t">${ev.time}${ev.endTime?" ~ "+ev.endTime:""}${ev.repeat!=="none"?" ↻":""}${ev.remindAt||ev.remindBefore!=null?" 🔔":""}</div>`;
+        }
         return `<div class="ev" style="border-left-color:${c.c}" data-ev="${ev.id}">
-          ${ev.time?`<div class="t">${ev.time}${ev.repeat!=="none"?" ↻":""}${ev.remindAt||ev.remindBefore!=null?" 🔔":""}</div>`:""}
+          ${range}
           <div class="ttl">${esc(ev.title)}</div>${ev.memo?`<div class="mm">${esc(ev.memo)}</div>`:""}</div>`;}).join("")
       : `<div class="empty">일정이 없어요</div>`;
     h+=`</div>`;
@@ -1785,7 +1818,7 @@ function renderPlannerBody(){
     const list=data.planner.study;
     if(!list.length)h+=emptyP("수강 중인 강의를 추가해보세요");
     else list.forEach(lec=>{
-      const total=(lec.lessons||[]).length, done=(lec.lessons||[]).filter(x=>x.done).length;
+      const total=(lec.lessons||[]).filter(x=>!x.sec).length, done=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;
       const p=total?Math.round(done/total*100):0;
       h+=`<div class="lec" data-lec="${lec.id}">
         <div class="lechead"><div><div class="lecname">${esc(lec.name)}</div>
@@ -1795,7 +1828,9 @@ function renderPlannerBody(){
         <div class="lecpct">${p}%</div>
         ${total?`<button class="lectoggle" data-lectog="${lec.id}">진도 ▾</button>
           <div class="lessons" id="lessons-${lec.id}" style="display:none;">
-          ${lec.lessons.map((ls,i)=>`<label class="lesson"><input type="checkbox" data-ll="${lec.id}" data-li="${i}" ${ls.done?"checked":""}><span>${esc(ls.t)}</span></label>`).join("")}
+          ${lec.lessons.map((ls,i)=>ls.sec
+            ?`<div class="lesson sechd">📂 <span>${esc(ls.t)}</span></div>`
+            :`<label class="lesson"><input type="checkbox" data-ll="${lec.id}" data-li="${i}" ${ls.done?"checked":""}><span>${esc(ls.t)}</span></label>`).join("")}
           </div>`:`<button class="lectoggle" data-lecimport="${lec.id}">커리큘럼 가져오기</button>`}
       </div>`;
     });
@@ -1859,8 +1894,8 @@ function bindPlannerForms(){
   document.querySelectorAll("[data-ll]").forEach(cb=>cb.onclick=()=>{
     const lec=data.planner.study.find(x=>x.id===cb.dataset.ll);if(!lec)return;
     lec.lessons[Number(cb.dataset.li)].done=cb.checked;persist();
-    // 진도율/카운트만 갱신
-    const total=lec.lessons.length,done=lec.lessons.filter(x=>x.done).length,p=Math.round(done/total*100);
+    // 진도율/카운트만 갱신 (섹션 헤더 제외)
+    const total=lec.lessons.filter(x=>!x.sec).length,done=lec.lessons.filter(x=>x.done&&!x.sec).length,p=total?Math.round(done/total*100):0;
     const card=cb.closest(".lec");if(card){card.querySelector(".bar i").style.width=p+"%";card.querySelector(".lecpct").textContent=p+"%";
       const plat=card.querySelector(".lecplat");if(plat)plat.textContent=(lec.platform?esc(lec.platform)+" · ":"")+`${done}/${total}강`;}});
   if(g("tAdd"))g("tAdd").onclick=()=>{const tx=g("tText").value.trim();if(!tx)return toast("할 일을 입력해요");
@@ -1897,11 +1932,13 @@ function openModal(id){
   if(id){const ev=data.events.find(e=>e.id===id);if(!ev)return;
     G("modalTitle").textContent="✦ 일정 수정";
     G("fTitle").value=ev.title;G("fDate").value=ev.date;G("fTime").value=ev.time||"";G("fMemo").value=ev.memo||"";
+    G("fEndDate").value=ev.endDate||"";G("fEndTime").value=ev.endTime||"";
     selColor=ev.color||"rose";G("fRepeat").value=ev.repeat||"none";
     G("fRemindAt").checked=!!ev.remindAt;G("fRemindBefore").checked=ev.remindBefore!=null;G("fBeforeMin").value=String(ev.remindBefore||10);
     del.style.display="inline-block";
   }else{G("modalTitle").textContent="✦ 새 일정";
     G("fTitle").value="";G("fDate").value=ymd(cursor);G("fTime").value="";G("fMemo").value="";
+    G("fEndDate").value="";G("fEndTime").value="";
     selColor="rose";G("fRepeat").value="none";G("fRemindAt").checked=false;G("fRemindBefore").checked=false;G("fBeforeMin").value="10";
     del.style.display="none";}
   buildSwatches();overlay.classList.add("show");setTimeout(()=>G("fTitle").focus(),50);
@@ -1910,8 +1947,10 @@ function closeModal(){overlay.classList.remove("show");}
 G("saveBtn").onclick=()=>{
   const title=G("fTitle").value.trim();if(!title){toast("제목을 입력해요");return;}
   const d={title,date:G("fDate").value||ymd(new Date()),time:G("fTime").value||"",memo:G("fMemo").value.trim(),
+    endDate:G("fEndDate").value||"",endTime:G("fEndTime").value||"",
     color:selColor,repeat:G("fRepeat").value,remindAt:G("fRemindAt").checked,
     remindBefore:G("fRemindBefore").checked?Number(G("fBeforeMin").value):null};
+  if(d.endDate&&d.endDate<d.date)d.endDate=""; // 종료가 시작보다 앞이면 무시
   if(editingId){Object.assign(data.events.find(e=>e.id===editingId),d);}
   else{d.id=uid();data.events.push(d);}
   persist();closeModal();render();toast("저장했어요 ✦");
@@ -1978,19 +2017,88 @@ G("photoInput").onchange=e=>{
 
 /* ============ Study (lecture + curriculum) ============ */
 const studyOverlay=G("studyOverlay"); let studyEditId=null; let previewLessons=[];
+function _curPad(n){ n=String(parseInt(n,10)); return n.length<2?"0"+n:n; }
+function _curDedupe(arr){ const seen=new Set(),o=[]; for(const x of arr){ if(seen.has(x))continue; seen.add(x); o.push(x);} return o; }
 function parseCurriculum(text){
-  const lines=String(text).split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-  const junk=/(수강평|평점|후기|장바구니|₩|원$|할인|쿠폰|미리보기|재생시간|수강시간|총\s*\d|문의|공유|찜|likes?|무료체험|지식공유자)/i;
-  const heading=/^(커리큘럼|목차|강의\s*소개|커리큘럼\s*소개|소개|목록|contents?|curriculum)$/i;
-  const numbered=[], plain=[], seen=new Set();
-  const push=(arr,label)=>{const k=label.toLowerCase();if(!seen.has(k)&&label){seen.add(k);arr.push(label);}};
-  for(let l of lines){
-    if(junk.test(l)||heading.test(l))continue;
-    const m=l.match(/^\[?\s*(?:섹션|section|chapter|ch|파트|part|강|lesson|lec)?\s*0*(\d{1,3})\s*(?:강|장|화|교시|부)?\s*[\].:\-|)]*\s*(.*)$/i);
-    if(m){const title=(m[2]||"").trim(); push(numbered, title||("파트 "+m[1]));}
-    else if(l.length>=2&&l.length<=60&&/[가-힣A-Za-z]/.test(l)&&!/^\d+$/.test(l)) push(plain,l);
+  // ── 1) 시간형(예: "1. 제목 07:16") : CLASS101·인프런 등 ─────────────
+  let s=String(text).replace(/\r/g," ").replace(/\n+/g," ");
+  s=s.replace(/\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*오[전후]\s*\d{1,2}:\d{2}/g," ");
+  s=s.replace(/\d+\.\d+\s*\(\d+\)/g," ");
+  s=s.replace(/https?:\/\/\S+/g," ").replace(/CLASS101[^]*?올인원/g," ")
+     .replace(/CHAPTER\s*\d+/gi," ").replace(/강의\s*\d+\s*개/g," ").replace(/재생하기/g," ")
+     .replace(/100만원\S*/g," ").replace(/쿠폰\S*/g," ").replace(/\b\d+위\b/g," ")
+     .replace(/\b\d{1,3}\s*\/\s*\d{1,3}\b/g," ");
+  const re=/(\d{1,3})\.\s*([^]*?)\s+(\d{1,2}:\d{2}(?::\d{2})?)(?=\D|$)/g;
+  const junkT=/(오[전후]\s*\d|CLASS101|쿠폰|적용 중)/;
+  const timed=[]; let m;
+  while((m=re.exec(s))){
+    let t=m[2].replace(/\s+/g," ").trim();
+    if(t.length<1||t.length>80)continue; if(junkT.test(t))continue; if(/^\d+$/.test(t))continue;
+    timed.push(`${t} (${m[3]})`);
   }
-  return numbered.length>=3 ? numbered : numbered.concat(plain);
+  if(timed.length>=3)return _curDedupe(timed);
+
+  // ── 2) 섹션형(예: 콜로소) : "Section NN 제목" + "NN. 제목", 하위 '- …' 제외 ──
+  let lines=String(text).replace(/\r/g,"\n").split(/\n+/).map(l=>l.replace(/\s+/g," ").trim()).filter(Boolean);
+  // 번호/섹션 머리만 다음 줄로 쪼개진 경우 병합(PDF 텍스트 조각화 대비)
+  const merged=[];
+  for(let i=0;i<lines.length;i++){
+    let l=lines[i], nx=lines[i+1]||"";
+    if(/^(?:section|섹션|챕터|chapter|part|파트)\s*\d{1,3}$/i.test(l) && nx && !/^[-–—•·]/.test(nx) && !/^\d{1,3}[.)]/.test(nx)){ l=l+" "+nx; i++; }
+    else if(/^0*\d{1,3}[.)]$/.test(l) && nx && !/^[-–—•·]/.test(nx) && !/^\d{1,3}[.)]/.test(nx) && /[가-힣A-Za-z]/.test(nx)){ l=l+" "+nx; i++; }
+    merged.push(l);
+  }
+  lines=merged;
+  // 잡음 줄 제거(페이지 머리글·푸터·전화/사업자번호·배너 등)
+  const noiseUrl=/(https?:\/\/|\.co\.kr\b|\.com\b|@[a-z0-9.]+\.[a-z])/i;
+  const noiseWord=/(슈퍼세일|쿠폰|혜택 마감|관심을 보였|얼리버드|콜로소캠프|평생교육|수강후기|클래스컷|웰컴|사업자등록번호|통신판매업|원격평생교육|개인정보|고객센터|CEO|대표자|주소\s*:|이메일|MARQVISION|데이원컴퍼니|저작권|지식재산|문의하기|채용|환불규정|FAQ|강의 사용 툴|유의사항|전체 공개|보여드려요)/;
+  const isDateHeader=l=>/^\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}\.?\s*오[전후]/.test(l);
+  const isPager=l=>/^\d{1,3}\s*\/\s*\d{1,3}$/.test(l);
+  const isRating=l=>/^\d\.\d\s*(\(\d+\))?$/.test(l)||/^총\s*\d+개/.test(l);
+  const isNumbery=l=>/^[+()]?\d[\d\-\s,()]*[호층]?$/.test(l); // 전화·사업자번호·페이지 등 숫자 위주
+  const clean=lines.filter(l=>{
+    if(isDateHeader(l)||isPager(l)||isRating(l)) return false;
+    if(noiseUrl.test(l)||noiseWord.test(l)) return false;
+    if(/D-\d/.test(l)&&/혜택|마감/.test(l)) return false;
+    if(isNumbery(l)) return false;
+    return true;
+  });
+  const secRe=/^(?:section|섹션|챕터|chapter|part|파트)\s*0*(\d{1,3})\s*[.:)\-]?\s*(.*)$/i;
+  const lesRe=/^0*(\d{1,3})[.)]\s+(.+)$/;
+  const junkTitle=/^(강의$|미리보기|재생|무료체험|맛보기$)/;
+  const out=[];
+  for(const l of clean){
+    if(/^[-–—•·]/.test(l)) continue;                 // 하위 항목 제외
+    const sc=l.match(secRe);
+    if(sc){ const st=(sc[2]||"").trim(); out.push("# "+(st||("섹션 "+sc[1]))); continue; }
+    const le=l.match(lesRe);
+    if(le){ let t=le[2].trim();
+      if(t.length<1||t.length>90) continue;
+      if(!/[가-힣A-Za-z]/.test(t)) continue;
+      if(junkTitle.test(t)) continue;
+      out.push(`${_curPad(le[1])}. ${t}`);           // 번호 유지로 순서 살림
+    }
+  }
+  // 뒤에 강의가 없는 빈 섹션 헤더 제거
+  const pruned=[];
+  for(let i=0;i<out.length;i++){
+    if(out[i].startsWith("# ")){
+      let hasLesson=false;
+      for(let j=i+1;j<out.length;j++){ if(out[j].startsWith("# "))break; hasLesson=true; break; }
+      if(!hasLesson) continue;
+    }
+    pruned.push(out[i]);
+  }
+  const res=_curDedupe(pruned);
+  if(res.filter(x=>!x.startsWith("# ")).length>=2) return res;
+
+  // ── 3) 최후 폴백(느슨, 구분자 . ) 만 허용) ──
+  const alt=[];
+  for(const l of clean){ if(/^[-–—•·]/.test(l))continue;
+    const mm=l.match(/^0*(\d{1,3})[.)]\s+(.+)$/);
+    if(mm){const t=mm[2].trim(); if(t&&t.length<=90&&/[가-힣A-Za-z]/.test(t))alt.push(`${_curPad(mm[1])}. ${t}`);}
+  }
+  return _curDedupe(alt);
 }
 function loadScript(src){return new Promise((res,rej)=>{
   const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("스크립트 로드 실패"));document.head.appendChild(s);});}
@@ -2011,7 +2119,7 @@ function showPreview(lessons){
   previewLessons=lessons;
   G("lecPreviewWrap").style.display= lessons.length?"block":"none";
   G("lecPreview").value=lessons.join("\n");
-  G("lecCount").textContent=lessons.length;
+  G("lecCount").textContent=lessons.filter(x=>!/^#/.test(x.trim())).length;
 }
 function openStudyModal(id){
   studyEditId=id||null; previewLessons=[];
@@ -2019,7 +2127,7 @@ function openStudyModal(id){
   G("studyTitle").textContent=lec?"✦ 커리큘럼 편집":"✦ 강의 추가";
   G("lecName").value=lec?lec.name:""; G("lecPlat").value=lec?(lec.platform||""):"";
   G("lecPaste").value=""; G("lecStatus").textContent="";
-  showPreview(lec&&lec.lessons?lec.lessons.map(x=>x.t):[]);
+  showPreview(lec&&lec.lessons?lec.lessons.map(x=>x.sec?"# "+x.t:x.t):[]);
   studyOverlay.classList.add("show");
 }
 function closeStudy(){studyOverlay.classList.remove("show");}
@@ -2037,28 +2145,36 @@ G("pdfInput").onchange=async e=>{
     const parsed=parseCurriculum(text);
     if(!parsed.length){G("lecStatus").textContent="PDF에서 목차를 못 찾았어요. 텍스트가 아닌 이미지 PDF일 수 있어요. 붙여넣기를 써보세요.";return;}
     if(!G("lecName").value.trim()){ // 강의명 자동 추측: 잡텍스트 아닌 첫 줄
-      const first=text.split(/\r?\n/).map(l=>l.trim()).find(l=>l.length>=3&&l.length<=40&&/[가-힣A-Za-z]/.test(l));
+      const nameJunk=/(오[전후]\s*\d|https?:\/\/|\.co\.kr|\.com|Coloso|CLASS101|커리큘럼|목차|수강|쿠폰|할인|판매가|소개 영상|D-\d|무이자|^\d)/i;
+      const first=text.split(/\r?\n/).map(l=>l.replace(/\s+/g," ").trim())
+        .find(l=>l.length>=4&&l.length<=45&&/[가-힣]/.test(l)&&!nameJunk.test(l));
       if(first)G("lecName").value=first;
     }
     showPreview(parsed);
     G("lecStatus").textContent=parsed.length+"강을 찾았어요. 다듬은 뒤 저장하세요. (PDF는 저장되지 않아요)";
   }catch(err){G("lecStatus").textContent="실패: "+err.message;}
 };
-G("lecPreview").oninput=()=>{const arr=G("lecPreview").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);G("lecCount").textContent=arr.length;};
+G("lecPreview").oninput=()=>{const arr=G("lecPreview").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);G("lecCount").textContent=arr.filter(x=>!/^#/.test(x)).length;};
 G("studyCancel").onclick=closeStudy;
 studyOverlay.onclick=e=>{if(e.target===studyOverlay)closeStudy();};
 G("studySave").onclick=()=>{
   const name=G("lecName").value.trim(); if(!name)return toast("강의명을 입력해요");
   const lessonsText=G("lecPreview").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  // "# 제목" → 섹션 헤더(체크 없음), 그 외 → 일반 강의
+  const toLesson=(line,doneMap)=>{
+    const mm=line.match(/^#\s*(.*)$/);
+    if(mm)return {t:mm[1].trim()||"섹션", sec:true};
+    return {t:line, done:doneMap?!!doneMap[line]:false};
+  };
   if(studyEditId){
     const lec=data.planner.study.find(x=>x.id===studyEditId);
     lec.name=name; lec.platform=G("lecPlat").value.trim();
     // 기존 완료상태 최대한 보존(제목 일치 기준)
-    const doneMap={}; (lec.lessons||[]).forEach(l=>{doneMap[l.t]=l.done;});
-    lec.lessons=lessonsText.map(t=>({t,done:!!doneMap[t]}));
+    const doneMap={}; (lec.lessons||[]).forEach(l=>{if(!l.sec)doneMap[l.t]=l.done;});
+    lec.lessons=lessonsText.map(t=>toLesson(t,doneMap));
   }else{
     data.planner.study.push({id:uid(),name,platform:G("lecPlat").value.trim(),
-      lessons:lessonsText.map(t=>({t,done:false}))});
+      lessons:lessonsText.map(t=>toLesson(t,null))});
   }
   persist(); closeStudy(); renderPlannerBody(); toast("강의를 저장했어요 ✦");
 };
