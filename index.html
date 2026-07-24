@@ -618,6 +618,7 @@ body{
     <div class="seg">
       <button data-day="morning">🌄 미라클</button>
       <button data-day="plan">📅 일정</button>
+      <button data-day="anniv">🎀 기념일</button>
       <button data-day="diary">✎ 일기</button>
     </div>
   </div>
@@ -1426,29 +1427,6 @@ function renderDay(){
           <div class="ttl">${esc(ev.title)}</div>${ev.memo?`<div class="mm">${esc(ev.memo)}</div>`:""}</div>`;}).join("")
       : `<div class="empty">일정이 없어요</div>`;
     h+=`</div>`;
-    // 기념일
-    const dayAnnivs=annivsOn(ds);
-    h+=`<div class="section"><h3>🎀 기념일 <button class="add" id="annivAdd">+</button></h3>`;
-    h+= dayAnnivs.length? dayAnnivs.map(a=>{
-        const info=annivDdayObj(a); const yrs=a.fromYear&&info.nextY?` · ${info.nextY-a.fromYear}주년`:"";
-        const dtxt=(jload("panur_dday",true)&&info.dday!=null)?`<span class="dbadge">${info.dday===0?"D-DAY":"D-"+info.dday}</span>`:"";
-        const base=a.cal==="lunar"?`음력 ${a.lm}/${a.ld}`:`매년 ${a.mmdd.replace("-","/")}`;
-        let mile="";
-        if(a.milestone){const ms=annivMilestone(a);
-          if(ms)mile=`<div class="mm" style="color:var(--rose)">💗 ${ms.elapsed}일째 · 다가오는 ${ms.label} ${ms.dday===0?"D-DAY":"D-"+ms.dday}</div>`;}
-        return `<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"🎀"} ${esc(a.title)} ${dtxt}</div>
-          <div class="mm">${base}${yrs}</div>${mile}</div>`;}).join("")
-      : `<div class="empty">이 날의 기념일이 없어요</div>`;
-    h+=`</div>`;
-    // 다가오는 누적 기념일(연애 100일·주년 등) — 매일 표시
-    const mileAnnivs=(data.annivs||[]).filter(a=>a.milestone&&a.fromYear).map(a=>({a,ms:annivMilestone(a)})).filter(x=>x.ms).sort((x,y)=>x.ms.dday-y.ms.dday);
-    if(mileAnnivs.length){
-      h+=`<div class="section"><h3>💗 다가오는 기념일</h3>`;
-      mileAnnivs.forEach(({a,ms})=>{
-        h+=`<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"💗"} ${esc(a.title)} <span class="dbadge">${ms.dday===0?ms.label+" D-DAY":ms.label+" D-"+ms.dday}</span></div>
-          <div class="mm">오늘 ${ms.elapsed}일째</div></div>`;});
-      h+=`</div>`;
-    }
     // 플래너(그 날)
     const pAll=[...appts,...study,...todos];
     h+=`<div class="section"><h3>플래너</h3>`;
@@ -1470,6 +1448,39 @@ function renderDay(){
         ${mm.links&&mm.links.length?`<div class="mm">🔗 ${mm.links.length}개 링크</div>`:""}</div>`;});
       h+=`</div>`;
     }
+  }else if(daySub==="anniv"){
+    // 그날 기념일
+    const dayAnnivs=annivsOn(ds);
+    h+=`<div class="section"><h3>🎀 이 날의 기념일 <button class="add" id="annivAdd">+</button></h3>`;
+    h+= dayAnnivs.length? dayAnnivs.map(a=>{
+        const info=annivDdayObj(a); const yrs=a.fromYear&&info.nextY?` · ${info.nextY-a.fromYear}주년`:"";
+        const dtxt=(jload("panur_dday",true)&&info.dday!=null)?`<span class="dbadge">${info.dday===0?"D-DAY":"D-"+info.dday}</span>`:"";
+        const base=a.cal==="lunar"?`음력 ${a.lm}/${a.ld}`:`매년 ${a.mmdd.replace("-","/")}`;
+        let mile="";
+        if(a.milestone){const ms=annivMilestone(a);
+          if(ms)mile=`<div class="mm" style="color:var(--rose)">💗 ${ms.elapsed}일째 · 다가오는 ${ms.label} ${ms.dday===0?"D-DAY":"D-"+ms.dday}</div>`;}
+        return `<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"🎀"} ${esc(a.title)} ${dtxt}</div>
+          <div class="mm">${base}${yrs}</div>${mile}</div>`;}).join("")
+      : `<div class="empty">이 날의 기념일이 없어요<small>+ 로 추가할 수 있어요</small></div>`;
+    h+=`</div>`;
+    // 다가오는 누적 기념일(연애 100일·주년 등)
+    const mileAnnivs=(data.annivs||[]).filter(a=>a.milestone&&a.fromYear).map(a=>({a,ms:annivMilestone(a)})).filter(x=>x.ms).sort((x,y)=>x.ms.dday-y.ms.dday);
+    if(mileAnnivs.length){
+      h+=`<div class="section"><h3>💗 다가오는 기념일</h3>`;
+      mileAnnivs.forEach(({a,ms})=>{
+        h+=`<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"💗"} ${esc(a.title)} <span class="dbadge">${ms.dday===0?ms.label+" D-DAY":ms.label+" D-"+ms.dday}</span></div>
+          <div class="mm">오늘 ${ms.elapsed}일째</div></div>`;});
+      h+=`</div>`;
+    }
+    // 전체 기념일 목록(다가오는 순)
+    const allAnnivs=(data.annivs||[]).map(a=>({a,info:annivDdayObj(a)})).filter(x=>x.info.dday!=null).sort((x,y)=>x.info.dday-y.info.dday);
+    h+=`<div class="section"><h3>📋 전체 기념일</h3>`;
+    h+= allAnnivs.length? allAnnivs.map(({a,info})=>{
+        const base=a.cal==="lunar"?`음력 ${a.lm}/${a.ld}`:a.mmdd.replace("-","/");
+        return `<div class="ev anniv" data-annivedit="${a.id}"><div class="ttl">${a.emoji||"🎀"} ${esc(a.title)} <span class="dbadge">${info.dday===0?"D-DAY":"D-"+info.dday}</span></div>
+          <div class="mm">${base}${a.milestone?" · 💗누적":""}</div></div>`;}).join("")
+      : `<div class="empty">등록된 기념일이 없어요</div>`;
+    h+=`</div>`;
   }else{
     // 일기
     h+=`<div class="cond"><span class="clabel">하루 마무리 컨디션</span>
@@ -1513,6 +1524,10 @@ function renderDay(){
   if(daySub==="plan")bindDayPlanner(ds);
   else if(daySub==="morning")bindMM(ds);
   else if(daySub==="diary")bindDiary(ds);
+  else if(daySub==="anniv"){
+    const _aa=document.getElementById("annivAdd"); if(_aa)_aa.onclick=()=>openAnniv(null,ds);
+    main.querySelectorAll("[data-annivedit]").forEach(el=>el.onclick=()=>openAnniv(el.dataset.annivedit,ds));
+  }
 }
 /* ---- 미라클 모닝 ---- */
 function mmOf(ds){
