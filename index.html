@@ -78,7 +78,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   padding:16px;backdrop-filter:blur(14px);}
 
 /* ---- Year 365 grid ---- */
-.yearscroll{overflow-x:auto;padding-bottom:8px;}
+.yearscroll{overflow:auto;padding-bottom:8px;max-height:72vh;}
 .yearscroll-top{overflow-x:auto;overflow-y:hidden;height:12px;margin-bottom:4px;}
 .yearscroll-top>div{height:1px;}
 .yrange{display:flex;gap:6px;margin-bottom:12px;}
@@ -91,7 +91,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .yblock .yearscroll{padding-bottom:4px;}
 .ygrid{display:grid;grid-template-columns:auto repeat(31,minmax(30px,1fr));gap:3px;min-width:960px;}
 .ygrid-v{grid-template-columns:34px repeat(12,56px);min-width:0;}
-.ygrid-v .ymhead{font-size:11px;font-weight:600;color:var(--lav);padding:4px 0;}
+.ygrid-v .ymhead{font-size:11px;font-weight:600;color:var(--lav);padding:4px 0;position:sticky;top:0;z-index:4;background:var(--panel);}
+.ygrid-v .ycorner{position:sticky;left:0;top:0;z-index:5;background:var(--panel);}
 .ygrid-v .yrow-label{background:var(--panel-2);color:var(--muted);font-size:11px;min-height:30px;position:sticky;left:0;z-index:3;}
 .ygrid-v .ycell{min-height:30px;}
 .ycell.noted{background:#E4F1FF;border-color:rgba(95,199,232,.6);}
@@ -123,7 +124,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cell.other{opacity:.35;} .cell.today{border-color:var(--ice);background:rgba(197,138,134,.10);}
 .cell .num{font-family:var(--disp);font-weight:600;font-size:13px;}
 .cell.today .num{color:var(--ice);} .cell.sun .num{color:var(--rose);} .cell.sat .num{color:var(--ice);}
-.chip{font-size:11px;line-height:1.25;padding:2px 7px;border-radius:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+.chip{font-size:11px;line-height:1.25;padding:2px 7px;border-radius:8px;color:#fff;font-weight:600;
+  word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 .more{font-size:10px;color:var(--muted);padding-left:3px;}
 .dcount{display:flex;gap:5px;font-size:10px;color:var(--muted);margin-top:auto;}
 .mdiatitle{font-size:10px;color:var(--ink-soft);line-height:1.35;word-break:break-word;
@@ -225,6 +227,24 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .msum-m{font-family:var(--disp);font-weight:700;color:var(--lav-d);font-size:13px;margin-bottom:6px;}
 .msum-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);padding:2px 0;}
 .msum-row b{color:var(--ink);font-weight:600;}
+.sumtabs{margin-bottom:14px;}
+/* 다꾸 스티커 */
+.decobar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.decochk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-soft);font-family:var(--disp);}
+.calwrap{position:relative;}
+.decolayer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;}
+.decolayer.edit{pointer-events:auto;}
+.sticker{position:absolute;pointer-events:none;}
+.decolayer.edit .sticker{pointer-events:auto;}
+.sticker img{width:100%;height:auto;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+.decolayer.edit .sticker img{pointer-events:auto;cursor:move;touch-action:none;}
+.sticker.sel{outline:2px dashed var(--lav-d);outline-offset:3px;}
+.sh{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--panel);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-soft);
+  box-shadow:var(--shadow-sm);touch-action:none;cursor:pointer;}
+.sh-del{top:-12px;right:-12px;color:var(--rose);}
+.sh-rot{top:-12px;left:-12px;cursor:grab;}
+.sh-size{bottom:-12px;right:-12px;background:var(--lav);cursor:nwse-resize;}
 .minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
 .mmsumtop{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .mmstat{flex:1 1 calc(50% - 5px);background:var(--panel-2);border-radius:12px;padding:12px;text-align:center;}
@@ -417,6 +437,17 @@ body{
 .wxsub{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;}
 .wxcityrow{display:flex;gap:8px;}
 .wxcityrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:13.5px;}
+.wxloc{font-family:var(--disp);font-weight:600;font-size:14px;color:var(--lav-d);margin-bottom:8px;}
+.wxhourly{display:flex;gap:6px;overflow-x:auto;padding:10px 0 6px;scrollbar-width:none;}
+.wxhourly::-webkit-scrollbar{display:none;}
+.wxh{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--panel-2);border-radius:10px;padding:8px 10px;min-width:46px;}
+.wxhh{font-size:10px;color:var(--muted);}
+.wxhe{font-size:18px;line-height:1;}
+.wxht{font-size:12px;font-weight:600;color:var(--ink-soft);font-family:var(--disp);}
+.wxpresets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 10px;}
+.wxchip{background:var(--panel-2);border:1px solid var(--line-2);border-radius:20px;padding:6px 12px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.wxchip b{color:var(--faint);font-weight:400;cursor:pointer;}
+.wxchip b:hover{color:var(--rose);}
 .affrow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;padding:8px 11px;font-size:13px;color:var(--ink-soft);}
 .affrow b{color:var(--faint);cursor:pointer;font-weight:400;flex:none;padding-left:6px;}
 .affrow b:hover{color:var(--rose);}
@@ -523,6 +554,7 @@ body{
       <button data-mode="plan" class="on">플랜</button>
       <button data-mode="diary">일기</button>
       <button data-mode="morning">미라클</button>
+      <button data-mode="deco">꾸미기</button>
     </div>
   </div>
   <div class="subbar hide" id="daySeg">
@@ -771,13 +803,16 @@ const DEFAULT_DATA={
   fx:{history:[]},  // [{ts, jpy100, usd1}]
   affirmations:[],   // 미라클모닝 확언 목록(백업)
   videos:[],         // 참고 영상 [{title,url}]
+  wxPresets:[],      // 날씨 위치 프리셋 [{label,q}]
+  deco:{},           // 다꾸 스티커 {"YYYY-M":[{id,img,x,y,w,rot}]}
   mmEmoji:{},        // 미라클모닝 단계별 이모지 {t1,t3,t5,t6}
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
-if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[];
+if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={};
+if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];
 if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};
 const MM_EMO_DEF={t1:"🌱",t3:"☀️",t5:"🌟",t6:"👑"}; for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
 if(!data.affirmations.length)data.affirmations=["나는 오늘 하루를 충분히 잘 해낼 수 있다", "나는 어제보다 조금 더 나아지고 있다", "작은 한 걸음도 분명한 전진이다", "나는 내가 하는 일을 사랑한다", "오늘의 나에게 필요한 것은 이미 내 안에 있다", "나는 나의 속도로 나아간다", "나는 실수해도 다시 시작할 수 있다", "오늘 나는 나를 다정하게 대한다", "나는 충분히 잘하고 있다", "나는 매일 조금씩 성장한다", "나는 오늘 마주할 모든 일을 감당할 수 있다", "나는 나 자신을 믿는다", "나는 지금 이 순간에 집중한다", "나는 내 삶의 주인이다", "나는 어려움 속에서도 길을 찾는다", "오늘의 작은 성취가 내일의 큰 힘이 된다", "나는 나에게 친절한 사람이다", "나는 배우고 성장하는 것을 즐긴다", "나는 내 감정을 있는 그대로 인정한다", "나는 두려움보다 용기를 선택한다", "나는 오늘 감사할 것을 발견한다", "나는 나의 노력을 자랑스러워한다", "나는 완벽하지 않아도 충분히 가치 있다", "나는 내 꿈을 향해 꾸준히 나아간다", "나는 오늘 하루를 새롭게 시작한다", "나는 나의 가능성을 믿는다", "나는 나를 위한 시간을 소중히 여긴다", "나는 평온함을 내 안에서 찾는다", "나는 변화 앞에서 유연하다", "나는 내가 원하는 삶을 만들어간다", "오늘 나는 최선을 다하고 결과를 받아들인다", "나는 나의 목소리를 낼 자격이 있다", "나는 어떤 하루든 의미를 만들 수 있다", "나는 나를 응원하는 가장 든든한 사람이다", "나는 지치면 쉬어갈 줄 안다", "나는 오늘 한 가지라도 해내면 충분하다", "나는 나의 길을 신뢰한다", "나는 매 순간 배우고 있다", "나는 나에게 필요한 답을 알고 있다", "나는 오늘 웃을 이유를 찾는다", "나는 내 마음의 평화를 지킨다", "나는 도전을 성장의 기회로 본다", "나는 나답게 살아간다", "나는 오늘도 나를 포기하지 않는다", "나는 좋은 것을 누릴 자격이 있다", "나는 나의 시간을 의미 있게 쓴다", "나는 작은 기쁨을 소중히 여긴다", "나는 내 삶을 사랑으로 채운다", "나는 오늘 더 나은 선택을 할 수 있다", "나는 나의 성장을 기다려줄 줄 안다", "나는 지금의 나로도 충분하다", "나는 매일 새로운 가능성을 마주한다", "나는 나의 노력을 믿는다", "나는 넘어져도 다시 일어난다", "나는 오늘 나에게 상냥하게 말한다", "나는 내 안의 힘을 신뢰한다", "나는 어제의 나를 넘어선다", "나는 오늘 하루를 온전히 살아낸다", "나는 내가 되고 싶은 사람에 가까워지고 있다", "나는 나의 마음을 돌볼 줄 안다", "나는 부족함마저 나의 일부로 받아들인다", "나는 오늘 필요한 만큼만 해내면 된다", "나는 나의 하루를 스스로 디자인한다", "나는 평온한 마음으로 하루를 연다", "나는 나의 리듬을 존중한다", "나는 오늘도 배우고 나아간다", "나는 나에게 두 번째 기회를 준다", "나는 지금 여기에서 충분히 행복할 수 있다", "나는 나의 미래를 밝게 그린다", "나는 나를 가두는 생각에서 자유로워진다", "나는 오늘 만나는 사람들에게 다정하다", "나는 나의 성취를 축하한다", "나는 어떤 감정도 흘려보낼 수 있다", "나는 나의 삶에 감사한다", "나는 오늘 한 걸음 더 내딛는다"];
@@ -799,6 +834,8 @@ let cursor=new Date(); cursor.setHours(0,0,0,0);
 let view="month", monthMode="plan", plannerType="appts", editingId=null;
 let etcSub=jload("panur_etcsub","memo"); // memo | material | fx
 let daySub=jload("panur_daysub","plan"); // morning | plan | diary
+let summarySub=jload("panur_sumsub","month"); // month | miracle | mini
+let decoSelId=null; // 선택된 스티커
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -934,13 +971,19 @@ function renderMonth(){
   const first=new Date(y,m,1), start=new Date(y,m,1-first.getDay());
   let html='<div class="card">';
   if(monthMode==="morning")html+=mmLegendHTML();
+  if(monthMode==="deco")html+=`<div class="decobar"><button class="btn primary" id="decoAdd">🖼️ 스티커 추가</button>
+    <label class="decochk"><input type="checkbox" id="decoRmbg"> 흰 배경 지우기</label>
+    <span style="font-size:11px;color:var(--muted);width:100%;">스티커를 끌어 이동 · 선택 후 모서리로 크기/회전 · ✕ 삭제</span>
+    <input type="file" id="decoInput" accept="image/*" style="display:none;"></div>`;
+  const effMode = monthMode==="deco" ? "plan" : monthMode;
+  html+='<div class="calwrap">';
   html+='<div class="dow">'+WEEK.map(w=>`<div>${w}</div>`).join("")+'</div><div class="grid">';
   for(let i=0;i<42;i++){
     const d=new Date(start); d.setDate(start.getDate()+i); const ds=ymd(d);
     const other=d.getMonth()!==m, cls=["cell"];
     if(other)cls.push("other"); if(isToday(d))cls.push("today");
     if(d.getDay()===0)cls.push("sun"); if(d.getDay()===6)cls.push("sat");
-    if(monthMode==="diary"){
+    if(effMode==="diary"){
       cls.push("diary"); const dia=data.diary[ds];
       const condColors={1:"#C7C0CB",2:"#8DBEDC",3:"#83C9B2",4:"#E6C282",5:"#E4A0B6"};
       const condMark=dia&&dia.cond?`<span class="mcond" style="background:${condColors[dia.cond]}">${dia.cond}</span>`:"";
@@ -957,7 +1000,7 @@ function renderMonth(){
         if(bottom)inner+=`<div class="dbottom">${bottom}</div>`;
       }
       html+=`<div class="${cls.join(" ")}" data-date="${ds}">${inner}</div>`;
-    }else if(monthMode==="morning"){
+    }else if(effMode==="morning"){
       cls.push("diary");
       const dia=data.diary[ds]; const mm=dia&&dia.mm;
       const cnt=mm?Object.values(mm.savers||{}).filter(Boolean).length:0;
@@ -970,7 +1013,6 @@ function renderMonth(){
       let chips=evs.slice(0,2).map(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
         return `<div class="chip" style="background:${c.c}">${ev.time?ev.time+" ":""}${esc(ev.title)}</div>`;}).join("");
       if(evs.length>2)chips+=`<div class="more">+${evs.length-2}</div>`;
-      // 하단: 할 일/메모 표시
       const tCount=countPlannerOn(ds), hasM=data.memos.some(mm=>mm.date===ds);
       let foot="";
       if(tCount||hasM){foot='<div class="dcount">'+
@@ -978,10 +1020,84 @@ function renderMonth(){
       html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="num">${d.getDate()}</div>${chips}${foot}</div>`;
     }
   }
-  html+="</div></div>";
+  html+="</div>"; // .grid
+  html+=decoLayerHTML(y,m);
+  html+="</div>"; // .calwrap
+  html+="</div>"; // .card
   main.innerHTML=html;
-  main.querySelectorAll(".cell[data-date]").forEach(c=>c.onclick=()=>{cursor=parseYmd(c.dataset.date);view="day";render();});
+  if(monthMode!=="deco")
+    main.querySelectorAll(".cell[data-date]").forEach(c=>c.onclick=()=>{cursor=parseYmd(c.dataset.date);view="day";render();});
   if(monthMode==="morning")bindMmLegend();
+  if(monthMode==="deco")bindDeco(y,m);
+}
+function decoKey(y,m){return `${y}-${m}`;}
+function decoLayerHTML(y,m){
+  const list=(data.deco&&data.deco[decoKey(y,m)])||[];
+  const editable=monthMode==="deco";
+  let h=`<div class="decolayer ${editable?"edit":""}" id="decoLayer">`;
+  list.forEach(s=>{
+    const sel=editable&&s.id===decoSelId;
+    h+=`<div class="sticker ${sel?"sel":""}" data-sid="${s.id}" style="left:${s.x}%;top:${s.y}%;width:${s.w}px;transform:translate(-50%,-50%) rotate(${s.rot||0}deg);">
+      <img src="${s.img}" draggable="false">
+      ${sel?`<span class="sh sh-del" data-sdel="${s.id}">✕</span>
+        <span class="sh sh-rot" data-srot="${s.id}">⟳</span>
+        <span class="sh sh-size" data-ssize="${s.id}"></span>`:""}
+    </div>`;
+  });
+  h+=`</div>`;
+  return h;
+}
+function bindDeco(y,m){
+  const key=decoKey(y,m);
+  data.deco[key]=data.deco[key]||[];
+  const layer=document.getElementById("decoLayer");
+  const addBtn=document.getElementById("decoAdd"), input=document.getElementById("decoInput");
+  addBtn.onclick=()=>input.click();
+  input.onchange=e=>{const f=e.target.files[0]; if(!f)return;
+    const rmbg=document.getElementById("decoRmbg")&&document.getElementById("decoRmbg").checked;
+    optimizeToDataURL(f,600,"image/png",undefined,durl=>{
+      const s={id:uid(),img:durl,x:50,y:35,w:110,rot:0};
+      data.deco[key].push(s); decoSelId=s.id; persist(); renderMonth(); toast(rmbg?"스티커 추가(배경 제거) ✦":"스티커 추가 ✦");
+    }, rmbg);};
+  // 빈 곳 탭 → 선택 해제
+  layer.onclick=e=>{ if(e.target===layer){decoSelId=null;renderMonth();} };
+  layer.querySelectorAll(".sticker").forEach(st=>{
+    const sid=st.dataset.sid; const obj=data.deco[key].find(x=>x.id===sid); if(!obj)return;
+    const rect=()=>layer.getBoundingClientRect();
+    // 본체 드래그(+선택)
+    const img=st.querySelector("img");
+    img.addEventListener("pointerdown",e=>{
+      e.preventDefault(); if(decoSelId!==sid){decoSelId=sid;renderMonth();return;}
+      const r=rect(); let moved=false;
+      const mv=ev=>{moved=true; obj.x=Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100));
+        obj.y=Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100));
+        st.style.left=obj.x+"%"; st.style.top=obj.y+"%";};
+      const up=()=>{document.removeEventListener("pointermove",mv);document.removeEventListener("pointerup",up);if(moved)persist();};
+      document.addEventListener("pointermove",mv);document.addEventListener("pointerup",up);
+    });
+    // 크기 조절
+    const sz=st.querySelector("[data-ssize]");
+    if(sz)sz.addEventListener("pointerdown",e=>{
+      e.preventDefault();e.stopPropagation();
+      const r=rect(); const cx=r.left+r.width*obj.x/100, cy=r.top+r.height*obj.y/100;
+      const mv=ev=>{const dist=Math.hypot(ev.clientX-cx,ev.clientY-cy); obj.w=Math.max(30,Math.min(420,dist*1.6)); st.style.width=obj.w+"px";};
+      const up=()=>{document.removeEventListener("pointermove",mv);document.removeEventListener("pointerup",up);persist();};
+      document.addEventListener("pointermove",mv);document.addEventListener("pointerup",up);
+    });
+    // 회전
+    const rt=st.querySelector("[data-srot]");
+    if(rt)rt.addEventListener("pointerdown",e=>{
+      e.preventDefault();e.stopPropagation();
+      const r=rect(); const cx=r.left+r.width*obj.x/100, cy=r.top+r.height*obj.y/100;
+      const mv=ev=>{obj.rot=Math.round(Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI+90);
+        st.style.transform=`translate(-50%,-50%) rotate(${obj.rot}deg)`;};
+      const up=()=>{document.removeEventListener("pointermove",mv);document.removeEventListener("pointerup",up);persist();};
+      document.addEventListener("pointermove",mv);document.addEventListener("pointerup",up);
+    });
+    // 삭제
+    const del=st.querySelector("[data-sdel]");
+    if(del)del.onclick=e=>{e.stopPropagation();data.deco[key]=data.deco[key].filter(x=>x.id!==sid);decoSelId=null;persist();renderMonth();};
+  });
 }
 function mmTier(cnt){return cnt>=6?"t6":cnt>=5?"t5":cnt>=3?"t3":cnt>=1?"t1":null;}
 function mmEmojiHtml(val){
@@ -1481,7 +1597,7 @@ G("cancelBtn").onclick=closeModal; overlay.onclick=e=>{if(e.target===overlay)clo
 let photoTargetDate=null;
 let moodTargetDate=null;
 // 공용: 파일 → 최적화된 dataURL(cb)
-function optimizeToDataURL(file, maxLong, mime, quality, cb){
+function optimizeToDataURL(file, maxLong, mime, quality, cb, removeBg){
   const reader=new FileReader();
   reader.onload=()=>{
     const img=new Image();
@@ -1489,7 +1605,23 @@ function optimizeToDataURL(file, maxLong, mime, quality, cb){
       const long=Math.max(img.width,img.height), scale=long>maxLong?maxLong/long:1;
       const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
       const cv=document.createElement("canvas");cv.width=w;cv.height=h;
-      cv.getContext("2d").drawImage(img,0,0,w,h);
+      const ctx=cv.getContext("2d"); ctx.drawImage(img,0,0,w,h);
+      if(removeBg){
+        try{
+          const id=ctx.getImageData(0,0,w,h), px=id.data;
+          const corner=(x,y)=>{const i=(y*w+x)*4;return [px[i],px[i+1],px[i+2]];};
+          const cs=[corner(0,0),corner(w-1,0),corner(0,h-1),corner(w-1,h-1)];
+          const br=cs.reduce((a,c)=>a+c[0],0)/4, bg=cs.reduce((a,c)=>a+c[1],0)/4, bb=cs.reduce((a,c)=>a+c[2],0)/4;
+          const tol=60; // 허용 범위
+          for(let i=0;i<px.length;i+=4){
+            const d=Math.sqrt((px[i]-br)**2+(px[i+1]-bg)**2+(px[i+2]-bb)**2);
+            if(d<=tol)px[i+3]=0;
+            else if(d<=tol*1.6)px[i+3]=Math.min(px[i+3],Math.round(255*(d-tol)/(tol*0.6)));
+          }
+          ctx.putImageData(id,0,0);
+          return cb(cv.toDataURL("image/png")); // 투명 유지 위해 png
+        }catch(e){/* 실패 시 원본 */}
+      }
       cb(cv.toDataURL(mime,quality));
     };
     img.onerror=()=>toast("이미지를 읽지 못했어요");
@@ -1702,60 +1834,101 @@ function renderEtc(){
 /* ---- 날씨 ---- */
 const WX_CODE={0:["맑음","☀️"],1:["대체로 맑음","🌤️"],2:["구름 조금","⛅"],3:["흐림","☁️"],45:["안개","🌫️"],48:["짙은 안개","🌫️"],51:["약한 이슬비","🌦️"],53:["이슬비","🌦️"],55:["강한 이슬비","🌧️"],61:["약한 비","🌦️"],63:["비","🌧️"],65:["강한 비","🌧️"],66:["언 비","🌧️"],67:["강한 언 비","🌧️"],71:["약한 눈","🌨️"],73:["눈","🌨️"],75:["강한 눈","❄️"],77:["싸락눈","🌨️"],80:["소나기","🌦️"],81:["소나기","🌧️"],82:["강한 소나기","⛈️"],85:["눈 소나기","🌨️"],86:["강한 눈 소나기","❄️"],95:["뇌우","⛈️"],96:["우박 뇌우","⛈️"],99:["강한 우박 뇌우","⛈️"]};
 function weatherBodyHTML(){
-  const city=jload("panur_wxcity","");
-  return `<div class="etcsec"><h3>🌤️ 오늘 날씨 <span style="font-size:11px;color:var(--muted);font-weight:400;">Open-Meteo · 참고용</span></h3>
+  return `<div class="etcsec"><h3>🌤️ 날씨 <span style="font-size:11px;color:var(--muted);font-weight:400;">Open-Meteo · 참고용</span></h3>
+    <div class="wxloc" id="wxLoc">📍 위치 확인 중…</div>
     <div id="wxResult" class="wxbox"><div style="color:var(--muted);font-size:13px;">날씨를 불러오는 중…</div></div>
-    <button class="btn primary" id="wxLocate" style="margin:10px 0 8px;">📍 내 위치로 날씨 보기</button>
+    <div class="wxhourly" id="wxHourly"></div>
+    <div class="wxpresets" id="wxPresets"></div>
+    <button class="btn primary" id="wxLocate" style="margin:4px 0 8px;">📍 내 위치로 보기</button>
     <div class="wxcityrow">
-      <input id="wxCity" placeholder="또는 도시명 입력 (예: Seoul, Busan)" value="${esc(city)}">
+      <input id="wxCity" placeholder="도시명 (예: Seoul, Tokyo)">
       <button class="btn" id="wxCityBtn">조회</button>
+      <button class="btn" id="wxPresetAdd" title="현재 입력을 프리셋에 추가">＋프리셋</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px;">위치 권한을 허용하면 현재 위치 날씨가 자동으로 떠요. 거부하면 도시명으로 조회하세요.</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">위치 권한을 허용하면 현재 위치, 거부하면 프리셋·도시명으로 조회해요.</div>
   </div>`;
 }
-function wxRender(o){
+function wxSetLoc(t){const el=document.getElementById("wxLoc"); if(el)el.textContent="📍 "+t;}
+function wxRenderCurrent(o){
   const el=document.getElementById("wxResult"); if(!el)return;
   if(!o){el.innerHTML='<div style="color:var(--muted);font-size:13px;">날씨를 불러오지 못했어요. 도시명으로 조회해보세요.</div>';return;}
   const c=WX_CODE[o.code]||["","🌡️"];
   el.innerHTML=`<div class="wxmain"><span class="wxemo">${c[1]}</span>
-    <div><div class="wxtemp">${Math.round(o.temp)}°C</div><div class="wxdesc">${c[0]}${o.name?" · "+esc(o.name):""}</div></div></div>
+    <div><div class="wxtemp">${Math.round(o.temp)}°C</div><div class="wxdesc">${c[0]}</div></div></div>
     <div class="wxsub">체감 ${Math.round(o.feels)}°C · 최고 ${Math.round(o.tmax)}° / 최저 ${Math.round(o.tmin)}° · 습도 ${o.hum}% · 바람 ${o.wind}m/s</div>`;
 }
-async function wxFetch(lat,lon,name){
+function wxRenderHourly(times,temps,codes){
+  const el=document.getElementById("wxHourly"); if(!el)return;
+  const now=Date.now(); let start=0;
+  for(let i=0;i<times.length;i++){ if(new Date(times[i]).getTime()>=now-3600000){start=i;break;} }
+  let h="";
+  for(let i=start;i<Math.min(start+12,times.length);i++){
+    const d=new Date(times[i]); const hh=d.getHours();
+    const c=WX_CODE[codes[i]]||["","🌡️"];
+    h+=`<div class="wxh"><span class="wxhh">${hh}시</span><span class="wxhe">${c[1]}</span><span class="wxht">${Math.round(temps[i])}°</span></div>`;
+  }
+  el.innerHTML=h;
+}
+function wxRenderPresets(){
+  const el=document.getElementById("wxPresets"); if(!el)return;
+  el.innerHTML=(data.wxPresets||[]).map((p,i)=>
+    `<span class="wxchip" data-q="${esc(p.q)}" data-label="${esc(p.label)}">${esc(p.label)}<b data-pdel="${i}">✕</b></span>`).join("");
+  el.querySelectorAll(".wxchip").forEach(c=>c.onclick=e=>{
+    if(e.target.dataset.pdel!=null)return;
+    jsave("panur_wxcity",c.dataset.q); wxByQuery(c.dataset.q,c.dataset.label);
+  });
+  el.querySelectorAll("[data-pdel]").forEach(b=>b.onclick=e=>{e.stopPropagation();
+    data.wxPresets.splice(Number(b.dataset.pdel),1);persist();wxRenderPresets();});
+}
+async function wxFetch(lat,lon,label){
   try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto&wind_speed_unit=ms`;
+    if(label)wxSetLoc(label);
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto&wind_speed_unit=ms&forecast_days=2`;
     const r=await fetch(u); const j=await r.json();
     const cur=j.current;
-    wxRender({temp:cur.temperature_2m,feels:cur.apparent_temperature,hum:cur.relative_humidity_2m,wind:cur.wind_speed_10m,code:cur.weather_code,
-      tmax:j.daily.temperature_2m_max[0],tmin:j.daily.temperature_2m_min[0],name});
-  }catch(e){wxRender(null);}
+    wxRenderCurrent({temp:cur.temperature_2m,feels:cur.apparent_temperature,hum:cur.relative_humidity_2m,wind:cur.wind_speed_10m,code:cur.weather_code,
+      tmax:j.daily.temperature_2m_max[0],tmin:j.daily.temperature_2m_min[0]});
+    if(j.hourly)wxRenderHourly(j.hourly.time,j.hourly.temperature_2m,j.hourly.weather_code);
+  }catch(e){wxRenderCurrent(null);}
 }
-async function wxGeocode(city){
+async function wxByQuery(query,label){
+  wxSetLoc((label||query)+" 조회 중…");
+  document.getElementById("wxResult").innerHTML='<div style="color:var(--muted);font-size:13px;">조회 중…</div>';
   try{
-    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ko`);
-    const j=await r.json(); if(!j.results||!j.results.length){wxRender(null);toast("도시를 찾지 못했어요");return;}
-    const g=j.results[0]; wxFetch(g.latitude,g.longitude,g.name);
-  }catch(e){wxRender(null);}
+    const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=ko`);
+    const j=await r.json(); if(!j.results||!j.results.length){wxRenderCurrent(null);wxSetLoc("도시를 찾지 못했어요");return;}
+    const g=j.results[0]; const nm=label||g.name||query;
+    wxFetch(g.latitude,g.longitude,nm);
+  }catch(e){wxRenderCurrent(null);}
+}
+function wxByGeo(){
+  if(!navigator.geolocation){wxSetLoc("위치 미지원");return;}
+  wxSetLoc("현재 위치 확인 중…");
+  navigator.geolocation.getCurrentPosition(async p=>{
+    let nm="현재 위치";
+    try{ const rr=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${p.coords.latitude}&longitude=${p.coords.longitude}&localityLanguage=ko`);
+      const jj=await rr.json(); nm=jj.city||jj.locality||jj.principalSubdivision||"현재 위치"; }catch(e){}
+    wxFetch(p.coords.latitude,p.coords.longitude,nm);
+  },()=>{ wxSetLoc("위치 권한 거부됨"); const c=jload("panur_wxcity",""); if(c)wxByQuery(c); else wxRenderCurrent(null); },{timeout:8000});
 }
 function bindWeather(){
-  const city=jload("panur_wxcity","");
-  // 자동: 위치 권한 → 없으면 저장 도시 → 없으면 안내
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      p=>wxFetch(p.coords.latitude,p.coords.longitude,""),
-      ()=>{ if(city)wxGeocode(city); else wxRender(null); },
-      {timeout:8000});
-  }else{ if(city)wxGeocode(city); else wxRender(null); }
-  document.getElementById("wxLocate").onclick=()=>{
-    if(!navigator.geolocation)return toast("이 브라우저는 위치를 지원하지 않아요");
-    document.getElementById("wxResult").innerHTML='<div style="color:var(--muted);font-size:13px;">위치 확인 중…</div>';
-    navigator.geolocation.getCurrentPosition(p=>wxFetch(p.coords.latitude,p.coords.longitude,""),()=>{wxRender(null);toast("위치 권한이 거부됐어요");},{timeout:8000});
-  };
+  wxRenderPresets();
+  const saved=jload("panur_wxcity","");
+  // 자동: 위치 권한 우선 → 실패 시 저장 도시
+  if(navigator.geolocation){ wxByGeo(); }
+  else if(saved){ wxByQuery(saved); }
+  else { wxSetLoc("위치를 선택하세요"); wxRenderCurrent(null); }
+  document.getElementById("wxLocate").onclick=wxByGeo;
   document.getElementById("wxCityBtn").onclick=()=>{
     const c=document.getElementById("wxCity").value.trim(); if(!c)return toast("도시명을 입력해요");
-    jsave("panur_wxcity",c); document.getElementById("wxResult").innerHTML='<div style="color:var(--muted);font-size:13px;">조회 중…</div>'; wxGeocode(c);
+    jsave("panur_wxcity",c); wxByQuery(c);
   };
   document.getElementById("wxCity").onkeydown=e=>{if(e.key==="Enter")document.getElementById("wxCityBtn").click();};
+  document.getElementById("wxPresetAdd").onclick=()=>{
+    const c=document.getElementById("wxCity").value.trim(); if(!c)return toast("추가할 도시명을 입력해요");
+    if(!data.wxPresets.some(p=>p.q===c)){data.wxPresets.push({label:c,q:c});persist();wxRenderPresets();toast("프리셋에 추가했어요");}
+    else toast("이미 있는 프리셋이에요");
+  };
 }
 function fxBodyHTML(){
   const hist=(data.fx&&data.fx.history)||[]; const last=hist[hist.length-1];
@@ -1794,7 +1967,12 @@ function summaryBodyHTML(){
     <div class="sumprog"><div class="bar"><i style="width:${pct}%"></i></div>
       <div class="sumprogtxt">${thisYear?`올해 ${pct}% 지남 · 남은 날 ${remain}일`:(today.getFullYear()>y?"지난 해":"아직 시작 전")}</div></div>
   </div>`;
-  h+=`<div class="sumsec"><h3>월별 요약</h3><div class="monthsum">`;
+  // 하위 탭
+  const subs=[["month","월별 요약"],["miracle","미라클 수행"],["mini","미니 캘린더"]];
+  h+=`<div class="ptypes sumtabs">`+subs.map(([k,n])=>`<button class="ptype ${summarySub===k?"on":""}" data-sum="${k}">${n}</button>`).join("")+`</div>`;
+
+  // (1) 월별 요약
+  let monthSec=`<div class="sumsec"><div class="monthsum">`;
   for(let m=0;m<12;m++){
     let evDays=0,diaDays=0,slSum=0,slDays=0;
     const dim=new Date(y,m+1,0).getDate();
@@ -1807,14 +1985,16 @@ function summaryBodyHTML(){
     const ps=planStatsInMonth(y,m);
     const pr=ps.total?Math.round(ps.done/ps.total*100):0;
     const slAvg=slDays?sleepFmt(Math.round(slSum/slDays)):"-";
-    h+=`<div class="msum"><div class="msum-m">${m+1}월</div>
+    monthSec+=`<div class="msum"><div class="msum-m">${m+1}월</div>
       <div class="msum-row"><span>📅 일정</span><b>${evDays}</b></div>
       <div class="msum-row"><span>✎ 일기</span><b>${diaDays}</b></div>
       <div class="msum-row"><span>✓ 플랜</span><b>${ps.done}/${ps.total} (${pr}%)</b></div>
       <div class="msum-row"><span>😴 수면</span><b>${slAvg}</b></div></div>`;
   }
-  h+=`</div></div>`;
-  // 미라클 모닝 수행 요약
+  monthSec+=`</div></div>`;
+
+  // (2) 미라클 모닝 수행
+  let mmSec;
   {
     let doneDays=0,saverTotal=0,condSum=0,condDays=0,sleepSum=0,sleepDays=0;
     const saverCnt={S:0,A:0,V:0,E:0,R:0,W:0};
@@ -1834,7 +2014,7 @@ function summaryBodyHTML(){
     const saverBars=SAVERS.map(([k,n])=>`<div class="mmbar"><span class="mmbl">${n}</span>
       <span class="mmbt"><i style="width:${Math.round(saverCnt[k]/maxc*100)}%"></i></span><span class="mmbn">${saverCnt[k]}</span></div>`).join("");
     const monthDots=perMonth.map((c,mi)=>`<div class="mmmo"><span>${mi+1}월</span><b>${c}일</b></div>`).join("");
-    h+=`<div class="sumsec"><h3>🌄 미라클 모닝 수행</h3>
+    mmSec=`<div class="sumsec">
       <div class="mmsumtop">
         <div class="mmstat"><div class="mmsv">${doneDays}</div><div class="mmsl">실천한 날</div></div>
         <div class="mmstat"><div class="mmsv">${avgSaver}<small>/6</small></div><div class="mmsl">평균 SAVERS</div></div>
@@ -1845,12 +2025,14 @@ function summaryBodyHTML(){
       <div class="mmmonths">${monthDots}</div>
     </div>`;
   }
-  h+=`<div class="sumsec"><h3>12개월 미니 달력 <span style="font-size:11px;color:var(--muted);font-weight:400;">일정·일기·플랜 있는 날 점 표시</span></h3><div class="minis">`;
+
+  // (3) 12개월 미니 달력
+  let miniSec=`<div class="sumsec"><div style="font-size:11px;color:var(--muted);margin-bottom:8px;">일정·일기·플랜 있는 날 점 표시</div><div class="minis">`;
   for(let m=0;m<12;m++){
-    h+=`<div class="mini"><div class="mini-h">${m+1}월</div><div class="mini-g">`;
-    for(const w of WEEK)h+=`<div class="mini-w">${w}</div>`;
+    miniSec+=`<div class="mini"><div class="mini-h">${m+1}월</div><div class="mini-g">`;
+    for(const w of WEEK)miniSec+=`<div class="mini-w">${w}</div>`;
     const first=new Date(y,m,1).getDay(), dim=new Date(y,m+1,0).getDate();
-    for(let i=0;i<first;i++)h+=`<div></div>`;
+    for(let i=0;i<first;i++)miniSec+=`<div></div>`;
     for(let dnum=1;dnum<=dim;dnum++){
       const d=new Date(y,m,dnum), ds=ymd(d);
       const hasEv=eventsOn(d).length>0;
@@ -1858,14 +2040,17 @@ function summaryBodyHTML(){
       const hasPlan=countPlannerOn(ds)>0;
       const dots=[hasEv?'<i style="background:var(--lav)"></i>':'',hasDia?'<i style="background:var(--mint)"></i>':'',hasPlan?'<i style="background:var(--gold)"></i>':''].join("");
       const tdy=isToday(d)?" mini-today":"";
-      h+=`<div class="mini-d${tdy}" data-goto="${ds}"><span>${dnum}</span><div class="mini-dot">${dots}</div></div>`;
+      miniSec+=`<div class="mini-d${tdy}" data-goto="${ds}"><span>${dnum}</span><div class="mini-dot">${dots}</div></div>`;
     }
-    h+=`</div></div>`;
+    miniSec+=`</div></div>`;
   }
-  h+=`</div></div>`;
+  miniSec+=`</div></div>`;
+
+  h+= summarySub==="miracle"?mmSec : summarySub==="mini"?miniSec : monthSec;
   return h;
 }
 function bindSummaryBody(){
+  main.querySelectorAll("[data-sum]").forEach(b=>b.onclick=()=>{summarySub=b.dataset.sum;jsave("panur_sumsub",summarySub);renderEtc();});
   main.querySelectorAll("[data-goto]").forEach(c=>c.onclick=()=>{cursor=parseYmd(c.dataset.goto);view="day";render();});
 }
 /* ---- 소재 백업 ---- */
@@ -2037,7 +2222,7 @@ async function pull(verbose){
     const remote=JSON.parse(b64decode(j.content.replace(/\n/g,"")));
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
-    if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
+    if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
     jsave(LS_DATA,data); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
@@ -2153,6 +2338,35 @@ function upcomingSummary(){
 }
 // 시작 시 동기화 설정돼 있으면 조용히 불러오기
 if(sync.owner&&sync.repo&&sync.token){pull(false);}
+/* ---- 비 예보 알림 ---- */
+const RAIN_CODES=new Set([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99]);
+async function rainCheckAt(lat,lon){
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=weather_code,precipitation_probability&timezone=auto&forecast_days=1`;
+    const r=await fetch(u); const j=await r.json();
+    const times=j.hourly.time, codes=j.hourly.weather_code, probs=j.hourly.precipitation_probability||[];
+    const now=Date.now(); let hit=null;
+    for(let i=0;i<times.length;i++){ const t=new Date(times[i]).getTime(); if(t<now-3600000)continue;
+      if(RAIN_CODES.has(codes[i])||(probs[i]!=null&&probs[i]>=60)){hit={h:new Date(times[i]).getHours(),prob:probs[i]};break;} }
+    if(hit){ const key="panur_rain_"+ymd(new Date());
+      if(!jload(key,false)){ jsave(key,true);
+        const msg=`☔ 오늘 비 소식 (${hit.h}시경${hit.prob!=null?`, 강수확률 ${hit.prob}%`:""}) · 우산을 챙기세요`;
+        if(("Notification"in window)&&Notification.permission==="granted")notify(msg); else toast(msg);
+      }
+    }
+  }catch(e){}
+}
+function checkRainAlert(){
+  const city=jload("panur_wxcity","");
+  if(city){
+    fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ko`)
+      .then(r=>r.json()).then(j=>{if(j.results&&j.results.length)rainCheckAt(j.results[0].latitude,j.results[0].longitude);}).catch(()=>{});
+  } else if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(p=>rainCheckAt(p.coords.latitude,p.coords.longitude),()=>{},{timeout:8000,maximumAge:3600000});
+  }
+}
+setTimeout(checkRainAlert,3000);
+setInterval(checkRainAlert,3*3600000);
 </script>
 </body>
 </html>
