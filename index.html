@@ -392,6 +392,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .lechead{display:flex;align-items:flex-start;gap:8px;}
 .lecname{font-weight:600;font-size:14.5px;} .lecplat{font-size:11.5px;color:var(--muted);margin-top:2px;}
 .lechead .del{margin-left:auto;border:none;background:none;color:var(--faint);cursor:pointer;font-size:15px;}
+.lechbtns{margin-left:auto;display:flex;align-items:center;gap:4px;}
+.lechbtns .del{margin-left:0;}
+.lecedit{border:none;background:none;color:var(--faint);cursor:pointer;font-size:14px;padding:0 2px;}
 .bar{height:7px;background:rgba(90,70,50,.12);border-radius:6px;overflow:hidden;margin:8px 0 3px;}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lav),var(--rose));border-radius:6px;transition:width .25s;}
 .lecpct{font-size:11px;color:var(--muted);font-family:var(--disp);text-align:right;}
@@ -412,8 +415,17 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   padding:6px 13px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;user-select:none;}
 .fchip.on{background:var(--rose);color:#fff;border-color:var(--rose);}
 .fchip.add{color:var(--lav);border-style:dashed;}
+.fieldtools{display:flex;align-items:center;gap:8px;margin:-2px 0 12px;font-size:12px;color:var(--muted);}
+.fieldtools span{margin-right:auto;font-weight:600;color:var(--lav);}
+.ftbtn{border:1px solid var(--line);background:var(--panel-2);color:var(--ink);border-radius:8px;
+  padding:5px 10px;font-size:12px;cursor:pointer;}
+.ftbtn.del{color:#C25;border-color:rgba(200,60,90,.35);}
 .ssec{margin-bottom:16px;}
-.ssechd{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:600;font-size:14px;color:var(--lav);margin:0 0 9px;}
+.ssechd{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:600;font-size:14px;color:var(--lav);margin:0 0 9px;flex-wrap:wrap;cursor:pointer;user-select:none;}
+.ssechd .scaret{font-size:11px;width:12px;display:inline-block;color:var(--muted);}
+.ssort{margin-left:auto;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);
+  border-radius:8px;padding:4px 8px;font-size:11.5px;font-family:var(--body);cursor:pointer;}
+.ssechd .ssort+.saddbtn{margin-left:6px;}
 .ssechd .scount{font-size:11px;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:1px 7px;font-weight:500;}
 .ssechd .saddbtn{margin-left:auto;border:none;background:var(--rose);color:#fff;border-radius:9px;
   padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
@@ -868,6 +880,12 @@ body{
 <div class="overlay" id="noteOverlay">
   <div class="modal">
     <h2 id="noteTitle">✦ 새 노트</h2>
+    <div class="field"><label>유형</label>
+      <div class="daychips" id="noteKind">
+        <div class="dc on" data-nk="note">📝 노트</div>
+        <div class="dc" data-nk="log">📖 학습 기록</div>
+      </div>
+    </div>
     <div class="row2">
       <div class="field"><label>분야</label><select id="noteField"></select></div>
       <div class="field"><label>날짜</label><input type="date" id="nDate"></div>
@@ -1134,6 +1152,8 @@ let decoSelId=null; // 선택된 스티커
 let decoTarget=jload("panur_decotarget","plan"); // 꾸미기 대상: plan|diary|morning
 let habitOffset=0; // 습관 주 이동(0=이번 주, 음수=과거)
 let studyField="전체"; // 공부 분야 필터 ("전체"|"__none"|분야명)
+let studySort=jload("panur_studysort","added"); // 자료 정렬
+let studyFold=jload("panur_studyfold",{}); // 섹션 접힘 {src,note,log}
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -1992,23 +2012,44 @@ function renderPlannerBody(){
       +fields.map(f=>`<div class="fchip${studyField===f?" on":""}" data-field="${esc(f)}">${esc(f)}</div>`).join("")
       +(hasUnfiled?`<div class="fchip${studyField==="__none"?" on":""}" data-field="__none">미분류</div>`:"")
       +`<div class="fchip add" id="fieldAdd">＋분야</div></div>`;
+    // 선택된 분야가 실제 분야면 이름 변경·삭제 도구 표시
+    if(studyField!=="전체"&&studyField!=="__none"){
+      h+=`<div class="fieldtools"><span>“${esc(studyField)}” 분야</span>
+        <button class="ftbtn" id="fieldRename">✎ 이름 변경</button>
+        <button class="ftbtn del" id="fieldDelete">🗑 삭제</button></div>`;
+    }
     const inField=x=> studyField==="전체"?true:(studyField==="__none"?!x.field:x.field===studyField);
-    // 자료 (강의·서적)
-    const srcList=sources.filter(inField);
-    h+=`<div class="ssec"><div class="ssechd">📚 자료<span class="scount">${srcList.length}</span><button class="saddbtn" id="sAddLec">＋ 자료</button></div>`;
-    if(!srcList.length)h+=emptyP("강의·서적 자료를 추가해보세요");
-    else srcList.forEach(lec=>{h+=sourceCard(lec);});
+    const caret=k=>studyFold[k]?"▸":"▾";
+    // 자료 (강의·서적) — 정렬 옵션 + 접기
+    let srcList=sources.filter(inField).slice();
+    srcList=sortSources(srcList,studySort);
+    const sortOpts=[["added","추가순"],["progA","진도 낮은순"],["progD","진도 높은순"],["name","이름순"]]
+      .map(o=>`<option value="${o[0]}"${studySort===o[0]?" selected":""}>${o[1]}</option>`).join("");
+    h+=`<div class="ssec"><div class="ssechd" data-fold="src"><span class="scaret">${caret("src")}</span>📚 자료<span class="scount">${srcList.length}</span>
+        <select class="ssort" id="srcSort" onclick="event.stopPropagation()">${sortOpts}</select>
+        <button class="saddbtn" id="sAddLec" onclick="event.stopPropagation()">＋ 자료</button></div>`;
+    if(!studyFold.src){
+      if(!srcList.length)h+=emptyP("강의·서적 자료를 추가해보세요");
+      else srcList.forEach(lec=>{h+=sourceCard(lec);});
+    }
     h+=`</div>`;
-    // 노트 (포스트)
-    const noteList=notes.filter(inField).sort((a,b)=>{
-      const ka=a.date||(a.ts?ymd(new Date(a.ts)):""), kb=b.date||(b.ts?ymd(new Date(b.ts)):"");
-      if(ka!==kb)return kb.localeCompare(ka);
-      return (b.ts||0)-(a.ts||0);
+    // 노트 / 학습 기록 (기능 동일, 용도 분류만 다름)
+    const byDate=(a,b)=>{const ka=a.date||(a.ts?ymd(new Date(a.ts)):""),kb=b.date||(b.ts?ymd(new Date(b.ts)):"");
+      if(ka!==kb)return kb.localeCompare(ka); return (b.ts||0)-(a.ts||0);};
+    const filtered=notes.filter(inField);
+    const buckets=[
+      {kind:"note", icon:"📝", label:"노트", add:"sAddNote", empty:"기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)"},
+      {kind:"log",  icon:"📖", label:"학습 기록", add:"sAddLog", empty:"오늘 공부한 내용을 기록으로 남겨보세요"}
+    ];
+    buckets.forEach(bk=>{
+      const arr=filtered.filter(n=>(n.kind||"note")===bk.kind).sort(byDate);
+      h+=`<div class="ssec"><div class="ssechd" data-fold="${bk.kind}"><span class="scaret">${caret(bk.kind)}</span>${bk.icon} ${bk.label}<span class="scount">${arr.length}</span><button class="saddbtn" data-addnote="${bk.kind}" id="${bk.add}" onclick="event.stopPropagation()">＋ ${bk.label}</button></div>`;
+      if(!studyFold[bk.kind]){
+        if(!arr.length)h+=emptyP(bk.empty);
+        else arr.forEach(n=>{h+=noteCard(n);});
+      }
+      h+=`</div>`;
     });
-    h+=`<div class="ssec"><div class="ssechd">📝 노트<span class="scount">${noteList.length}</span><button class="saddbtn" id="sAddNote">＋ 노트</button></div>`;
-    if(!noteList.length)h+=emptyP("기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)");
-    else noteList.forEach(n=>{h+=noteCard(n);});
-    h+=`</div>`;
   }else if(t==="todos"){
     h+=`<div class="pform"><div class="row"><input id="tDate" type="date"><input id="tText" placeholder="할 일 (날짜 비우면 미정)"></div>
       <div class="row"><textarea id="tMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
@@ -2047,6 +2088,14 @@ function plCard(type,a,meta){
     <button class="del" data-pdel>✕</button></div>`;
 }
 function emptyP(msg){return `<div class="empty">${msg}</div>`;}
+function srcProg(lec){const t=(lec.lessons||[]).filter(x=>!x.sec).length,d=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;return t?d/t:0;}
+function sortSources(list,mode){
+  const a=list.slice();
+  if(mode==="progA")a.sort((x,y)=>srcProg(x)-srcProg(y));
+  else if(mode==="progD")a.sort((x,y)=>srcProg(y)-srcProg(x));
+  else if(mode==="name")a.sort((x,y)=>String(x.name||"").localeCompare(String(y.name||"")));
+  return a; // added: 추가(저장) 순서 유지
+}
 function sourceCard(lec){
   const isBook=lec.type==="book", unit=isBook?"장":"강", icon=isBook?"📖":"🎓";
   const total=(lec.lessons||[]).filter(x=>!x.sec).length, done=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;
@@ -2056,7 +2105,7 @@ function sourceCard(lec){
   return `<div class="lec" data-lec="${lec.id}">
     <div class="lechead"><div><div class="lecname">${icon} ${esc(lec.name)}</div>
       <div class="lecplat">${meta}</div></div>
-      <button class="del" data-lecdel="${lec.id}">✕</button></div>
+      <div class="lechbtns"><button class="lecedit" data-lecedit="${lec.id}">✎</button><button class="del" data-lecdel="${lec.id}">✕</button></div></div>
     <div class="bar"><i style="width:${p}%"></i></div>
     <div class="lecpct">${p}%</div>
     ${total?`<div class="lecbtns"><button class="lectoggle" data-lectog="${lec.id}">진도 ▾</button><button class="lecsched" data-lecsched="${lec.id}">📅 학습 일정</button></div>
@@ -2085,14 +2134,43 @@ function addStudyField(){
   if(!data.studyFields.includes(name))data.studyFields.push(name);
   studyField=name; persist(); renderPlannerBody();
 }
+function renameStudyField(){
+  const old=studyField; if(old==="전체"||old==="__none")return;
+  const nn=(window.prompt("분야 이름 변경",old)||"").trim();
+  if(!nn||nn===old)return;
+  data.studyFields=data.studyFields||[];
+  const idx=data.studyFields.indexOf(old);
+  if(data.studyFields.includes(nn)){ if(idx>=0)data.studyFields.splice(idx,1); }   // 이미 있으면 병합
+  else if(idx>=0){ data.studyFields[idx]=nn; }
+  else { data.studyFields.push(nn); }
+  (data.planner.study||[]).forEach(s=>{if(s.field===old)s.field=nn;});
+  (data.studyNotes||[]).forEach(n=>{if(n.field===old)n.field=nn;});
+  studyField=nn; persist(); renderPlannerBody(); toast("분야 이름을 바꿨어요");
+}
+function deleteStudyField(){
+  const name=studyField; if(name==="전체"||name==="__none")return;
+  if(!window.confirm("“"+name+"” 분야를 삭제할까요?\n안에 있던 자료·노트는 미분류로 이동해요."))return;
+  data.studyFields=(data.studyFields||[]).filter(f=>f!==name);
+  let moved=0;
+  (data.planner.study||[]).forEach(s=>{if(s.field===name){s.field="";moved++;}});
+  (data.studyNotes||[]).forEach(n=>{if(n.field===name){n.field="";moved++;}});
+  studyField="전체"; persist(); renderPlannerBody();
+  toast(moved?`분야 삭제 · ${moved}개를 미분류로 이동했어요`:"분야를 삭제했어요");
+}
 function bindPlannerForms(){
   const g=id=>document.getElementById(id);
   const add=(arr,obj)=>{obj.id=uid();obj.done=false;data.planner[arr].push(obj);persist();renderPlannerBody();};
   if(g("aAdd"))g("aAdd").onclick=()=>{const ti=g("aTitle").value.trim();if(!ti)return toast("약속 제목을 입력해요");
     add("appts",{title:ti,date:g("aDate").value||ymd(new Date()),time:g("aTime").value,who:g("aWho").value.trim(),place:g("aPlace").value.trim(),memo:g("aMemo").value.trim(),remind:g("aRemind").value||null});};
   if(g("sAddLec"))g("sAddLec").onclick=()=>openStudyModal(null);
-  if(g("sAddNote"))g("sAddNote").onclick=()=>openNoteModal(null);
+  document.querySelectorAll("[data-addnote]").forEach(b=>b.onclick=()=>openNoteModal(null,b.dataset.addnote));
   if(g("fieldAdd"))g("fieldAdd").onclick=addStudyField;
+  if(g("fieldRename"))g("fieldRename").onclick=renameStudyField;
+  if(g("fieldDelete"))g("fieldDelete").onclick=deleteStudyField;
+  if(g("srcSort"))g("srcSort").onchange=()=>{studySort=g("srcSort").value;jsave("panur_studysort",studySort);renderPlannerBody();};
+  document.querySelectorAll("[data-fold]").forEach(el=>el.onclick=(e)=>{
+    if(e.target.closest("button,select"))return; // 안쪽 버튼·드롭다운 클릭은 접기 아님
+    const k=el.dataset.fold;studyFold[k]=!studyFold[k];jsave("panur_studyfold",studyFold);renderPlannerBody();});
   document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;renderPlannerBody();});
   document.querySelectorAll("[data-noteopen]").forEach(el=>el.onclick=e=>{if(e.target.closest("[data-noteedit]"))return;openNoteModal(el.dataset.noteopen);});
   document.querySelectorAll("[data-noteedit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openNoteModal(b.dataset.noteedit);});
@@ -2109,6 +2187,7 @@ function bindPlannerForms(){
     const box=document.getElementById("lessons-"+b.dataset.lectog);
     if(box){const show=box.style.display==="none";box.style.display=show?"block":"none";b.textContent=show?"진도 ▴":"진도 ▾";}});
   document.querySelectorAll("[data-lecimport]").forEach(b=>b.onclick=()=>openStudyModal(b.dataset.lecimport));
+  document.querySelectorAll("[data-lecedit]").forEach(b=>b.onclick=()=>openStudyModal(b.dataset.lecedit));
   document.querySelectorAll("[data-lecsched]").forEach(b=>b.onclick=()=>openSchedModal(b.dataset.lecsched));
   document.querySelectorAll("[data-ll]").forEach(cb=>cb.onclick=()=>{
     const lec=data.planner.study.find(x=>x.id===cb.dataset.ll);if(!lec)return;
@@ -2267,6 +2346,8 @@ function setupFieldSelect(sel,current){
 function _curPad(n){ n=String(parseInt(n,10)); return n.length<2?"0"+n:n; }
 function _curDedupe(arr){ const seen=new Set(),o=[]; for(const x of arr){ if(seen.has(x))continue; seen.add(x); o.push(x);} return o; }
 function parseCurriculum(text){
+  // 제어문자(공백을 U+0001 등으로 인코딩한 PDF 대비)를 일반 공백으로 정규화
+  text=String(text).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u00A0\u200B\u200C\uFEFF]/g," ");
   // ── 1) 시간형(예: "1. 제목 07:16") : CLASS101·인프런 등 ─────────────
   let s=String(text).replace(/\r/g," ").replace(/\n+/g," ");
   s=s.replace(/\d{1,2}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?\s*오\s*[전후]\s*\d{1,2}\s*:\s*\d{2}/g," ");
@@ -2314,7 +2395,9 @@ function parseCurriculum(text){
   const lesRe=/^0*(\d{1,3})[.)]\s+(.+)$/;
   const junkTitle=/^(강의$|미리보기|재생|무료체험|맛보기$)/;
   const out=[];
-  for(const l of clean){
+  for(const l0 of clean){
+    // 푸터 내비("홈")가 강의 번호 앞에 붙는 경우 보정: "홈 18. 에셋..." → "18. 에셋..."
+    const l=l0.replace(/^(?:홈|최대)\s+(?=\d{1,3}[.)]\s)/,"");
     if(/^[-–—•·]/.test(l)) continue;                 // 하위 항목 제외
     const sc=l.match(secRe);
     if(sc){ const st=(sc[2]||"").trim(); out.push("# "+(st||("섹션 "+sc[1]))); continue; }
@@ -2349,6 +2432,9 @@ function parseCurriculum(text){
 }
 function loadScript(src){return new Promise((res,rej)=>{
   const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("스크립트 로드 실패"));document.head.appendChild(s);});}
+function normPdfStr(s){ // 제어문자(예: 이 PDF는 공백을 U+0001로 인코딩)를 일반 공백으로
+  return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u00A0\u200B\u200C\uFEFF]/g," ");
+}
 async function extractPdfText(file){
   if(!window.pdfjsLib){
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
@@ -2361,21 +2447,20 @@ async function extractPdfText(file){
   for(let p=1;p<=pdf.numPages;p++){
     const page=await pdf.getPage(p);
     const c=await page.getTextContent();
-    // PDF.js가 한글을 글자 단위로 쪼개 주는 경우가 있어, 좌표로 같은 줄을 재구성한다.
-    const items=c.items.filter(i=>i&&i.transform&&typeof i.str==="string"&&i.str.length);
-    // y 내림차순(위→아래), 같은 줄이면 x 오름차순(왼→오)
-    items.sort((a,b)=>{const dy=b.transform[5]-a.transform[5]; if(Math.abs(dy)>3)return dy; return a.transform[4]-b.transform[4];});
-    const rows=[]; let cur=null;
-    for(const it of items){
-      const y=it.transform[5], x=it.transform[4], w=it.width||0,
-            h=it.height||Math.abs(it.transform[3])||9;
-      if(!cur || Math.abs(cur.y-y)>Math.max(3,h*0.6)){ cur={y,endX:x+w,text:it.str}; rows.push(cur); continue; }
-      // 같은 줄: x 간격이 글자폭의 30% 이상이면 공백 삽입(붙어 있으면 붙임 → 한글 안 쪼개짐)
-      const gap=x-cur.endX;
-      const sep=(/\s$/.test(cur.text)||/^\s/.test(it.str))?"":(gap>h*0.3?" ":"");
-      cur.text+=sep+it.str; cur.endX=x+w;
+    // 읽기 순서 유지 + 줄바꿈은 hasEOL(우선)·y좌표 변화(폴백)로 판단, 가로 간격만큼만 공백
+    let line="", prevEndX=null, prevY=null;
+    const flush=()=>{ const t=line.replace(/\s+$/,""); if(t.trim())text+=t+"\n"; line=""; prevEndX=null; prevY=null; };
+    for(const it of c.items){
+      if(!it||typeof it.str!=="string")continue;
+      const tr=it.transform||[1,0,0,10,0,0];
+      const x=tr[4], y=tr[5], w=it.width||0, h=it.height||Math.abs(tr[3])||10;
+      const str=normPdfStr(it.str);
+      if(prevY!==null && Math.abs(prevY-y)>Math.max(3,h*0.6)) flush();
+      if(line && prevEndX!==null){ const gap=x-prevEndX; if(!/\s$/.test(line)&&gap>h*0.35) line+=" "; }
+      line+=str; prevEndX=x+w; prevY=y;
+      if(it.hasEOL) flush();
     }
-    text+=rows.map(r=>r.text.replace(/\s+$/,"")).join("\n")+"\n";
+    flush(); text+="\n";
   }
   return text;
 }
@@ -2508,15 +2593,27 @@ G("pdfInput").onchange=async e=>{
   try{
     const text=await extractPdfText(file);
     const parsed=parseCurriculum(text);
-    if(!parsed.length){G("lecStatus").textContent="PDF에서 목차를 못 찾았어요. 텍스트가 아닌 이미지 PDF일 수 있어요. 붙여넣기를 써보세요.";return;}
     if(!G("lecName").value.trim()){ // 강의명 자동 추측: 잡텍스트 아닌 첫 줄
       const nameJunk=/(오[전후]\s*\d|https?:\/\/|\.co\.kr|\.com|Coloso|CLASS101|커리큘럼|목차|수강|쿠폰|할인|판매가|소개 영상|D-\d|무이자|^\d)/i;
       const first=text.split(/\r?\n/).map(l=>l.replace(/\s+/g," ").trim())
         .find(l=>l.length>=4&&l.length<=45&&/[가-힣]/.test(l)&&!nameJunk.test(l));
       if(first)G("lecName").value=first;
     }
-    showPreview(parsed);
-    G("lecStatus").textContent=parsed.length+"강을 찾았어요. 다듬은 뒤 저장하세요. (PDF는 저장되지 않아요)";
+    if(parsed.length){
+      showPreview(parsed);
+      G("lecStatus").textContent=parsed.length+"강을 찾았어요. 다듬은 뒤 저장하세요. (PDF는 저장되지 않아요)";
+    }else{
+      // 자동 인식 실패 → 추출한 줄을 미리보기에 채워 직접 다듬게(막다른 길 방지)
+      const junk=/(https?:\/\/|\.co\.kr|슈퍼세일|쿠폰|혜택 마감|관심을 보였|얼리버드|콜로소캠프|평생교육|수강후기|클래스컷|웰컴|사업자|통신판매|고객센터|이메일|@|BEST|D-\d|Coloso\.|스킬트리 \|)/;
+      const cand=text.split(/\r?\n/).map(l=>l.replace(/\s+/g," ").trim())
+        .filter(l=>l.length>=2&&l.length<=90&&/[가-힣A-Za-z]/.test(l)&&!junk.test(l)&&!/^\d{1,2}\s*\.\s*\d/.test(l));
+      if(cand.length){
+        showPreview(cand);
+        G("lecStatus").textContent="자동 인식이 애매해서 추출한 목록을 넣었어요. 강의가 아닌 줄은 지워주세요.";
+      }else{
+        G("lecStatus").textContent="PDF에서 글자를 못 읽었어요(이미지 PDF일 수 있어요). 붙여넣기를 써보세요.";
+      }
+    }
   }catch(err){G("lecStatus").textContent="실패: "+err.message;}
 };
 G("lecPreview").oninput=()=>{const arr=G("lecPreview").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);G("lecCount").textContent=arr.filter(x=>!/^#/.test(x)).length;};
@@ -2554,10 +2651,18 @@ function renderNImages(){
 G("noteImgInput").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
   optimizeToDataURL(f,1280,"image/jpeg",0.7,durl=>{noteImagesArr.push(durl);renderNImages();toast("사진 추가(최적화됨)");});};
 G("nImgAdd").onclick=()=>G("noteImgInput").click();
-function openNoteModal(id){
+let noteKind="note";
+function noteKindLabel(k){return k==="log"?"학습 기록":"노트";}
+function openNoteModal(id,kindDefault){
   noteEditId=id||null;
   const n=id?data.studyNotes.find(x=>x.id===id):null;
-  G("noteTitle").textContent=n?"✦ 노트 편집":"✦ 새 노트";
+  noteKind=n?(n.kind||"note"):(kindDefault||"note");
+  G("noteTitle").textContent=(n?"✦ ":"✦ 새 ")+noteKindLabel(noteKind)+(n?" 편집":"");
+  document.querySelectorAll("#noteKind .dc").forEach(el=>{
+    el.classList.toggle("on",el.dataset.nk===noteKind);
+    el.onclick=()=>{noteKind=el.dataset.nk;document.querySelectorAll("#noteKind .dc").forEach(x=>x.classList.toggle("on",x===el));
+      G("noteTitle").textContent=(noteEditId?"✦ ":"✦ 새 ")+noteKindLabel(noteKind)+(noteEditId?" 편집":"");};
+  });
   G("nTitle").value=n?n.title:""; G("nBody").value=n?(n.body||""):"";
   G("nDate").value=n?(n.date||""):ymd(new Date());
   noteImagesArr=n?JSON.parse(JSON.stringify(n.images||[])):[];
@@ -2573,10 +2678,10 @@ G("noteSave").onclick=()=>{
   const title=G("nTitle").value.trim(), body=G("nBody").value.trim();
   if(!title&&!body&&!noteImagesArr.length)return toast("내용을 입력해요");
   let field=G("noteField").value; if(field==="__new")field="";
-  const obj={field,title,body,images:noteImagesArr,date:G("nDate").value||""};
+  const obj={field,title,body,images:noteImagesArr,date:G("nDate").value||"",kind:noteKind};
   if(noteEditId){Object.assign(data.studyNotes.find(x=>x.id===noteEditId),obj);}
   else{obj.id=uid();obj.ts=Date.now();data.studyNotes.push(obj);}
-  persist(); closeNote(); renderPlannerBody(); toast("노트를 저장했어요 ✦");
+  persist(); closeNote(); renderPlannerBody(); toast(noteKindLabel(noteKind)+"을 저장했어요 ✦");
 };
 G("noteDelete").onclick=()=>{if(noteEditId)data.studyNotes=data.studyNotes.filter(x=>x.id!==noteEditId);persist();closeNote();renderPlannerBody();toast("삭제했어요");};
 
