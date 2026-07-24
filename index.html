@@ -92,6 +92,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .yearscroll::-webkit-scrollbar{display:none;width:0;height:0;}
 /* 연간 뷰: 바깥(.main) 스크롤만 잠가 이중 스크롤 방지 → 안쪽 그리드의 상단·좌측 sticky 헤더 유지 */
 .main.yearlock{overflow:hidden;}
+@keyframes slideInNext{from{opacity:.35;transform:translateX(28px);}to{opacity:1;transform:translateX(0);}}
+@keyframes slideInPrev{from{opacity:.35;transform:translateX(-28px);}to{opacity:1;transform:translateX(0);}}
+.main.anim-next{animation:slideInNext .24s cubic-bezier(.22,.61,.36,1);}
+.main.anim-prev{animation:slideInPrev .24s cubic-bezier(.22,.61,.36,1);}
+@media (prefers-reduced-motion:reduce){.main.anim-next,.main.anim-prev{animation:none;}}
 .yearcard{margin:0;}
 .yearscroll-top{overflow-x:auto;overflow-y:hidden;height:12px;margin-bottom:4px;}
 .yearscroll-top>div{height:1px;}
@@ -3734,6 +3739,13 @@ function shift(dir){
     let i=order.indexOf(etcSub); i=(i+dir+order.length)%order.length; etcSub=order[i]; jsave("panur_etcsub",etcSub);
   }
   render();
+  animMain(dir);
+}
+function animMain(dir){
+  const cls=dir>0?"anim-next":"anim-prev";
+  main.classList.remove("anim-next","anim-prev");
+  void main.offsetWidth;          // 리플로우로 애니메이션 재시작
+  main.classList.add(cls);
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{view=t.dataset.view;render();});
 monthSeg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
