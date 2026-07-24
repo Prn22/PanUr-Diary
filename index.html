@@ -79,7 +79,12 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   padding:16px;backdrop-filter:blur(14px);}
 
 /* ---- Year 365 grid ---- */
-.yearscroll{overflow:auto;padding-bottom:8px;max-height:72vh;}
+.yearscroll{overflow:auto;padding-bottom:8px;max-height:72vh;max-height:calc(100dvh - 260px);
+  overscroll-behavior:contain;scrollbar-width:none;-ms-overflow-style:none;}
+.yearscroll::-webkit-scrollbar{display:none;width:0;height:0;}
+/* 연간 뷰: 바깥(.main) 스크롤만 잠가 이중 스크롤 방지 → 안쪽 그리드의 상단·좌측 sticky 헤더 유지 */
+.main.yearlock{overflow:hidden;}
+.yearcard{margin:0;}
 .yearscroll-top{overflow-x:auto;overflow-y:hidden;height:12px;margin-bottom:4px;}
 .yearscroll-top>div{height:1px;}
 .yrange{display:flex;gap:6px;margin-bottom:12px;}
@@ -392,6 +397,60 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .lecpct{font-size:11px;color:var(--muted);font-family:var(--disp);text-align:right;}
 .lectoggle{margin-top:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;
   padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:500;cursor:pointer;}
+.lecbtns{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px;}
+.lecbtns .lectoggle{margin-top:0;}
+.lecsched{border:none;background:var(--lav);color:#fff;border-radius:9px;padding:6px 12px;
+  font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
+.daychips{display:flex;gap:6px;flex-wrap:wrap;}
+.daychips .dc{flex:1;min-width:36px;text-align:center;border:1px solid var(--line);background:var(--panel-2);
+  color:var(--ink);border-radius:9px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;user-select:none;}
+.daychips .dc.on{background:var(--lav);color:#fff;border-color:var(--lav);}
+/* 공부: 분야 필터 · 자료/노트 섹션 · 노트 카드 */
+.fieldbar{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;-ms-overflow-style:none;}
+.fieldbar::-webkit-scrollbar{display:none;}
+.fchip{flex:none;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);border-radius:999px;
+  padding:6px 13px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;user-select:none;}
+.fchip.on{background:var(--rose);color:#fff;border-color:var(--rose);}
+.fchip.add{color:var(--lav);border-style:dashed;}
+.ssec{margin-bottom:16px;}
+.ssechd{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:600;font-size:14px;color:var(--lav);margin:0 0 9px;}
+.ssechd .scount{font-size:11px;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:1px 7px;font-weight:500;}
+.ssechd .saddbtn{margin-left:auto;border:none;background:var(--rose);color:#fff;border-radius:9px;
+  padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
+.notecard{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
+.notehead{display:flex;align-items:center;gap:8px;}
+.notecard .ntt{font-weight:600;font-size:14px;flex:1;}
+.notecard .nedit{border:none;background:none;color:var(--faint);cursor:pointer;font-size:14px;}
+.notecard .nmeta{display:flex;align-items:center;gap:7px;margin-top:3px;}
+.notecard .fbadge{font-size:10.5px;color:#fff;background:var(--lav);border-radius:7px;padding:1px 7px;font-weight:600;}
+.notecard .ndate{font-size:11px;color:var(--muted);}
+.notecard .nbody{font-size:12.5px;color:var(--ink-soft);margin-top:7px;white-space:pre-wrap;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+img.zoomable{cursor:zoom-in;}
+/* 이미지 라이트박스 */
+#imgLightbox .lbwrap{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:100%;}
+#imgLightbox #lbImg{max-width:92vw;max-height:74vh;border-radius:14px;box-shadow:var(--shadow);background:#fff;}
+#imgLightbox .lbbtns{display:flex;gap:10px;}
+/* 여행 카드 */
+.trip{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-sm);
+  padding:16px;margin-bottom:14px;}
+.trip-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+.trip-hd h3{font-family:var(--disp);font-size:19px;margin:0;color:var(--ink);}
+.trip-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+.trip-range{font-family:var(--disp);font-weight:600;font-size:13px;color:var(--lav);white-space:nowrap;}
+.trip-hd .nedit{border:none;background:none;color:var(--faint);cursor:pointer;font-size:15px;margin-top:4px;}
+.trip-flight{background:var(--panel-2);border-radius:12px;padding:10px 12px;margin:12px 0;font-family:var(--disp);font-weight:600;font-size:12.5px;color:var(--lav);}
+.trip-flight .trip-fl{font-family:var(--body);font-weight:500;color:var(--ink-soft);font-size:12.5px;margin-top:6px;}
+.trip-day{display:flex;align-items:center;gap:10px;margin:14px 0 8px;}
+.trip-daybadge{color:#fff;font-family:var(--disp);font-weight:700;font-size:12px;padding:4px 12px;border-radius:9px;letter-spacing:.5px;}
+.trip-dayhead{font-family:var(--disp);font-weight:600;font-size:13.5px;color:var(--ink);}
+.trip-item{display:flex;gap:12px;padding:6px 0 6px 4px;}
+.trip-time{flex:none;width:58px;font-family:var(--disp);font-weight:700;font-size:12.5px;color:var(--ink);padding-top:1px;}
+.trip-body{flex:1;min-width:0;}
+.trip-ttl{font-weight:600;font-size:14px;color:var(--ink);}
+.trip-note{font-size:12px;color:var(--muted);margin-top:2px;}
+.trip-notes{margin-top:14px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--ink-soft);line-height:1.6;}
+.trip-notes b{display:block;color:var(--rose);font-family:var(--disp);margin-bottom:5px;}
 .lessons{margin-top:8px;max-height:220px;overflow:auto;padding-right:4px;}
 .lesson{display:flex;align-items:center;gap:9px;padding:5px 4px;font-size:13px;border-radius:8px;cursor:pointer;}
 .lesson:hover{background:var(--panel);}
@@ -655,6 +714,7 @@ body{
     <div class="seg">
       <button data-etc="memo">메모</button>
       <button data-etc="material">소재</button>
+      <button data-etc="trip">여행</button>
       <button data-etc="summary">요약</button>
       <button data-etc="weather">날씨</button>
       <button data-etc="fx">환율</button>
@@ -664,8 +724,6 @@ body{
 
   <div class="main" id="main"></div>
 </div>
-
-<button class="fab" id="fab">+</button>
 
 <!-- Event modal -->
 <div class="overlay" id="overlay">
@@ -694,6 +752,7 @@ body{
         <option value="10" selected>10분</option><option value="30">30분</option><option value="60">1시간</option><option value="1440">1일</option></select><span>전</span></div>
     </div>
     <div class="modal-actions">
+      <button class="btn danger" id="deleteThisBtn" style="display:none;">이 날만 삭제</button>
       <button class="btn danger" id="deleteBtn" style="display:none;">삭제</button>
       <button class="btn ghost" id="cancelBtn">취소</button>
       <button class="btn primary" id="saveBtn">저장</button>
@@ -736,17 +795,27 @@ body{
 <input type="file" id="moodInput" accept="image/png,image/*" style="display:none;">
 <input type="file" id="memoImgInput" accept="image/*" style="display:none;">
 <input type="file" id="matImgInput" accept="image/*" style="display:none;">
+<input type="file" id="noteImgInput" accept="image/*" style="display:none;">
 
 <!-- Study (lecture) modal -->
 <div class="overlay" id="studyOverlay">
   <div class="modal">
     <h2 id="studyTitle">✦ 강의 추가</h2>
     <div class="row2">
-      <div class="field"><label>강의명</label><input id="lecName" placeholder="예: 실전 블렌더"></div>
-      <div class="field"><label>플랫폼</label><input id="lecPlat" placeholder="예: 인프런"></div>
+      <div class="field"><label>유형</label>
+        <div class="daychips" id="lecType">
+          <div class="dc on" data-lt="lecture">🎓 강의</div>
+          <div class="dc" data-lt="book">📖 서적</div>
+        </div>
+      </div>
+      <div class="field"><label>분야</label><select id="lecField"></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label id="lecNameLabel">강의명</label><input id="lecName" placeholder="예: 실전 블렌더"></div>
+      <div class="field"><label id="lecPlatLabel">플랫폼</label><input id="lecPlat" placeholder="예: 인프런"></div>
     </div>
     <div class="field">
-      <label>커리큘럼 가져오기</label>
+      <label id="lecImpLabel">커리큘럼 가져오기</label>
       <div class="impbtns" style="margin-bottom:8px;">
         <button class="btn ghost" id="lecPdfBtn">📄 PDF 첨부</button>
         <button class="btn ghost" id="lecPasteBtn">📋 붙여넣기 변환</button>
@@ -762,6 +831,100 @@ body{
     <div class="modal-actions">
       <button class="btn ghost" id="studyCancel">취소</button>
       <button class="btn primary" id="studySave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Study schedule modal -->
+<div class="overlay" id="schedOverlay">
+  <div class="modal">
+    <h2>📅 학습 일정 만들기</h2>
+    <div id="schedLecName" style="font-size:12.5px;color:var(--muted);margin:-8px 0 14px;"></div>
+    <div class="row2">
+      <div class="field"><label>시작일</label><input type="date" id="scStart"></div>
+      <div class="field"><label>주당 섹션 수</label><input type="number" id="scPerWeek" min="1" max="6" value="2"></div>
+    </div>
+    <div class="field">
+      <label>학습 요일</label>
+      <div class="daychips" id="scDays"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>시작 시간</label><input type="time" id="scStartTime" value="21:00"></div>
+      <div class="field"><label>끝 시간</label><input type="time" id="scEndTime" value="22:30"></div>
+    </div>
+    <div class="field" style="margin-bottom:8px;">
+      <label class="rlbl" style="cursor:pointer;"><input type="checkbox" id="scReview" checked style="width:16px;height:16px;accent-color:var(--lav);"> 마지막에 ✨ 예비·복습 주 추가 (밀리면 따라잡기)</label>
+    </div>
+    <div id="schedPreview" style="font-size:12px;color:var(--ink-soft);background:var(--panel-2);border-radius:11px;padding:10px 12px;max-height:160px;overflow:auto;line-height:1.6;"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;">기존에 이 강의로 만든 학습 일정은 새로 만들 때 자동으로 정리돼요.</div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="schedCancel">취소</button>
+      <button class="btn primary" id="schedMake">일정 만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Study note modal -->
+<div class="overlay" id="noteOverlay">
+  <div class="modal">
+    <h2 id="noteTitle">✦ 새 노트</h2>
+    <div class="row2">
+      <div class="field"><label>분야</label><select id="noteField"></select></div>
+      <div class="field"><label>날짜</label><input type="date" id="nDate"></div>
+    </div>
+    <div class="field"><label>제목</label><input id="nTitle" placeholder="예: 노드 머테리얼 핵심 정리"></div>
+    <div class="field"><label>내용</label><textarea id="nBody" rows="6" placeholder="기억하고 싶은 내용을 자유롭게 적어요"></textarea></div>
+    <div class="field">
+      <label>사진 (발췌·캡처 첨부)</label>
+      <button class="btn ghost" id="nImgAdd" style="margin-bottom:8px;">🖼 사진 추가</button>
+      <div class="imgrow" id="nImages"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="noteDelete" style="display:none;margin-right:auto;">삭제</button>
+      <button class="btn ghost" id="noteCancel">취소</button>
+      <button class="btn primary" id="noteSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Image lightbox (확대·저장) -->
+<div class="overlay" id="imgLightbox">
+  <div class="lbwrap">
+    <img id="lbImg" src="" alt="">
+    <div class="lbbtns">
+      <button class="btn ghost" id="lbClose">닫기</button>
+      <button class="btn primary" id="lbSave">⤓ 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trip (여행 일정) modal -->
+<div class="overlay" id="tripOverlay">
+  <div class="modal">
+    <h2 id="tripModalTitle">✦ 새 여행</h2>
+    <div class="row2">
+      <div class="field"><label>여행 제목</label><input id="tpTitle" placeholder="예: 후쿠오카 여행"></div>
+      <div class="field"><label>부제 (선택)</label><input id="tpSub" placeholder="예: 아이나나 라이브 · 1박 2일"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>시작일</label><input type="date" id="tpStart"></div>
+      <div class="field"><label>종료일</label><input type="date" id="tpEnd"></div>
+    </div>
+    <div class="field"><label>✈ 가는편 (선택)</label><input id="tpFlightOut" placeholder="예: 9/12(토) ICN 11:05 → FUK 12:30  KE791"></div>
+    <div class="field"><label>✈ 오는편 (선택)</label><input id="tpFlightRet" placeholder="예: 9/13(일) FUK 19:40 → ICN 21:00  KE5096"></div>
+    <div class="field">
+      <label>일정 (하루는 <span style="color:var(--lav);">#</span> 로 시작 · 각 줄: <b>시간 장소 | 메모</b>)</label>
+      <textarea id="tpItin" rows="9" class="preview-lines" placeholder="# 9/12 (토) · 텐진
+14:00 니시테츠 인 후쿠오카 | 짐 맡기기 (공항→텐진 11분)
+14:30 쿠시다 신사 | 도보 7분 · 오마모리 17시까지
+# 9/13 (일) · 공연 당일
+11:00 신신 라멘 (텐진 본점) | 오픈런 → 웨이팅 최소"></textarea>
+    </div>
+    <div class="field"><label>꼭 확인 (한 줄에 하나)</label><textarea id="tpNotes" rows="3" placeholder="공연 티켓은 사전 예매 필수&#10;끝나면 곧장 이동 (기내용 캐리어 권장)"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="tripDelete" style="display:none;margin-right:auto;">삭제</button>
+      <button class="btn ghost" id="tripCancel">취소</button>
+      <button class="btn primary" id="tripSave">저장</button>
     </div>
   </div>
 </div>
@@ -933,12 +1096,17 @@ const DEFAULT_DATA={
   annivs:[],         // 기념일 [{id,title,mmdd,fromYear,emoji}]
   userHols:[],       // 사용자 공휴일 [{date:"YYYY-MM-DD",name}]
   mmEmoji:{},        // 미라클모닝 단계별 이모지 {t1,t3,t5,t6}
+  studyFields:[],    // 학습 분야 라벨 ["3D · 블렌더", ...]
+  studyNotes:[],     // 포스트형 학습 노트 [{id,field,title,body,images:[],date,ts}]
+  trips:[],          // 여행 일정 [{id,title,subtitle,startDate,endDate,flightOut,flightRet,itinerary,notes}]
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
+if(!Array.isArray(data.studyFields))data.studyFields=[]; if(!Array.isArray(data.studyNotes))data.studyNotes=[]; if(!Array.isArray(data.trips))data.trips=[];
+(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture"; if(s.field==null)s.field="";});
 if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];
 if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};
 const MM_EMO_DEF={t1:"🌱",t3:"☀️",t5:"🌟",t6:"👑"}; for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
@@ -965,11 +1133,13 @@ let summarySub=jload("panur_sumsub","month"); // month | miracle | mini
 let decoSelId=null; // 선택된 스티커
 let decoTarget=jload("panur_decotarget","plan"); // 꾸미기 대상: plan|diary|morning
 let habitOffset=0; // 습관 주 이동(0=이번 주, 음수=과거)
+let studyField="전체"; // 공부 분야 필터 ("전체"|"__none"|분야명)
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
 function occursOn(ev,d){
   const dsd=ymd(d);
+  if(ev.exdates&&ev.exdates.includes(dsd))return false; // 이 날만 삭제된 회차
   if(ev.endDate&&ev.endDate>ev.date&&(!ev.repeat||ev.repeat==="none")){
     return dsd>=ev.date&&dsd<=ev.endDate;
   }
@@ -1139,6 +1309,7 @@ function render(){
   plannerSeg.querySelectorAll("[data-pt]").forEach(b=>b.classList.toggle("on",b.dataset.pt===plannerType));
   etcSeg.classList.toggle("hide",view!=="etc");
   etcSeg.querySelectorAll("[data-etc]").forEach(b=>b.classList.toggle("on",b.dataset.etc===etcSub));
+  main.classList.toggle("yearlock",view==="year");
   if(view==="year")renderYear();
   else if(view==="month")renderMonth();
   else if(view==="day")renderDay();
@@ -1185,7 +1356,7 @@ function renderYear(){
   const y=cursor.getFullYear(); periodEl.textContent=`${y}`;
   if(!["all","h1","h2"].includes(yearRange))yearRange="h1";
   const block = yearRange==="h1"?buildYearBlock(y,0,6) : yearRange==="h2"?buildYearBlock(y,6,12) : buildYearBlock(y,0,12);
-  main.innerHTML=`<div class="card">
+  main.innerHTML=`<div class="card yearcard">
     ${block}
     <div style="font-size:11px;color:var(--muted);margin-top:10px;">짧게 누르면 그 날 일간으로 · <b>길게 누르면</b> 칸에 단어 메모 · <span style="color:var(--mint)">●</span> 일기</div></div>`;
   bindYearCells();
@@ -1567,7 +1738,7 @@ function renderDay(){
   h+=`</div>`;
   main.innerHTML=h;
   const _addEv=document.getElementById("addEv"); if(_addEv)_addEv.onclick=()=>openModal(null);
-  main.querySelectorAll(".ev[data-ev]").forEach(e=>e.onclick=()=>openModal(e.dataset.ev));
+  main.querySelectorAll(".ev[data-ev]").forEach(e=>e.onclick=()=>openModal(e.dataset.ev, ymd(cursor)));
   main.querySelectorAll("[data-memoopen]").forEach(e=>e.onclick=()=>openMemo(e.dataset.memoopen));
   main.querySelectorAll("#condDots i").forEach(el=>el.onclick=()=>{
     const n=Number(el.dataset.cond);
@@ -1719,7 +1890,7 @@ function diaryBlocksHTML(dia){
       ${i>0?`<button data-bup="${i}">↑</button>`:""}
       ${i<blocks.length-1?`<button data-bdown="${i}">↓</button>`:""}
       <button data-bdel="${i}">✕</button></div>`;
-    if(b.type==="img")return `<div class="blk blk-img">${ctrl}<img src="${b.v}"></div>`;
+    if(b.type==="img")return `<div class="blk blk-img">${ctrl}<img class="zoomable" src="${b.v}"></div>`;
     return `<div class="blk blk-text">${ctrl}<textarea class="btext" data-bi="${i}" placeholder="내용을 입력하세요…">${esc(b.v||"")}</textarea></div>`;
   }).join("");
 }
@@ -1813,27 +1984,31 @@ function renderPlannerBody(){
       </div>`;
     });
   }else if(t==="study"){
-    h+=`<div class="pform"><button class="btn primary" id="sAddLec">＋ 강의 추가</button>
-      <div style="font-size:11px;color:var(--muted);">강의명·플랫폼을 넣고, 커리큘럼은 PDF 첨부나 붙여넣기로 가져와요</div></div>`;
-    const list=data.planner.study;
-    if(!list.length)h+=emptyP("수강 중인 강의를 추가해보세요");
-    else list.forEach(lec=>{
-      const total=(lec.lessons||[]).filter(x=>!x.sec).length, done=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;
-      const p=total?Math.round(done/total*100):0;
-      h+=`<div class="lec" data-lec="${lec.id}">
-        <div class="lechead"><div><div class="lecname">${esc(lec.name)}</div>
-          <div class="lecplat">${esc(lec.platform||"")}${total?` · ${done}/${total}강`:" · 커리큘럼 없음"}</div></div>
-          <button class="del" data-lecdel="${lec.id}">✕</button></div>
-        <div class="bar"><i style="width:${p}%"></i></div>
-        <div class="lecpct">${p}%</div>
-        ${total?`<button class="lectoggle" data-lectog="${lec.id}">진도 ▾</button>
-          <div class="lessons" id="lessons-${lec.id}" style="display:none;">
-          ${lec.lessons.map((ls,i)=>ls.sec
-            ?`<div class="lesson sechd">📂 <span>${esc(ls.t)}</span></div>`
-            :`<label class="lesson"><input type="checkbox" data-ll="${lec.id}" data-li="${i}" ${ls.done?"checked":""}><span>${esc(ls.t)}</span></label>`).join("")}
-          </div>`:`<button class="lectoggle" data-lecimport="${lec.id}">커리큘럼 가져오기</button>`}
-      </div>`;
+    const fields=data.studyFields||[], sources=data.planner.study||[], notes=data.studyNotes||[];
+    const hasUnfiled=sources.some(x=>!x.field)||notes.some(x=>!x.field);
+    // 분야 필터 칩
+    h+=`<div class="fieldbar">`
+      +`<div class="fchip${studyField==="전체"?" on":""}" data-field="전체">전체</div>`
+      +fields.map(f=>`<div class="fchip${studyField===f?" on":""}" data-field="${esc(f)}">${esc(f)}</div>`).join("")
+      +(hasUnfiled?`<div class="fchip${studyField==="__none"?" on":""}" data-field="__none">미분류</div>`:"")
+      +`<div class="fchip add" id="fieldAdd">＋분야</div></div>`;
+    const inField=x=> studyField==="전체"?true:(studyField==="__none"?!x.field:x.field===studyField);
+    // 자료 (강의·서적)
+    const srcList=sources.filter(inField);
+    h+=`<div class="ssec"><div class="ssechd">📚 자료<span class="scount">${srcList.length}</span><button class="saddbtn" id="sAddLec">＋ 자료</button></div>`;
+    if(!srcList.length)h+=emptyP("강의·서적 자료를 추가해보세요");
+    else srcList.forEach(lec=>{h+=sourceCard(lec);});
+    h+=`</div>`;
+    // 노트 (포스트)
+    const noteList=notes.filter(inField).sort((a,b)=>{
+      const ka=a.date||(a.ts?ymd(new Date(a.ts)):""), kb=b.date||(b.ts?ymd(new Date(b.ts)):"");
+      if(ka!==kb)return kb.localeCompare(ka);
+      return (b.ts||0)-(a.ts||0);
     });
+    h+=`<div class="ssec"><div class="ssechd">📝 노트<span class="scount">${noteList.length}</span><button class="saddbtn" id="sAddNote">＋ 노트</button></div>`;
+    if(!noteList.length)h+=emptyP("기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)");
+    else noteList.forEach(n=>{h+=noteCard(n);});
+    h+=`</div>`;
   }else if(t==="todos"){
     h+=`<div class="pform"><div class="row"><input id="tDate" type="date"><input id="tText" placeholder="할 일 (날짜 비우면 미정)"></div>
       <div class="row"><textarea id="tMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
@@ -1872,12 +2047,55 @@ function plCard(type,a,meta){
     <button class="del" data-pdel>✕</button></div>`;
 }
 function emptyP(msg){return `<div class="empty">${msg}</div>`;}
+function sourceCard(lec){
+  const isBook=lec.type==="book", unit=isBook?"장":"강", icon=isBook?"📖":"🎓";
+  const total=(lec.lessons||[]).filter(x=>!x.sec).length, done=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;
+  const p=total?Math.round(done/total*100):0;
+  const sub=esc(lec.platform||"");
+  const meta=[sub, total?`${done}/${total}${unit}`:(isBook?"목차 없음":"커리큘럼 없음"), lec.field?esc(lec.field):""].filter(Boolean).join(" · ");
+  return `<div class="lec" data-lec="${lec.id}">
+    <div class="lechead"><div><div class="lecname">${icon} ${esc(lec.name)}</div>
+      <div class="lecplat">${meta}</div></div>
+      <button class="del" data-lecdel="${lec.id}">✕</button></div>
+    <div class="bar"><i style="width:${p}%"></i></div>
+    <div class="lecpct">${p}%</div>
+    ${total?`<div class="lecbtns"><button class="lectoggle" data-lectog="${lec.id}">진도 ▾</button><button class="lecsched" data-lecsched="${lec.id}">📅 학습 일정</button></div>
+      <div class="lessons" id="lessons-${lec.id}" style="display:none;">
+      ${lec.lessons.map((ls,i)=>ls.sec
+        ?`<div class="lesson sechd">📂 <span>${esc(ls.t)}</span></div>`
+        :`<label class="lesson"><input type="checkbox" data-ll="${lec.id}" data-li="${i}" ${ls.done?"checked":""}><span>${esc(ls.t)}</span></label>`).join("")}
+      </div>`:`<button class="lectoggle" data-lecimport="${lec.id}">${isBook?"목차 가져오기":"커리큘럼 가져오기"}</button>`}
+  </div>`;
+}
+function noteCard(n){
+  let ds="";
+  if(n.date){const d=parseYmd(n.date);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())} (${WEEK[d.getDay()]})`;}
+  else if(n.ts){const d=new Date(n.ts);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}`;}
+  return `<div class="notecard" data-noteopen="${n.id}">
+    <div class="notehead"><div class="ntt">${esc(n.title||"(제목 없음)")}</div><button class="nedit" data-noteedit="${n.id}">✎</button></div>
+    <div class="nmeta">${n.field?`<span class="fbadge">${esc(n.field)}</span>`:""}${ds?`<span class="ndate">${ds}</span>`:""}</div>
+    ${n.body?`<div class="nbody">${esc(n.body)}</div>`:""}
+    ${(n.images&&n.images.length)?`<div class="cardimgs">${n.images.slice(0,3).map(src=>`<img class="zoomable" src="${src}">`).join("")}${n.images.length>3?`<span class="imore">+${n.images.length-3}</span>`:""}</div>`:""}
+  </div>`;
+}
+function addStudyField(){
+  const name=(window.prompt("새 학습 분야 이름 (예: 3D · 블렌더)")||"").trim();
+  if(!name)return;
+  data.studyFields=data.studyFields||[];
+  if(!data.studyFields.includes(name))data.studyFields.push(name);
+  studyField=name; persist(); renderPlannerBody();
+}
 function bindPlannerForms(){
   const g=id=>document.getElementById(id);
   const add=(arr,obj)=>{obj.id=uid();obj.done=false;data.planner[arr].push(obj);persist();renderPlannerBody();};
   if(g("aAdd"))g("aAdd").onclick=()=>{const ti=g("aTitle").value.trim();if(!ti)return toast("약속 제목을 입력해요");
     add("appts",{title:ti,date:g("aDate").value||ymd(new Date()),time:g("aTime").value,who:g("aWho").value.trim(),place:g("aPlace").value.trim(),memo:g("aMemo").value.trim(),remind:g("aRemind").value||null});};
   if(g("sAddLec"))g("sAddLec").onclick=()=>openStudyModal(null);
+  if(g("sAddNote"))g("sAddNote").onclick=()=>openNoteModal(null);
+  if(g("fieldAdd"))g("fieldAdd").onclick=addStudyField;
+  document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;renderPlannerBody();});
+  document.querySelectorAll("[data-noteopen]").forEach(el=>el.onclick=e=>{if(e.target.closest("[data-noteedit]"))return;openNoteModal(el.dataset.noteopen);});
+  document.querySelectorAll("[data-noteedit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openNoteModal(b.dataset.noteedit);});
   if(g("wAdd"))g("wAdd").onclick=()=>openWork(null);
   document.querySelectorAll("[data-wedit]").forEach(b=>b.onclick=()=>openWork(b.dataset.wedit));
   document.querySelectorAll("[data-wstatus]").forEach(b=>b.onclick=()=>{
@@ -1891,6 +2109,7 @@ function bindPlannerForms(){
     const box=document.getElementById("lessons-"+b.dataset.lectog);
     if(box){const show=box.style.display==="none";box.style.display=show?"block":"none";b.textContent=show?"진도 ▴":"진도 ▾";}});
   document.querySelectorAll("[data-lecimport]").forEach(b=>b.onclick=()=>openStudyModal(b.dataset.lecimport));
+  document.querySelectorAll("[data-lecsched]").forEach(b=>b.onclick=()=>openSchedModal(b.dataset.lecsched));
   document.querySelectorAll("[data-ll]").forEach(cb=>cb.onclick=()=>{
     const lec=data.planner.study.find(x=>x.id===cb.dataset.ll);if(!lec)return;
     lec.lessons[Number(cb.dataset.li)].done=cb.checked;persist();
@@ -1927,20 +2146,25 @@ const G=id=>document.getElementById(id);
 function buildSwatches(){const w=G("swatches");w.innerHTML="";CATS.forEach(c=>{
   const s=document.createElement("div");s.className="sw"+(c.key===selColor?" sel":"");s.style.background=c.c;s.title=c.name;
   s.onclick=()=>{selColor=c.key;buildSwatches();};w.appendChild(s);});}
-function openModal(id){
-  editingId=id||null; const del=G("deleteBtn");
+let modalDate=null;
+function openModal(id,occDate){
+  editingId=id||null; modalDate=occDate||null;
+  const del=G("deleteBtn"), delThis=G("deleteThisBtn");
   if(id){const ev=data.events.find(e=>e.id===id);if(!ev)return;
     G("modalTitle").textContent="✦ 일정 수정";
     G("fTitle").value=ev.title;G("fDate").value=ev.date;G("fTime").value=ev.time||"";G("fMemo").value=ev.memo||"";
     G("fEndDate").value=ev.endDate||"";G("fEndTime").value=ev.endTime||"";
     selColor=ev.color||"rose";G("fRepeat").value=ev.repeat||"none";
     G("fRemindAt").checked=!!ev.remindAt;G("fRemindBefore").checked=ev.remindBefore!=null;G("fBeforeMin").value=String(ev.remindBefore||10);
+    const recurring=ev.repeat&&ev.repeat!=="none";
+    if(recurring&&modalDate){ delThis.style.display="inline-block"; del.textContent="전체 삭제"; }
+    else{ delThis.style.display="none"; del.textContent="삭제"; }
     del.style.display="inline-block";
   }else{G("modalTitle").textContent="✦ 새 일정";
     G("fTitle").value="";G("fDate").value=ymd(cursor);G("fTime").value="";G("fMemo").value="";
     G("fEndDate").value="";G("fEndTime").value="";
     selColor="rose";G("fRepeat").value="none";G("fRemindAt").checked=false;G("fRemindBefore").checked=false;G("fBeforeMin").value="10";
-    del.style.display="none";}
+    del.style.display="none"; delThis.style.display="none"; del.textContent="삭제";}
   buildSwatches();overlay.classList.add("show");setTimeout(()=>G("fTitle").focus(),50);
 }
 function closeModal(){overlay.classList.remove("show");}
@@ -1956,6 +2180,11 @@ G("saveBtn").onclick=()=>{
   persist();closeModal();render();toast("저장했어요 ✦");
 };
 G("deleteBtn").onclick=()=>{if(editingId)data.events=data.events.filter(e=>e.id!==editingId);persist();closeModal();render();toast("삭제했어요");};
+G("deleteThisBtn").onclick=()=>{
+  if(editingId&&modalDate){const ev=data.events.find(e=>e.id===editingId);
+    if(ev){ev.exdates=ev.exdates||[]; if(!ev.exdates.includes(modalDate))ev.exdates.push(modalDate);}}
+  persist();closeModal();render();toast("이 날짜만 삭제했어요");
+};
 G("cancelBtn").onclick=closeModal; overlay.onclick=e=>{if(e.target===overlay)closeModal();};
 
 /* ============ Photo optimize ============ */
@@ -2016,20 +2245,38 @@ G("photoInput").onchange=e=>{
 };
 
 /* ============ Study (lecture + curriculum) ============ */
-const studyOverlay=G("studyOverlay"); let studyEditId=null; let previewLessons=[];
+const studyOverlay=G("studyOverlay"); let studyEditId=null; let previewLessons=[]; let lecType="lecture";
+function fillFieldSelect(sel,current){
+  const fields=data.studyFields||[];
+  let opts=`<option value="">미분류</option>`;
+  fields.forEach(f=>opts+=`<option value="${esc(f)}">${esc(f)}</option>`);
+  if(current&&!fields.includes(current))opts+=`<option value="${esc(current)}">${esc(current)}</option>`;
+  opts+=`<option value="__new">＋ 새 분야 만들기…</option>`;
+  sel.innerHTML=opts; sel.value=current||"";
+}
+function setupFieldSelect(sel,current){
+  fillFieldSelect(sel,current); sel.dataset.prev=current||"";
+  sel.onchange=()=>{
+    if(sel.value==="__new"){
+      const name=(window.prompt("새 학습 분야 이름 (예: 3D · 블렌더)")||"").trim();
+      if(name){data.studyFields=data.studyFields||[];if(!data.studyFields.includes(name))data.studyFields.push(name);persist();fillFieldSelect(sel,name);sel.dataset.prev=name;}
+      else fillFieldSelect(sel,sel.dataset.prev||"");
+    }else sel.dataset.prev=sel.value;
+  };
+}
 function _curPad(n){ n=String(parseInt(n,10)); return n.length<2?"0"+n:n; }
 function _curDedupe(arr){ const seen=new Set(),o=[]; for(const x of arr){ if(seen.has(x))continue; seen.add(x); o.push(x);} return o; }
 function parseCurriculum(text){
   // ── 1) 시간형(예: "1. 제목 07:16") : CLASS101·인프런 등 ─────────────
   let s=String(text).replace(/\r/g," ").replace(/\n+/g," ");
-  s=s.replace(/\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}\.\s*오[전후]\s*\d{1,2}:\d{2}/g," ");
+  s=s.replace(/\d{1,2}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?\s*오\s*[전후]\s*\d{1,2}\s*:\s*\d{2}/g," ");
   s=s.replace(/\d+\.\d+\s*\(\d+\)/g," ");
   s=s.replace(/https?:\/\/\S+/g," ").replace(/CLASS101[^]*?올인원/g," ")
      .replace(/CHAPTER\s*\d+/gi," ").replace(/강의\s*\d+\s*개/g," ").replace(/재생하기/g," ")
      .replace(/100만원\S*/g," ").replace(/쿠폰\S*/g," ").replace(/\b\d+위\b/g," ")
      .replace(/\b\d{1,3}\s*\/\s*\d{1,3}\b/g," ");
   const re=/(\d{1,3})\.\s*([^]*?)\s+(\d{1,2}:\d{2}(?::\d{2})?)(?=\D|$)/g;
-  const junkT=/(오[전후]\s*\d|CLASS101|쿠폰|적용 중)/;
+  const junkT=/(^\s*오\s*[전후]|CLASS101|쿠폰|적용 중|https?:)/;
   const timed=[]; let m;
   while((m=re.exec(s))){
     let t=m[2].replace(/\s+/g," ").trim();
@@ -2052,7 +2299,7 @@ function parseCurriculum(text){
   // 잡음 줄 제거(페이지 머리글·푸터·전화/사업자번호·배너 등)
   const noiseUrl=/(https?:\/\/|\.co\.kr\b|\.com\b|@[a-z0-9.]+\.[a-z])/i;
   const noiseWord=/(슈퍼세일|쿠폰|혜택 마감|관심을 보였|얼리버드|콜로소캠프|평생교육|수강후기|클래스컷|웰컴|사업자등록번호|통신판매업|원격평생교육|개인정보|고객센터|CEO|대표자|주소\s*:|이메일|MARQVISION|데이원컴퍼니|저작권|지식재산|문의하기|채용|환불규정|FAQ|강의 사용 툴|유의사항|전체 공개|보여드려요)/;
-  const isDateHeader=l=>/^\d{1,2}\.\s*\d{1,2}\.\s*\d{1,2}\.?\s*오[전후]/.test(l);
+  const isDateHeader=l=>/^\d{1,2}\s*\.\s*\d{1,2}\s*\.\s*\d{1,2}\s*\.?\s*오\s*[전후]/.test(l);
   const isPager=l=>/^\d{1,3}\s*\/\s*\d{1,3}$/.test(l);
   const isRating=l=>/^\d\.\d\s*(\(\d+\))?$/.test(l)||/^총\s*\d+개/.test(l);
   const isNumbery=l=>/^[+()]?\d[\d\-\s,()]*[호층]?$/.test(l); // 전화·사업자번호·페이지 등 숫자 위주
@@ -2111,8 +2358,25 @@ async function extractPdfText(file){
   const buf=await file.arrayBuffer();
   const pdf=await pdfjsLib.getDocument({data:buf}).promise;
   let text="";
-  for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p);const c=await page.getTextContent();
-    text+=c.items.map(i=>i.str).join("\n")+"\n";}
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const c=await page.getTextContent();
+    // PDF.js가 한글을 글자 단위로 쪼개 주는 경우가 있어, 좌표로 같은 줄을 재구성한다.
+    const items=c.items.filter(i=>i&&i.transform&&typeof i.str==="string"&&i.str.length);
+    // y 내림차순(위→아래), 같은 줄이면 x 오름차순(왼→오)
+    items.sort((a,b)=>{const dy=b.transform[5]-a.transform[5]; if(Math.abs(dy)>3)return dy; return a.transform[4]-b.transform[4];});
+    const rows=[]; let cur=null;
+    for(const it of items){
+      const y=it.transform[5], x=it.transform[4], w=it.width||0,
+            h=it.height||Math.abs(it.transform[3])||9;
+      if(!cur || Math.abs(cur.y-y)>Math.max(3,h*0.6)){ cur={y,endX:x+w,text:it.str}; rows.push(cur); continue; }
+      // 같은 줄: x 간격이 글자폭의 30% 이상이면 공백 삽입(붙어 있으면 붙임 → 한글 안 쪼개짐)
+      const gap=x-cur.endX;
+      const sep=(/\s$/.test(cur.text)||/^\s/.test(it.str))?"":(gap>h*0.3?" ":"");
+      cur.text+=sep+it.str; cur.endX=x+w;
+    }
+    text+=rows.map(r=>r.text.replace(/\s+$/,"")).join("\n")+"\n";
+  }
   return text;
 }
 function showPreview(lessons){
@@ -2124,13 +2388,114 @@ function showPreview(lessons){
 function openStudyModal(id){
   studyEditId=id||null; previewLessons=[];
   const lec=id?data.planner.study.find(x=>x.id===id):null;
-  G("studyTitle").textContent=lec?"✦ 커리큘럼 편집":"✦ 강의 추가";
+  lecType=lec?(lec.type||"lecture"):"lecture";
+  G("studyTitle").textContent=lec?"✦ 자료 편집":"✦ 자료 추가";
   G("lecName").value=lec?lec.name:""; G("lecPlat").value=lec?(lec.platform||""):"";
+  document.querySelectorAll("#lecType .dc").forEach(el=>{
+    el.classList.toggle("on",el.dataset.lt===lecType);
+    el.onclick=()=>{lecType=el.dataset.lt;document.querySelectorAll("#lecType .dc").forEach(x=>x.classList.toggle("on",x===el));applyLecTypeLabels();};
+  });
+  applyLecTypeLabels();
+  const defField=lec?(lec.field||""):((studyField!=="전체"&&studyField!=="__none")?studyField:"");
+  setupFieldSelect(G("lecField"),defField);
   G("lecPaste").value=""; G("lecStatus").textContent="";
   showPreview(lec&&lec.lessons?lec.lessons.map(x=>x.sec?"# "+x.t:x.t):[]);
   studyOverlay.classList.add("show");
 }
+function applyLecTypeLabels(){
+  const book=lecType==="book";
+  G("lecNameLabel").textContent=book?"서적명":"강의명";
+  G("lecName").placeholder=book?"예: 블렌더 마스터 가이드":"예: 실전 블렌더";
+  G("lecPlatLabel").textContent=book?"저자·출판사":"플랫폼";
+  G("lecPlat").placeholder=book?"예: 홍길동 / OO출판":"예: 인프런";
+  G("lecImpLabel").textContent=book?"목차 가져오기":"커리큘럼 가져오기";
+}
 function closeStudy(){studyOverlay.classList.remove("show");}
+
+/* ===== 학습 일정 만들기 (커리큘럼 → 달력 일정) ===== */
+const schedOverlay=G("schedOverlay"); let schedLecId=null;
+const WD_LABEL=["일","월","화","수","목","금","토"];
+function weekMonday(d){const x=new Date(d);const off=(x.getDay()+6)%7;x.setDate(x.getDate()-off);x.setHours(0,0,0,0);return x;}
+function pad2(n){n=String(n);return n.length<2?"0"+n:n;}
+function lecUnits(lec){
+  const ls=lec.lessons||[]; const hasSec=ls.some(x=>x.sec);
+  const isBook=lec&&lec.type==="book"; const secKind=isBook?"부":"Sec", itemKind=isBook?"장":"강";
+  if(hasSec){ const u=[]; let cur=null,idx=0;
+    ls.forEach(x=>{ if(x.sec){idx++;cur={kind:secKind,n:idx,title:x.t,items:[]};u.push(cur);}
+      else{ if(!cur){idx++;cur={kind:secKind,n:idx,title:"",items:[]};u.push(cur);} cur.items.push(x.t);} });
+    return u;
+  }
+  return ls.map((x,i)=>({kind:itemKind,n:i+1,title:x.t.replace(/^\d{1,3}\.\s*/,""),items:[x.t]}));
+}
+function schedDaysSelected(){return [...document.querySelectorAll("#scDays .dc.on")].map(el=>Number(el.dataset.wd)).sort((a,b)=>a-b);}
+function buildSchedulePlan(lec){
+  const units=lecUnits(lec);
+  const perWeek=Math.max(1,Math.min(6,parseInt(G("scPerWeek").value,10)||2));
+  const weeks=[]; for(let i=0;i<units.length;i+=perWeek)weeks.push(units.slice(i,i+perWeek));
+  const out=[];
+  weeks.forEach((wk,i)=>{
+    const kind=wk[0].kind, first=wk[0].n, last=wk[wk.length-1].n;
+    const range=first===last?pad2(first):pad2(first)+"~"+pad2(last);
+    let rep=wk.map(u=>u.title).filter(Boolean).join(" · ");
+    if(rep.length>18)rep=rep.slice(0,18)+"…";
+    const title=`${i+1}주차: ${kind} ${range}${rep?" "+rep:""}`;
+    const memo=wk.map(u=>u.kind==="Sec"
+      ? `• ${u.kind} ${pad2(u.n)} ${u.title}${u.items.length?` (${u.items.length}강)`:""}`
+      : `• ${pad2(u.n)}. ${u.title}`).join("\n");
+    out.push({title,memo,review:false});
+  });
+  if(G("scReview").checked)
+    out.push({title:"✨ 예비·복습 주 (밀리면 여기서 따라잡기)",memo:"밀린 세션을 이 주에 보충해요.",review:true});
+  return out;
+}
+function scheduleDates(plan){
+  const startVal=G("scStart").value; const base=startVal?parseYmd(startVal):new Date();
+  const anchorMon=weekMonday(base); const days=schedDaysSelected(); if(!days.length)return [];
+  const evs=[];
+  plan.forEach((p,wi)=>{ days.forEach(wd=>{
+    const dt=new Date(anchorMon); dt.setDate(anchorMon.getDate()+wi*7+((wd+6)%7));
+    if(wi===0&&startVal&&ymd(dt)<startVal)return; // 첫 주엔 시작일 이전 제외
+    evs.push({date:ymd(dt),title:p.title,memo:p.memo,review:p.review});
+  }); });
+  return evs.sort((a,b)=>a.date.localeCompare(b.date));
+}
+function renderSchedPreview(){
+  const lec=data.planner.study.find(x=>x.id===schedLecId); if(!lec)return;
+  const plan=buildSchedulePlan(lec); const days=schedDaysSelected();
+  const dnames=days.map(d=>WD_LABEL[d]).join("·")||"(요일 선택)";
+  const evs=scheduleDates(plan);
+  G("schedPreview").innerHTML=plan.map(p=>`<div>${esc(p.title)}</div>`).join("")
+    +`<div style="margin-top:6px;color:var(--muted);">→ ${dnames} · ${G("scStartTime").value}~${G("scEndTime").value} · 총 ${evs.length}개 일정</div>`;
+}
+function openSchedModal(lecId){
+  schedLecId=lecId; const lec=data.planner.study.find(x=>x.id===lecId); if(!lec)return;
+  if(!(lec.lessons||[]).length)return toast("먼저 커리큘럼을 불러와요");
+  G("schedLecName").textContent=lec.name+(lec.platform?" · "+lec.platform:"");
+  G("scStart").value=ymd(weekMonday(new Date()));
+  G("scPerWeek").value="2"; G("scStartTime").value="21:00"; G("scEndTime").value="22:30"; G("scReview").checked=true;
+  const def=[1,2];
+  G("scDays").innerHTML=WD_LABEL.map((w,i)=>`<div class="dc${def.includes(i)?" on":""}" data-wd="${i}">${w}</div>`).join("");
+  document.querySelectorAll("#scDays .dc").forEach(el=>el.onclick=()=>{el.classList.toggle("on");renderSchedPreview();});
+  ["scStart","scPerWeek","scStartTime","scEndTime","scReview"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
+  renderSchedPreview(); schedOverlay.classList.add("show");
+}
+function closeSched(){schedOverlay.classList.remove("show");}
+G("schedCancel").onclick=closeSched;
+schedOverlay.onclick=e=>{if(e.target===schedOverlay)closeSched();};
+G("schedMake").onclick=()=>{
+  const lec=data.planner.study.find(x=>x.id===schedLecId); if(!lec)return;
+  if(!schedDaysSelected().length)return toast("학습 요일을 하나 이상 골라요");
+  const evs=scheduleDates(buildSchedulePlan(lec));
+  if(!evs.length)return toast("만들 일정이 없어요");
+  const before=data.events.length;
+  data.events=data.events.filter(e=>e.studyOf!==lec.id);
+  const removed=before-data.events.length;
+  const st=G("scStartTime").value||"21:00", et=G("scEndTime").value||"22:30";
+  evs.forEach(e=>data.events.push({id:uid(),title:e.title,date:e.date,time:st,endTime:et,endDate:"",
+    color:e.review?"plum":"rose",repeat:"none",memo:e.memo,studyOf:lec.id,remindAt:false,remindBefore:null}));
+  persist(); closeSched(); render();
+  toast(`학습 일정 ${evs.length}개를 만들었어요 📅${removed?` (기존 ${removed}개 정리)`:""}`);
+};
 G("lecPasteBtn").onclick=()=>{
   const parsed=parseCurriculum(G("lecPaste").value);
   if(!parsed.length){G("lecStatus").textContent="변환할 목차를 찾지 못했어요. 목차만 붙여넣어 보세요.";return;}
@@ -2158,7 +2523,8 @@ G("lecPreview").oninput=()=>{const arr=G("lecPreview").value.split(/\r?\n/).map(
 G("studyCancel").onclick=closeStudy;
 studyOverlay.onclick=e=>{if(e.target===studyOverlay)closeStudy();};
 G("studySave").onclick=()=>{
-  const name=G("lecName").value.trim(); if(!name)return toast("강의명을 입력해요");
+  const name=G("lecName").value.trim(); if(!name)return toast((lecType==="book"?"서적명":"강의명")+"을 입력해요");
+  let field=G("lecField").value; if(field==="__new")field="";
   const lessonsText=G("lecPreview").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   // "# 제목" → 섹션 헤더(체크 없음), 그 외 → 일반 강의
   const toLesson=(line,doneMap)=>{
@@ -2168,16 +2534,151 @@ G("studySave").onclick=()=>{
   };
   if(studyEditId){
     const lec=data.planner.study.find(x=>x.id===studyEditId);
-    lec.name=name; lec.platform=G("lecPlat").value.trim();
+    lec.name=name; lec.platform=G("lecPlat").value.trim(); lec.type=lecType; lec.field=field;
     // 기존 완료상태 최대한 보존(제목 일치 기준)
     const doneMap={}; (lec.lessons||[]).forEach(l=>{if(!l.sec)doneMap[l.t]=l.done;});
     lec.lessons=lessonsText.map(t=>toLesson(t,doneMap));
   }else{
-    data.planner.study.push({id:uid(),name,platform:G("lecPlat").value.trim(),
+    data.planner.study.push({id:uid(),name,platform:G("lecPlat").value.trim(),type:lecType,field,
       lessons:lessonsText.map(t=>toLesson(t,null))});
   }
-  persist(); closeStudy(); renderPlannerBody(); toast("강의를 저장했어요 ✦");
+  persist(); closeStudy(); renderPlannerBody(); toast((lecType==="book"?"서적":"강의")+"을 저장했어요 ✦");
 };
+
+/* ===== 학습 노트(포스트) 모달 ===== */
+const noteOverlay=G("noteOverlay"); let noteEditId=null, noteImagesArr=[];
+function renderNImages(){
+  G("nImages").innerHTML=noteImagesArr.map((src,i)=>`<div class="imgthumb"><img class="zoomable" src="${src}"><button data-nimdel="${i}">✕</button></div>`).join("");
+  G("nImages").querySelectorAll("[data-nimdel]").forEach(b=>b.onclick=()=>{noteImagesArr.splice(Number(b.dataset.nimdel),1);renderNImages();});
+}
+G("noteImgInput").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+  optimizeToDataURL(f,1280,"image/jpeg",0.7,durl=>{noteImagesArr.push(durl);renderNImages();toast("사진 추가(최적화됨)");});};
+G("nImgAdd").onclick=()=>G("noteImgInput").click();
+function openNoteModal(id){
+  noteEditId=id||null;
+  const n=id?data.studyNotes.find(x=>x.id===id):null;
+  G("noteTitle").textContent=n?"✦ 노트 편집":"✦ 새 노트";
+  G("nTitle").value=n?n.title:""; G("nBody").value=n?(n.body||""):"";
+  G("nDate").value=n?(n.date||""):ymd(new Date());
+  noteImagesArr=n?JSON.parse(JSON.stringify(n.images||[])):[];
+  const defField=n?(n.field||""):((studyField!=="전체"&&studyField!=="__none")?studyField:"");
+  setupFieldSelect(G("noteField"),defField);
+  renderNImages();
+  G("noteDelete").style.display=id?"inline-block":"none";
+  noteOverlay.classList.add("show"); setTimeout(()=>G("nTitle").focus(),50);
+}
+function closeNote(){noteOverlay.classList.remove("show");}
+G("noteCancel").onclick=closeNote; noteOverlay.onclick=e=>{if(e.target===noteOverlay)closeNote();};
+G("noteSave").onclick=()=>{
+  const title=G("nTitle").value.trim(), body=G("nBody").value.trim();
+  if(!title&&!body&&!noteImagesArr.length)return toast("내용을 입력해요");
+  let field=G("noteField").value; if(field==="__new")field="";
+  const obj={field,title,body,images:noteImagesArr,date:G("nDate").value||""};
+  if(noteEditId){Object.assign(data.studyNotes.find(x=>x.id===noteEditId),obj);}
+  else{obj.id=uid();obj.ts=Date.now();data.studyNotes.push(obj);}
+  persist(); closeNote(); renderPlannerBody(); toast("노트를 저장했어요 ✦");
+};
+G("noteDelete").onclick=()=>{if(noteEditId)data.studyNotes=data.studyNotes.filter(x=>x.id!==noteEditId);persist();closeNote();renderPlannerBody();toast("삭제했어요");};
+
+/* ===== 이미지 확대·저장(다운로드) 라이트박스 ===== */
+const imgLightbox=G("imgLightbox"); let lbSrc="";
+function openLightbox(src){ lbSrc=src; G("lbImg").src=src; imgLightbox.classList.add("show"); }
+function downloadImage(src){
+  try{
+    const a=document.createElement("a"); a.href=src;
+    a.download="PanUr_"+Date.now()+(/^data:image\/png/i.test(src)?".png":".jpg");
+    document.body.appendChild(a); a.click(); a.remove(); toast("이미지를 저장했어요");
+  }catch(e){toast("저장 실패: "+e.message);}
+}
+G("lbClose").onclick=()=>imgLightbox.classList.remove("show");
+G("lbSave").onclick=()=>downloadImage(lbSrc);
+imgLightbox.onclick=e=>{if(e.target===imgLightbox)imgLightbox.classList.remove("show");};
+// 첨부 이미지(zoomable) 탭 → 라이트박스 (카드 편집 등 다른 클릭보다 먼저 가로채기)
+document.addEventListener("click",e=>{
+  const t=e.target; if(!t||!t.closest)return;
+  const img=t.closest("img.zoomable");
+  if(img){ e.stopPropagation(); e.preventDefault(); openLightbox(img.currentSrc||img.src); }
+},true);
+
+/* ===== 여행 일정 탭 ===== */
+const tripOverlay=G("tripOverlay"); let tripEditId=null;
+function fmtTripDate(ds){ if(!ds)return ""; const d=parseYmd(ds); return `${d.getMonth()+1}.${d.getDate()} (${WEEK[d.getDay()]})`; }
+function parseItinerary(text){
+  const days=[]; let cur=null;
+  String(text||"").split(/\r?\n/).forEach(line=>{
+    const l=line.trim(); if(!l)return;
+    const dm=l.match(/^#\s*(.*)$/);
+    if(dm){ cur={head:dm[1].trim(),items:[]}; days.push(cur); return; }
+    if(!cur){ cur={head:"",items:[]}; days.push(cur); }
+    let time="", rest=l;
+    const tm=l.match(/^(\S+)\s+(.*)$/);
+    if(tm && /[\d:~]/.test(tm[1])){ time=tm[1]; rest=tm[2]; }
+    let title=rest, note=""; const p=rest.indexOf("|");
+    if(p>=0){ title=rest.slice(0,p).trim(); note=rest.slice(p+1).trim(); }
+    cur.items.push({time,title:title.trim(),note});
+  });
+  return days;
+}
+function renderTripCard(t){
+  const days=parseItinerary(t.itinerary);
+  const notes=String(t.notes||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const range=[t.startDate,t.endDate].filter(Boolean).map(fmtTripDate).join(" – ");
+  const dayHues=["var(--gold,#D9C08C)","var(--lav)","var(--mint)","var(--rose)"];
+  let h=`<div class="trip" data-trip="${t.id}">
+    <div class="trip-hd"><div><h3>${esc(t.title||"여행")}</h3>${t.subtitle?`<div class="trip-sub">${esc(t.subtitle)}</div>`:""}</div>
+      <div style="text-align:right;"><div class="trip-range">${esc(range)}</div><button class="nedit" data-tripedit="${t.id}">✎</button></div></div>`;
+  if(t.flightOut||t.flightRet){
+    h+=`<div class="trip-flight">✈ 항공`;
+    if(t.flightOut)h+=`<div class="trip-fl">${esc(t.flightOut)}</div>`;
+    if(t.flightRet)h+=`<div class="trip-fl">${esc(t.flightRet)}</div>`;
+    h+=`</div>`;
+  }
+  days.forEach((d,i)=>{
+    const hue=dayHues[i%dayHues.length];
+    h+=`<div class="trip-day"><div class="trip-daybadge" style="background:${hue}">DAY ${i+1}</div><div class="trip-dayhead">${esc(d.head)}</div></div>`;
+    d.items.forEach(it=>{
+      h+=`<div class="trip-item"><div class="trip-time">${esc(it.time)}</div><div class="trip-body"><div class="trip-ttl">${esc(it.title)}</div>${it.note?`<div class="trip-note">${esc(it.note)}</div>`:""}</div></div>`;
+    });
+  });
+  if(notes.length) h+=`<div class="trip-notes"><b>꼭 확인</b>${notes.map(n=>`<div>• ${esc(n)}</div>`).join("")}</div>`;
+  h+=`</div>`;
+  return h;
+}
+function tripBodyHTML(){
+  const list=(data.trips||[]).slice().sort((a,b)=>(a.startDate||"9999").localeCompare(b.startDate||"9999"));
+  let h=`<div class="pform"><button class="btn primary" id="tripAdd">＋ 여행 추가</button>
+    <div style="font-size:11px;color:var(--muted);">항공·일자별 동선·메모를 한 장으로 정리해요</div></div>`;
+  h+= list.length ? list.map(renderTripCard).join("") : emptyP("여행 일정을 정리해보세요");
+  return h;
+}
+function bindTripBody(){
+  const g=id=>document.getElementById(id);
+  if(g("tripAdd"))g("tripAdd").onclick=()=>openTripModal(null);
+  document.querySelectorAll("[data-tripedit]").forEach(b=>b.onclick=()=>openTripModal(b.dataset.tripedit));
+}
+function openTripModal(id){
+  tripEditId=id||null;
+  const t=id?data.trips.find(x=>x.id===id):null;
+  G("tripModalTitle").textContent=t?"✦ 여행 편집":"✦ 새 여행";
+  G("tpTitle").value=t?t.title:""; G("tpSub").value=t?(t.subtitle||""):"";
+  G("tpStart").value=t?(t.startDate||""):""; G("tpEnd").value=t?(t.endDate||""):"";
+  G("tpFlightOut").value=t?(t.flightOut||""):""; G("tpFlightRet").value=t?(t.flightRet||""):"";
+  G("tpItin").value=t?(t.itinerary||""):""; G("tpNotes").value=t?(t.notes||""):"";
+  G("tripDelete").style.display=id?"inline-block":"none";
+  tripOverlay.classList.add("show"); setTimeout(()=>G("tpTitle").focus(),50);
+}
+function closeTrip(){tripOverlay.classList.remove("show");}
+G("tripCancel").onclick=closeTrip; tripOverlay.onclick=e=>{if(e.target===tripOverlay)closeTrip();};
+G("tripSave").onclick=()=>{
+  const title=G("tpTitle").value.trim(); if(!title)return toast("여행 제목을 입력해요");
+  const obj={title,subtitle:G("tpSub").value.trim(),startDate:G("tpStart").value||"",endDate:G("tpEnd").value||"",
+    flightOut:G("tpFlightOut").value.trim(),flightRet:G("tpFlightRet").value.trim(),
+    itinerary:G("tpItin").value,notes:G("tpNotes").value};
+  if(tripEditId){Object.assign(data.trips.find(x=>x.id===tripEditId),obj);}
+  else{obj.id=uid();data.trips.push(obj);}
+  persist(); closeTrip(); renderEtc(); toast("여행 일정을 저장했어요 ✦");
+};
+G("tripDelete").onclick=()=>{if(tripEditId)data.trips=data.trips.filter(x=>x.id!==tripEditId);persist();closeTrip();renderEtc();toast("삭제했어요");};
 
 /* ============ Memo ============ */
 function memoBodyHTML(){
@@ -2210,7 +2711,7 @@ function memoCard(m){
       <button class="medit">✎</button></div>
     ${m.date?`<div class="mdate">${m.date}</div>`:""}
     ${m.body?`<div class="mbody">${esc(m.body)}</div>`:""}
-    ${(m.images&&m.images.length)?`<div class="cardimgs">${m.images.slice(0,3).map(src=>`<img src="${src}">`).join("")}${m.images.length>3?`<span class="imore">+${m.images.length-3}</span>`:""}</div>`:""}
+    ${(m.images&&m.images.length)?`<div class="cardimgs">${m.images.slice(0,3).map(src=>`<img class="zoomable" src="${src}">`).join("")}${m.images.length>3?`<span class="imore">+${m.images.length-3}</span>`:""}</div>`:""}
     ${(m.links&&m.links.length)?`<div class="mlinks">${m.links.map(l=>`<a href="${esc(normUrl(l.url))}" target="_blank" rel="noopener">🔗 ${esc(l.name||l.url)}</a>`).join("")}</div>`:""}
     ${total?`<div class="mchecks">${m.checks.map((c,i)=>`<label class="mcheck"><input type="checkbox" data-mcheck="${i}" ${c.done?"checked":""}><span>${esc(c.text)}</span></label>`).join("")}<div class="mprog">${done}/${total}</div></div>`:""}
     <div class="mfoot"><button data-march="${m.id}">${m.archived?"복원":"보관"}</button></div>
@@ -2219,7 +2720,7 @@ function memoCard(m){
 // ---- Memo modal ----
 const memoOverlay=G("memoOverlay"); let memoEditId=null, memoLabel="", mLinksArr=[], mChecksArr=[], mImagesArr=[];
 function renderMImages(){G("mImages").innerHTML=mImagesArr.map((src,i)=>
-  `<div class="imgthumb"><img src="${src}"><button data-imdel="${i}">✕</button></div>`).join("");
+  `<div class="imgthumb"><img class="zoomable" src="${src}"><button data-imdel="${i}">✕</button></div>`).join("");
   G("mImages").querySelectorAll("[data-imdel]").forEach(b=>b.onclick=()=>{mImagesArr.splice(Number(b.dataset.imdel),1);renderMImages();});}
 function buildMSwatches(){const w=G("mSwatches");w.innerHTML="";
   const none=document.createElement("div");none.className="sw"+(memoLabel===""?" sel":"");none.style.background="var(--line)";none.title="없음";
@@ -2269,6 +2770,7 @@ function renderEtc(){
   const box=document.getElementById("etcbody");
   if(etcSub==="memo"){ box.innerHTML=memoBodyHTML(); bindMemoBody(renderEtc); }
   else if(etcSub==="material"){ box.innerHTML=materialBodyHTML(); bindMaterialBody(); }
+  else if(etcSub==="trip"){ box.innerHTML=tripBodyHTML(); bindTripBody(); }
   else if(etcSub==="summary"){ box.innerHTML=summaryBodyHTML(); bindSummaryBody(); }
   else if(etcSub==="weather"){ box.innerHTML=weatherBodyHTML(); bindWeather(); }
   else if(etcSub==="options"){ box.innerHTML=optionsBodyHTML(); bindOptions(); }
@@ -2630,7 +3132,7 @@ function matCard(m){
     <div class="memohead"><div class="mtt">${esc(m.title||"(제목 없음)")}</div>
       <span class="matkind">${esc(m.kind||"")}</span><button class="medit">✎</button></div>
     ${m.body?`<div class="mbody">${esc(m.body)}</div>`:""}
-    ${(m.images&&m.images.length)?`<div class="cardimgs">${m.images.slice(0,3).map(src=>`<img src="${src}">`).join("")}${m.images.length>3?`<span class="imore">+${m.images.length-3}</span>`:""}</div>`:""}
+    ${(m.images&&m.images.length)?`<div class="cardimgs">${m.images.slice(0,3).map(src=>`<img class="zoomable" src="${src}">`).join("")}${m.images.length>3?`<span class="imore">+${m.images.length-3}</span>`:""}</div>`:""}
     ${m.tags?`<div class="mtags">${esc(m.tags)}</div>`:""}
     <div class="mfoot"><button data-matarch="${m.id}">${m.archived?"복원":"보관"}</button></div>
   </div>`;
@@ -2666,7 +3168,7 @@ async function fetchFx(){
 /* ============ Material modal ============ */
 const matOverlay=G("matOverlay"); let matEditId=null; let xImagesArr=[];
 function renderXImages(){G("xImages").innerHTML=xImagesArr.map((src,i)=>
-  `<div class="imgthumb"><img src="${src}"><button data-xidel="${i}">✕</button></div>`).join("");
+  `<div class="imgthumb"><img class="zoomable" src="${src}"><button data-xidel="${i}">✕</button></div>`).join("");
   G("xImages").querySelectorAll("[data-xidel]").forEach(b=>b.onclick=()=>{xImagesArr.splice(Number(b.dataset.xidel),1);renderXImages();});}
 (function initKinds(){const sel=G("xKind"); if(sel)sel.innerHTML=MAT_KINDS.map(k=>`<option value="${k}">${k}</option>`).join("");})();
 function openMaterial(id){
@@ -2803,7 +3305,7 @@ function shift(dir){
     const order=["appts","work","study","todos","habits"];
     let i=order.indexOf(plannerType); i=(i+dir+order.length)%order.length; plannerType=order[i];
   }else if(view==="etc"){
-    const order=["memo","material","summary","weather","fx","options"];
+    const order=["memo","material","trip","summary","weather","fx","options"];
     let i=order.indexOf(etcSub); i=(i+dir+order.length)%order.length; etcSub=order[i]; jsave("panur_etcsub",etcSub);
   }
   render();
@@ -2811,11 +3313,7 @@ function shift(dir){
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{view=t.dataset.view;render();});
 monthSeg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
   monthMode=b.dataset.mode; monthSeg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); renderMonth();});
-G("fab").onclick=()=>{
-  if(view==="planner"){ if(plannerType==="work")openWork(null); else if(plannerType==="study")openStudyModal(null); else toast("플래너는 위 폼에서 추가해요"); return; }
-  if(view==="etc"){ if(etcSub==="memo")openMemo(null); else if(etcSub==="material")openMaterial(null); else toast("환율은 위에서 불러와요"); return; }
-  openModal(null);
-};
+/* (＋ 플로팅 버튼 제거됨 — 일정은 일간 뷰의 '일정 ＋', 플래너는 각 폼에서 추가) */
 
 /* ============ Toast ============ */
 let toastT; function toast(m){const t=G("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1900);}
@@ -2854,6 +3352,7 @@ async function pull(verbose){
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
     if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!Array.isArray(data.userHols))data.userHols=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];
+    if(!Array.isArray(data.studyFields))data.studyFields=[];if(!Array.isArray(data.studyNotes))data.studyNotes=[];if(!Array.isArray(data.trips))data.trips=[];(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture";if(s.field==null)s.field="";});
     jsave(LS_DATA,data); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
