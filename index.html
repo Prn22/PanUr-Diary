@@ -28,6 +28,7 @@
   --cat-rose:#E4A0B6; --cat-ice:#8DBEDC; --cat-lav:#B79AE0; --cat-mint:#83C9B2; --cat-gold:#E6C282; --cat-plum:#C58CC0;
   --disp:'Outfit','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --body:'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --bg-grad:#EFD0DF 0%,#E9DCEC 30%,#EBE6F0 55%,#F1EEF2 78%,#F6F3F5 100%;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;height:100%;}
@@ -37,7 +38,7 @@ body{
     radial-gradient(ellipse at 12% 0%, rgba(199,155,208,.28), transparent 46%),
     radial-gradient(ellipse at 90% 10%, rgba(143,199,214,.24), transparent 48%),
     radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5), transparent 52%),
-    linear-gradient(165deg,#EFD0DF 0%,#E9DCEC 30%,#EBE6F0 55%,#F1EEF2 78%,#F6F3F5 100%);
+    linear-gradient(165deg,var(--bg-grad));
   background-attachment:fixed;
 }
 /* dreamy star specks */
@@ -441,7 +442,7 @@ body{
     radial-gradient(ellipse at 12% 0%, rgba(199,155,208,.28), transparent 46%),
     radial-gradient(ellipse at 90% 10%, rgba(143,199,214,.24), transparent 48%),
     radial-gradient(ellipse at 50% 118%, rgba(255,255,255,.5), transparent 52%),
-    linear-gradient(165deg,#EFD0DF 0%,#E9DCEC 30%,#EBE6F0 55%,#F1EEF2 78%,#F6F3F5 100%) !important;
+    linear-gradient(165deg,var(--bg-grad)) !important;
   background-attachment:fixed !important;
 }
 .top, .tabs{background:rgba(255,250,253,.9);backdrop-filter:blur(12px);}
@@ -2083,11 +2084,11 @@ function renderEtc(){
 const WX_CODE={0:["맑음","☀️"],1:["대체로 맑음","🌤️"],2:["구름 조금","⛅"],3:["흐림","☁️"],45:["안개","🌫️"],48:["짙은 안개","🌫️"],51:["약한 이슬비","🌦️"],53:["이슬비","🌦️"],55:["강한 이슬비","🌧️"],61:["약한 비","🌦️"],63:["비","🌧️"],65:["강한 비","🌧️"],66:["언 비","🌧️"],67:["강한 언 비","🌧️"],71:["약한 눈","🌨️"],73:["눈","🌨️"],75:["강한 눈","❄️"],77:["싸락눈","🌨️"],80:["소나기","🌦️"],81:["소나기","🌧️"],82:["강한 소나기","⛈️"],85:["눈 소나기","🌨️"],86:["강한 눈 소나기","❄️"],95:["뇌우","⛈️"],96:["우박 뇌우","⛈️"],99:["강한 우박 뇌우","⛈️"]};
 /* ---- 옵션(설정) ---- */
 const THEMES={
-  rose:{n:"로즈핑크",lav:"#C79BD0",lavd:"#A876B4",rose:"#E4A6BC",mint:"#8CCBB4",gold:"#E6C889",ice:"#8FC7D6",bg:"#F7F0F3",bg2:"#F1E7EC",tc:"#F3DCE6",grad:"linear-gradient(165deg,#EFD0DF 0%,#E9DCEC 30%,#EBE6F0 55%,#F1EEF2 78%,#F6F3F5 100%)"},
-  lav:{n:"라벤더",lav:"#A99BE0",lavd:"#7E6BC4",rose:"#B8A6E4",mint:"#9CC7E0",gold:"#D6C0EC",ice:"#9FB6E8",bg:"#F1EFF9",bg2:"#E9E5F5",tc:"#E4DEF3",grad:"linear-gradient(165deg,#D9D0EF 0%,#DCDCEC 35%,#E6E6F2 60%,#EEEEF6 100%)"},
-  mint:{n:"민트",lav:"#7FC9B4",lavd:"#4FA891",rose:"#8CD0BE",mint:"#83C9B2",gold:"#BEE0C0",ice:"#8FD6CE",bg:"#EEF6F2",bg2:"#E5F1EC",tc:"#DCF0E8",grad:"linear-gradient(165deg,#CFEFE2 0%,#DCECE6 40%,#E6F2EE 70%,#EEF6F3 100%)"},
-  sky:{n:"하늘",lav:"#8FB8E0",lavd:"#5F8FC4",rose:"#A6C4E4",mint:"#8CC7CB",gold:"#C0D6EC",ice:"#8FC0E8",bg:"#EEF3F9",bg2:"#E5ECF5",tc:"#DCE8F3",grad:"linear-gradient(165deg,#D0E0EF 0%,#DCE6EC 40%,#E6EEF2 70%,#EEF3F6 100%)"},
-  apricot:{n:"살구",lav:"#E0A98F",lavd:"#C4805F",rose:"#E4B6A6",mint:"#CBC78C",gold:"#E6C889",ice:"#E0C08F",bg:"#F9F3EE",bg2:"#F5ECE5",tc:"#F3E8DC",grad:"linear-gradient(165deg,#EFDFD0 0%,#ECE6DC 40%,#F2EEE6 70%,#F6F3EE 100%)"}
+  rose:{n:"로즈핑크",lav:"#C79BD0",lavd:"#A876B4",rose:"#E4A6BC",mint:"#8CCBB4",gold:"#E6C889",ice:"#8FC7D6",bg:"#F7F0F3",bg2:"#F1E7EC",tc:"#F3DCE6",grad:"#EFD0DF 0%,#E9DCEC 30%,#EBE6F0 55%,#F1EEF2 78%,#F6F3F5 100%"},
+  lav:{n:"라벤더",lav:"#A99BE0",lavd:"#7E6BC4",rose:"#B8A6E4",mint:"#9CC7E0",gold:"#D6C0EC",ice:"#9FB6E8",bg:"#F1EFF9",bg2:"#E9E5F5",tc:"#E4DEF3",grad:"#D9D0EF 0%,#DCDCEC 35%,#E6E6F2 60%,#EEEEF6 100%"},
+  mint:{n:"민트",lav:"#7FC9B4",lavd:"#4FA891",rose:"#8CD0BE",mint:"#83C9B2",gold:"#BEE0C0",ice:"#8FD6CE",bg:"#EEF6F2",bg2:"#E5F1EC",tc:"#DCF0E8",grad:"#CFEFE2 0%,#DCECE6 40%,#E6F2EE 70%,#EEF6F3 100%"},
+  sky:{n:"하늘",lav:"#8FB8E0",lavd:"#5F8FC4",rose:"#A6C4E4",mint:"#8CC7CB",gold:"#C0D6EC",ice:"#8FC0E8",bg:"#EEF3F9",bg2:"#E5ECF5",tc:"#DCE8F3",grad:"#D0E0EF 0%,#DCE6EC 40%,#E6EEF2 70%,#EEF3F6 100%"},
+  apricot:{n:"살구",lav:"#E0A98F",lavd:"#C4805F",rose:"#E4B6A6",mint:"#CBC78C",gold:"#E6C889",ice:"#E0C08F",bg:"#F9F3EE",bg2:"#F5ECE5",tc:"#F3E8DC",grad:"#EFDFD0 0%,#ECE6DC 40%,#F2EEE6 70%,#F6F3EE 100%"}
 };
 const FONTS={
   default:{n:"기본",disp:"'Outfit','Apple SD Gothic Neo','Malgun Gothic',sans-serif",body:"'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif"},
@@ -2101,7 +2102,7 @@ function applyTheme(key){
   r.setProperty("--lav",t.lav); r.setProperty("--lav-d",t.lavd); r.setProperty("--rose",t.rose);
   r.setProperty("--mint",t.mint); r.setProperty("--gold",t.gold); r.setProperty("--ice",t.ice);
   r.setProperty("--bg",t.bg); r.setProperty("--bg2",t.bg2);
-  document.body.style.background=t.grad;
+  r.setProperty("--bg-grad",t.grad);
   const meta=document.querySelector('meta[name=theme-color]'); if(meta)meta.setAttribute("content",t.tc);
 }
 function applyFont(key){
