@@ -281,7 +281,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .blk .bctrl{position:absolute;top:6px;right:6px;display:flex;gap:4px;z-index:2;}
 .blk .bctrl button{width:26px;height:26px;border:none;border-radius:8px;background:var(--panel);color:var(--ink-soft);box-shadow:var(--shadow-sm);cursor:pointer;font-size:13px;}
 .blk .bctrl button[data-bdel]{color:var(--rose);}
-.blk-text textarea{width:100%;border:none;background:transparent;color:var(--ink);font-family:var(--body);font-size:14.5px;line-height:1.65;resize:vertical;min-height:70px;padding-right:90px;box-sizing:border-box;}
+.blk-text textarea{width:100%;border:none;background:transparent;color:var(--ink);font-family:var(--body);font-size:14.5px;line-height:1.65;resize:none;overflow:hidden;min-height:70px;padding-right:90px;box-sizing:border-box;}
 .blk-text textarea:focus{outline:none;}
 .blk-img{padding:6px;}
 .blk-img img{width:100%;border-radius:8px;display:block;}
@@ -1939,9 +1939,11 @@ function bindDiary(ds){
   let t; title.oninput=()=>{clearTimeout(t);t=setTimeout(saveTitle,500);}; title.onblur=saveTitle;
   // 텍스트 블록 자동저장(리렌더 없이)
   main.querySelectorAll(".btext").forEach(ta=>{
+    const grow=()=>{ta.style.height="auto";ta.style.height=(ta.scrollHeight+2)+"px";};
+    grow(); // 저장된 내용에 맞춰 펼친 상태로 표시
     let tt; const save=()=>{const cur=getCur();cur.blocks=cur.blocks||[];const i=Number(ta.dataset.bi);
       if(cur.blocks[i]){cur.blocks[i].v=ta.value;persistCur(cur);}};
-    ta.oninput=()=>{clearTimeout(tt);tt=setTimeout(save,500);}; ta.onblur=save;
+    ta.oninput=()=>{grow();clearTimeout(tt);tt=setTimeout(save,500);}; ta.onblur=save;
   });
   // 블록 이동/삭제
   main.querySelectorAll("[data-bup]").forEach(b=>b.onclick=()=>{const cur=getCur();const i=Number(b.dataset.bup);
