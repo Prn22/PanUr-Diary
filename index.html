@@ -330,12 +330,20 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .pform input:focus{outline:none;border-color:var(--lav);}
 .empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 0;}
 .empty small{display:block;margin-top:5px;opacity:.75;}
-.habitcell{display:flex;align-items:center;gap:12px;background:var(--panel-2);border-radius:12px;padding:11px 13px;margin-bottom:7px;}
+.habitcell{display:flex;align-items:center;gap:10px;background:var(--panel-2);border-radius:12px;padding:11px 13px;margin-bottom:7px;}
 .habitcell .hname{flex:1;font-weight:600;font-size:14px;}
+.habitcell .hname .htot{margin-left:6px;font-size:11px;font-weight:600;color:var(--lav-d);}
 .habitcell .week{display:flex;gap:4px;}
-.habitcell .week i{width:22px;height:22px;border-radius:7px;background:var(--panel);display:flex;align-items:center;justify-content:center;
-  font-size:9px;color:var(--faint);cursor:pointer;font-family:var(--disp);}
-.habitcell .week i.on{background:var(--mint);color:#fff;font-weight:700;}
+.habitcell .week i{width:30px;min-height:34px;border-radius:8px;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  cursor:pointer;font-family:var(--disp);}
+.habitcell .week i b{font-size:9px;font-weight:600;color:var(--faint);line-height:1;}
+.habitcell .week i em{font-size:11px;font-style:normal;color:var(--muted);line-height:1;}
+.habitcell .week i.today{outline:1.5px solid var(--ice);}
+.habitcell .week i.on{background:var(--mint);}
+.habitcell .week i.on b,.habitcell .week i.on em{color:#fff;font-weight:700;}
+.habitnav{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px;font-family:var(--disp);font-weight:600;font-size:13px;color:var(--ink-soft);}
+.habitnav button{border:1px solid var(--line);background:var(--panel-2);border-radius:8px;width:34px;height:30px;cursor:pointer;color:var(--ink-soft);}
+.habitnav button:disabled{opacity:.35;}
 .lec{background:var(--panel-2);border:1px solid var(--line-2);border-radius:13px;padding:12px 14px;margin-bottom:9px;}
 .work{background:var(--panel-2);border:1px solid var(--line-2);border-radius:13px;padding:12px 14px;margin-bottom:9px;}
 .work.wdone{opacity:.6;}
@@ -889,6 +897,7 @@ let daySub=jload("panur_daysub","plan"); // morning | plan | diary
 let summarySub=jload("panur_sumsub","month"); // month | miracle | mini
 let decoSelId=null; // 선택된 스티커
 let decoTarget=jload("panur_decotarget","plan"); // 꾸미기 대상: plan|diary|morning
+let habitOffset=0; // 습관 주 이동(0=이번 주, 음수=과거)
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -1625,16 +1634,19 @@ function renderPlannerBody(){
   }else{
     h+=`<div class="pform"><div class="row"><input id="hName" placeholder="습관 이름 (예: 물 2L 마시기)"></div>
       <button class="btn primary" id="hAdd">습관 추가</button></div>`;
-    const today=new Date(); const days=[];
-    for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);days.push(d);}
+    const base=new Date(); base.setDate(base.getDate()+habitOffset*7); const days=[];
+    for(let i=6;i>=0;i--){const d=new Date(base);d.setDate(base.getDate()-i);days.push(d);}
+    const rangeLabel=`${days[0].getMonth()+1}/${days[0].getDate()} ~ ${days[6].getMonth()+1}/${days[6].getDate()}`;
     if(data.planner.habits.length){
+      h+=`<div class="habitnav"><button id="habitPrev">◀</button><span>${rangeLabel}${habitOffset===0?" · 이번 주":""}</span><button id="habitNext" ${habitOffset>=0?"disabled":""}>▶</button></div>`;
       data.planner.habits.forEach(hb=>{
-        h+=`<div class="habitcell"><span class="hname">${esc(hb.name)}</span><div class="week">`+
-          days.map(d=>{const ds=ymd(d);const on=hb.done&&hb.done[ds];
-            return `<i class="${on?"on":""}" data-hid="${hb.id}" data-hd="${ds}">${WEEK[d.getDay()]}</i>`;}).join("")+
+        const total=Object.keys(hb.done||{}).length;
+        h+=`<div class="habitcell"><span class="hname">${esc(hb.name)}<small class="htot">${total}일</small></span><div class="week">`+
+          days.map(d=>{const ds=ymd(d);const on=hb.done&&hb.done[ds]; const td=isToday(d)?" today":"";
+            return `<i class="${on?"on":""}${td}" data-hid="${hb.id}" data-hd="${ds}"><b>${WEEK[d.getDay()]}</b><em>${d.getDate()}</em></i>`;}).join("")+
           `</div><button class="del" data-hdel="${hb.id}">✕</button></div>`;
       });
-      h+=`<div style="font-size:11px;color:var(--muted);margin-top:6px;">최근 7일 · 칸을 눌러 체크</div>`;
+      h+=`<div style="font-size:11px;color:var(--muted);margin-top:6px;">◀ ▶ 로 주를 옮겨 아무 날짜나 체크할 수 있어요 · 숫자는 누적 실천일</div>`;
     }else h+=emptyP("매일 반복할 습관을 추가해보세요");
   }
   box.innerHTML=h;
@@ -1687,8 +1699,10 @@ function bindPlannerForms(){
     const hb=data.planner.habits.find(x=>x.id===el.dataset.hid);if(!hb)return;
     hb.done=hb.done||{};const d=el.dataset.hd;
     if(hb.done[d])delete hb.done[d];else hb.done[d]=true;
-    persist();el.classList.toggle("on");
+    persist();renderPlannerBody();
   });
+  if(g("habitPrev"))g("habitPrev").onclick=()=>{habitOffset--;renderPlannerBody();};
+  if(g("habitNext"))g("habitNext").onclick=()=>{if(habitOffset<0){habitOffset++;renderPlannerBody();}};
   document.querySelectorAll("[data-hdel]").forEach(el=>el.onclick=()=>{
     data.planner.habits=data.planner.habits.filter(x=>x.id!==el.dataset.hdel);persist();renderPlannerBody();});
 }
