@@ -167,6 +167,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .pitem{display:flex;align-items:center;gap:10px;background:var(--panel-2);border-radius:11px;padding:9px 12px;margin-bottom:6px;}
 .pitem input[type=checkbox]{width:19px;height:19px;accent-color:var(--lav);cursor:pointer;flex:none;}
 .pitem .txt{flex:1;font-size:13.5px;} .pitem.done .txt{text-decoration:line-through;color:var(--faint);}
+.pitem .pmain{flex:1;display:flex;flex-direction:column;gap:2px;}
+.pitem .pmain .txt{flex:none;}
+.pitem .pmemo{font-size:12px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.45;background:var(--panel);border-radius:7px;padding:5px 8px;margin-top:2px;}
+.pitem.done .pmemo{color:var(--faint);}
 .pitem .meta{font-size:11px;color:var(--muted);}
 .pitem .del{border:none;background:none;color:var(--faint);cursor:pointer;font-size:15px;}
 .diarybox{background:var(--panel-2);border-radius:var(--r-sm);padding:14px;}
@@ -339,9 +343,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .rlbl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-family:var(--disp);}
 .rlbl select{flex:0 0 auto;padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);}
 .pform .row{display:flex;gap:8px;flex-wrap:wrap;}
-.pform input,.pform select{flex:1;min-width:100px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);
+.pform input,.pform select,.pform textarea{flex:1;min-width:100px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);
   border-radius:11px;padding:10px 12px;font-family:var(--body);font-size:13.5px;}
-.pform input:focus{outline:none;border-color:var(--lav);}
+.pform textarea{width:100%;resize:vertical;line-height:1.5;}
+.pform input:focus,.pform textarea:focus{outline:none;border-color:var(--lav);}
 .empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 0;}
 .empty small{display:block;margin-top:5px;opacity:.75;}
 .habitcell{display:flex;align-items:center;gap:10px;background:var(--panel-2);border-radius:12px;padding:11px 13px;margin-bottom:7px;}
@@ -1548,8 +1553,9 @@ function bindMM(ds){
 function pRow(type,a,meta){
   return `<div class="pitem ${a.done?"done":""}" data-ptype="${type}" data-pid="${a.id}">
     <input type="checkbox" data-pcheck ${a.done?"checked":""}>
-    <span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
-    ${meta?`<span class="meta">${esc(meta)}</span>`:""}
+    <div class="pmain"><span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
+      ${meta?`<span class="meta">${esc(meta)}</span>`:""}
+      ${a.memo?`<div class="pmemo">${esc(a.memo)}</div>`:""}</div>
     <button class="del" data-pdel>✕</button></div>`;
 }
 function bindDayPlanner(ds){
@@ -1634,6 +1640,7 @@ function renderPlannerBody(){
   if(t==="appts"){
     h+=`<div class="pform"><div class="row"><input id="aDate" type="date"><input id="aTime" type="time"></div>
       <div class="row"><input id="aTitle" placeholder="약속 제목"><input id="aWho" placeholder="상대"><input id="aPlace" placeholder="장소"></div>
+      <div class="row"><textarea id="aMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
       <div class="row"><label class="rlbl">🔔 알림<select id="aRemind">${remindOptions("")}</select></label></div>
       <button class="btn primary" id="aAdd">약속 추가</button></div>`;
     const list=[...data.planner.appts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
@@ -1688,6 +1695,7 @@ function renderPlannerBody(){
     });
   }else if(t==="todos"){
     h+=`<div class="pform"><div class="row"><input id="tDate" type="date"><input id="tText" placeholder="할 일 (날짜 비우면 미정)"></div>
+      <div class="row"><textarea id="tMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
       <div class="row"><label class="rlbl">🔔 알림<select id="tRemind">${remindOptions("",true)}</select></label></div>
       <button class="btn primary" id="tAdd">할 일 추가</button></div>`;
     const list=[...data.planner.todos].sort((a,b)=>((a.date||"9999")).localeCompare(b.date||"9999"));
@@ -1716,15 +1724,17 @@ function renderPlannerBody(){
 function plCard(type,a,meta){
   return `<div class="pitem ${a.done?"done":""}" data-ptype="${type}" data-pid="${a.id}">
     <input type="checkbox" data-pcheck ${a.done?"checked":""}>
-    <span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
-    <span class="meta">${esc(meta)}</span><button class="del" data-pdel>✕</button></div>`;
+    <div class="pmain"><span class="txt">${esc(a.title||a.subject||a.text||"")}</span>
+      <span class="meta">${esc(meta)}</span>
+      ${a.memo?`<div class="pmemo">${esc(a.memo)}</div>`:""}</div>
+    <button class="del" data-pdel>✕</button></div>`;
 }
 function emptyP(msg){return `<div class="empty">${msg}</div>`;}
 function bindPlannerForms(){
   const g=id=>document.getElementById(id);
   const add=(arr,obj)=>{obj.id=uid();obj.done=false;data.planner[arr].push(obj);persist();renderPlannerBody();};
   if(g("aAdd"))g("aAdd").onclick=()=>{const ti=g("aTitle").value.trim();if(!ti)return toast("약속 제목을 입력해요");
-    add("appts",{title:ti,date:g("aDate").value||ymd(new Date()),time:g("aTime").value,who:g("aWho").value.trim(),place:g("aPlace").value.trim(),remind:g("aRemind").value||null});};
+    add("appts",{title:ti,date:g("aDate").value||ymd(new Date()),time:g("aTime").value,who:g("aWho").value.trim(),place:g("aPlace").value.trim(),memo:g("aMemo").value.trim(),remind:g("aRemind").value||null});};
   if(g("sAddLec"))g("sAddLec").onclick=()=>openStudyModal(null);
   if(g("wAdd"))g("wAdd").onclick=()=>openWork(null);
   document.querySelectorAll("[data-wedit]").forEach(b=>b.onclick=()=>openWork(b.dataset.wedit));
@@ -1747,7 +1757,7 @@ function bindPlannerForms(){
     const card=cb.closest(".lec");if(card){card.querySelector(".bar i").style.width=p+"%";card.querySelector(".lecpct").textContent=p+"%";
       const plat=card.querySelector(".lecplat");if(plat)plat.textContent=(lec.platform?esc(lec.platform)+" · ":"")+`${done}/${total}강`;}});
   if(g("tAdd"))g("tAdd").onclick=()=>{const tx=g("tText").value.trim();if(!tx)return toast("할 일을 입력해요");
-    add("todos",{text:tx,date:g("tDate").value||null,remind:g("tRemind").value||null});};
+    add("todos",{text:tx,date:g("tDate").value||null,memo:g("tMemo").value.trim(),remind:g("tRemind").value||null});};
   if(g("hAdd"))g("hAdd").onclick=()=>{const nm=g("hName").value.trim();if(!nm)return toast("습관 이름을 입력해요");
     add("habits",{name:nm,done:{}});};
   document.querySelectorAll(".pitem[data-pid]").forEach(row=>{
