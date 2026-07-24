@@ -9,9 +9,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PanUr">
 <link rel="icon" href="favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
-<title>PanUr 다이어리</title>
+<title>💛파뉴땅🤍</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -503,6 +505,10 @@ body{
   <div class="banner hide" id="notifBanner">
     <span>🌙 알림을 켜면 일정 시간과 미리 알림을 받을 수 있어요.</span>
     <button id="enableNotif">알림 켜기</button>
+  </div>
+  <div class="banner hide" id="installBanner">
+    <span>📲 이 앱을 홈 화면에 추가해 앱처럼 쓸 수 있어요.</span>
+    <button id="installBtn">홈 화면에 추가</button>
   </div>
 
   <div class="tabs">
@@ -2064,6 +2070,25 @@ G("enableNotif").onclick=async()=>{
   const p=await Notification.requestPermission();
   toast(p==="granted"?"알림이 켜졌어요 🌙":"브라우저 설정에서 허용해주세요");
   banner.classList.add("hide");jsave(LS_BANNER,true);
+};
+/* ---- 홈 화면에 추가(PWA 설치) ---- */
+const installBanner=G("installBanner"), installBtn=G("installBtn");
+let deferredPrompt=null;
+const standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredPrompt=e;
+  if(!standalone && !jload("panur_install_hide",false)) installBanner.classList.remove("hide"); });
+window.addEventListener("appinstalled",()=>{ installBanner.classList.add("hide"); toast("홈 화면에 추가됐어요 🌙"); deferredPrompt=null; });
+// 설치 프롬프트를 지원하지 않는 브라우저(삼성 인터넷 일부/iOS)에서도 버튼은 보이게: http(s)에서 standalone 아니면 표시
+if(!standalone && (location.protocol==="http:"||location.protocol==="https:") && !jload("panur_install_hide",false))
+  setTimeout(()=>installBanner.classList.remove("hide"),1200);
+installBtn.onclick=async()=>{
+  if(deferredPrompt){ deferredPrompt.prompt(); try{await deferredPrompt.userChoice;}catch(e){} deferredPrompt=null; installBanner.classList.add("hide"); return; }
+  // 폴백: 브라우저 메뉴 안내
+  const ua=navigator.userAgent||"";
+  let msg="브라우저 메뉴(≡)에서 '홈 화면에 추가'를 눌러주세요";
+  if(/iPhone|iPad|iPod/i.test(ua)) msg="사파리 공유 버튼(⬆) → '홈 화면에 추가'를 눌러주세요";
+  else if(/SamsungBrowser/i.test(ua)) msg="삼성 인터넷 메뉴(≡) → '현재 페이지 추가' → '홈 화면'을 눌러주세요";
+  toast("📲 "+msg);
 };
 const fired=new Set();
 const REMIND_OPTS=[["","끔"],["0","정각"],["5","5분 전"],["10","10분 전"],["30","30분 전"],["60","1시간 전"],["1440","1일 전"]];
