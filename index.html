@@ -362,6 +362,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .sleeprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);}
 .sleeprow input[type=time]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel-2);color:var(--ink);font-family:var(--body);}
 .sleepdur{color:var(--lav-d);font-weight:600;font-family:var(--disp);}
+.sleeptot{font-size:12px;color:var(--lav-d);font-weight:600;font-family:var(--disp);margin-left:4px;}
+.sleeplist{display:flex;flex-direction:column;gap:7px;margin-bottom:7px;}
+.sleepseg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:7px 9px;}
+.sleepseg input[type=time]{border:1px solid var(--line);border-radius:8px;padding:5px 7px;background:var(--panel);color:var(--ink);font-family:var(--body);font-size:12.5px;}
+.sleepseg .seg-dur{color:var(--lav-d);font-weight:600;font-family:var(--disp);margin-left:auto;}
+.sleepseg .slp-del{border:none;background:none;color:var(--faint);cursor:pointer;font-size:13px;padding:0 2px;}
+.sleepempty{font-size:12px;color:var(--muted);padding:2px 2px 6px;}
+.sleephint{font-size:11px;color:var(--faint);margin-top:5px;}
 .mmsv{font-family:var(--disp);font-weight:700;font-size:22px;color:var(--lav-d);}
 .mmsv small{font-size:12px;color:var(--muted);font-weight:500;}
 .mmsl{font-size:11px;color:var(--muted);margin-top:3px;}
@@ -1310,6 +1318,9 @@ function sleepMinutes(bed,wake){ if(!bed||!wake)return null;
   const [bh,bm]=bed.split(":").map(Number),[wh,wm]=wake.split(":").map(Number);
   let mins=(wh*60+wm)-(bh*60+bm); if(mins<=0)mins+=24*60; return mins; }
 function sleepFmt(mins){ if(mins==null)return"-"; return Math.floor(mins/60)+"시간 "+(mins%60)+"분"; }
+// 수면 구간 목록 (신규 sleeps 배열 우선, 구버전 bed/wake 자동 이전)
+function mmSleepList(mm){ if(mm&&Array.isArray(mm.sleeps)&&mm.sleeps.length)return mm.sleeps; if(mm&&(mm.bed||mm.wake))return [{bed:mm.bed||"",wake:mm.wake||""}]; return []; }
+function sleepTotal(mm){ let t=0,any=false; mmSleepList(mm).forEach(s=>{const m=sleepMinutes(s.bed,s.wake); if(m!=null){t+=m;any=true;}}); return any?t:null; }
 /* 기념일 */
 const lunarInfo=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x05ac0,0x0ab60,0x096d5,0x092e0,0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,0x0d520];
 function lunLeapMonth(y){return lunarInfo[y-1900]&0xf;}
@@ -1940,7 +1951,7 @@ function saveMM(ds,patch){
   const cur=data.diary[ds]||{photos:[]};
   cur.mm=Object.assign(mmOf(ds),patch);
   // 비어있으면 mm 제거
-  const m=cur.mm, empty=!m.cond&&!m.affirm&&!m.visual&&!m.reading&&!m.note&&!m.bed&&!m.wake
+  const m=cur.mm, empty=!m.cond&&!m.affirm&&!m.visual&&!m.reading&&!m.note&&!m.bed&&!m.wake&&!(m.sleeps&&m.sleeps.length)
     &&!(m.grat||[]).some(x=>x)&&!Object.values(m.savers||{}).some(Boolean);
   if(empty)delete cur.mm;
   data.diary[ds]=cur; pruneDiary(ds); persist();
@@ -1983,12 +1994,11 @@ function mmSectionHTML(ds){
     ${(data.diary[ds]&&data.diary[ds].mm)?`<div class="mmmove">📅 날짜 이동 <input type="date" id="mmMoveDate" value="${ds}"><button class="addchip" id="mmMoveBtn">이동</button></div>`:""}
     <div class="savers">${saverBtns}</div>
     <div class="cond mmcond"><span class="clabel">아침 컨디션</span><div class="dots" id="mmCondDots">${condDots}</div></div>
-    <div class="mmfield"><label>😴 수면</label>
-      <div class="sleeprow">
-        <span>취침 <input type="time" id="mmBed" value="${esc(mm.bed)}"></span>
-        <span>기상 <input type="time" id="mmWake" value="${esc(mm.wake)}"></span>
-        <span class="sleepdur" id="mmSleepDur">${mm.bed&&mm.wake?("💤 "+sleepFmt(sleepMinutes(mm.bed,mm.wake))):""}</span>
-      </div></div>
+    <div class="mmfield"><label>😴 수면 <span class="sleeptot" id="mmSleepTot"></span></label>
+      <div class="sleeplist" id="mmSleepList"></div>
+      <button type="button" class="addchip" id="mmSleepAdd">＋ 수면 구간</button>
+      <div class="sleephint">자다 깬 경우 구간을 여러 개 넣으면 합산돼요 (낮잠도 구간으로)</div>
+    </div>
     <div class="mmfield"><div class="mmfhead"><label>💬 확언</label><button type="button" class="dice" id="mmAffDice">🎲</button></div>
       <input id="mmAffirm" placeholder="🎲로 오늘의 확언을 뽑아보세요" value="${esc(mm.affirm)}">
       <div class="mmaffbtns">
@@ -2011,6 +2021,23 @@ function mmSectionHTML(ds){
     <div class="mmfield"><label>📝 기타 메모</label><textarea id="mmNote" placeholder="아침 생각·다짐 등">${esc(mm.note)}</textarea></div>
   </div>`;
 }
+let mmSleepArr=[];
+function _segTotal(){let t=0,any=false;mmSleepArr.forEach(s=>{const m=sleepMinutes(s.bed,s.wake);if(m!=null){t+=m;any=true;}});return any?t:null;}
+function renderMmSleep(ds){
+  const el=document.getElementById("mmSleepList"); if(!el)return;
+  el.innerHTML = mmSleepArr.length? mmSleepArr.map((s,i)=>`
+    <div class="sleepseg">
+      <span class="slp-lbl">취침 <input type="time" class="slp-bed" data-i="${i}" value="${esc(s.bed||"")}"></span>
+      <span class="slp-lbl">기상 <input type="time" class="slp-wake" data-i="${i}" value="${esc(s.wake||"")}"></span>
+      <span class="seg-dur">${(s.bed&&s.wake)?("💤 "+sleepFmt(sleepMinutes(s.bed,s.wake))):""}</span>
+      <button type="button" class="slp-del" data-i="${i}" title="삭제">✕</button>
+    </div>`).join("") : `<div class="sleepempty">＋로 수면 구간을 추가해요</div>`;
+  el.querySelectorAll(".slp-bed").forEach(inp=>inp.onchange=()=>{mmSleepArr[+inp.dataset.i].bed=inp.value; _saveSleep(ds); renderMmSleep(ds);});
+  el.querySelectorAll(".slp-wake").forEach(inp=>inp.onchange=()=>{mmSleepArr[+inp.dataset.i].wake=inp.value; _saveSleep(ds); renderMmSleep(ds);});
+  el.querySelectorAll(".slp-del").forEach(b=>b.onclick=()=>{mmSleepArr.splice(+b.dataset.i,1); _saveSleep(ds); renderMmSleep(ds);});
+  const tot=document.getElementById("mmSleepTot"); if(tot){const t=_segTotal(),cnt=mmSleepArr.filter(s=>s.bed&&s.wake).length; tot.textContent=(t!=null&&cnt>1)?("· 합계 "+sleepFmt(t)):"";}
+}
+function _saveSleep(ds){ const arr=mmSleepArr.filter(s=>s.bed||s.wake); saveMM(ds,{sleeps:arr,bed:"",wake:""}); }
 function bindMM(ds){
   // SAVERS 토글
   const _mmb=document.getElementById("mmMoveBtn"); if(_mmb)_mmb.onclick=()=>moveMM(ds);
@@ -2033,11 +2060,10 @@ function bindMM(ds){
   note.oninput=deb(()=>saveMM(ds,{note:note.value})); note.onblur=()=>saveMM(ds,{note:note.value});
   main.querySelectorAll(".grat").forEach(inp=>{const save=()=>{const g=mmOf(ds).grat.slice();g[Number(inp.dataset.g)]=inp.value;saveMM(ds,{grat:g});};
     inp.oninput=deb(save); inp.onblur=save;});
-  // 수면(취침·기상)
-  const bed=G2("mmBed"),wake=G2("mmWake"),dur=G2("mmSleepDur");
-  if(bed&&wake){const updSleep=()=>{ saveMM(ds,{bed:bed.value,wake:wake.value});
-    dur.textContent=(bed.value&&wake.value)?("💤 "+sleepFmt(sleepMinutes(bed.value,wake.value))):""; };
-    bed.onchange=updSleep; wake.onchange=updSleep;}
+  // 수면 구간(여러 개)
+  mmSleepArr = mmSleepList(mmOf(ds)).map(s=>({bed:s.bed||"",wake:s.wake||""}));
+  renderMmSleep(ds);
+  const _slAdd=G2("mmSleepAdd"); if(_slAdd)_slAdd.onclick=()=>{ mmSleepArr.push({bed:"",wake:""}); renderMmSleep(ds); };
   // 확언 랜덤 뽑기 + 목록 저장/삭제
   G2("mmAffDice").onclick=()=>{const a=data.affirmations;if(!a.length)return toast("확언 목록이 비어있어요");
     affirm.value=a[Math.floor(Math.random()*a.length)];saveMM(ds,{affirm:affirm.value});};
@@ -3494,7 +3520,7 @@ function summaryBodyHTML(){
       const d=new Date(y,m,dnum), ds=ymd(d);
       if(eventsOn(d).length)evDays++;
       const di=data.diary[ds]; if(diaryHasContent(di))diaDays++;
-      if(di&&di.mm&&di.mm.bed&&di.mm.wake){const s=sleepMinutes(di.mm.bed,di.mm.wake);if(s){slSum+=s;slDays++;}}
+      if(di&&di.mm){const s=sleepTotal(di.mm);if(s){slSum+=s;slDays++;}}
     }
     const ps=planStatsInMonth(y,m);
     const pr=ps.total?Math.round(ps.done/ps.total*100):0;
@@ -3519,7 +3545,7 @@ function summaryBodyHTML(){
       const sv=di.mm.savers||{}; const cnt=Object.keys(saverCnt).filter(k=>sv[k]).length;
       if(cnt>0){doneDays++; saverTotal+=cnt; perMonth[d.getMonth()]++; Object.keys(saverCnt).forEach(k=>{if(sv[k])saverCnt[k]++;});}
       if(di.mm.cond){condSum+=di.mm.cond;condDays++;}
-      if(di.mm.bed&&di.mm.wake){const s=sleepMinutes(di.mm.bed,di.mm.wake); if(s){sleepSum+=s;sleepDays++;}}
+      if(di.mm){const s=sleepTotal(di.mm); if(s){sleepSum+=s;sleepDays++;}}
     }
     const avgSaver=doneDays?(saverTotal/doneDays).toFixed(1):"0";
     const avgCond=condDays?(condSum/condDays).toFixed(1):"-";
@@ -3772,7 +3798,7 @@ function dayViewerHTML(ds,scope){
     let ml=""; const done=SAVERS.filter(([k])=>mm.savers[k]).map(([k,n])=>n).join("  ");
     if(done)ml+=`<div class="dvrow">${done}</div>`;
     if(mm.cond)ml+=`<div class="dvrow">아침 컨디션 ${mm.cond}/5</div>`;
-    if(mm.bed&&mm.wake)ml+=`<div class="dvrow">💤 ${sleepFmt(sleepMinutes(mm.bed,mm.wake))}</div>`;
+    {const st=sleepTotal(mm),segs=mmSleepList(mm).filter(s=>s.bed&&s.wake).length; if(st!=null)ml+=`<div class="dvrow">💤 ${sleepFmt(st)}${segs>1?` (${segs}구간)`:""}</div>`;}
     if(mm.affirm)ml+=`<div class="dvrow">💬 ${esc(mm.affirm)}</div>`;
     if(mm.visual)ml+=`<div class="dvrow">🌅 ${esc(mm.visual)}</div>`;
     if(mm.reading)ml+=`<div class="dvrow">📖 ${esc(mm.reading)}</div>`;
