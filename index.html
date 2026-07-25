@@ -161,7 +161,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   margin-left:-7px;margin-right:-7px;border-radius:0;}
 .spanbar.s-start{border-top-left-radius:8px;border-bottom-left-radius:8px;margin-left:0;padding-left:7px;}
 .spanbar.s-end{border-top-right-radius:8px;border-bottom-right-radius:8px;margin-right:0;padding-right:7px;}
-.dcount{display:flex;gap:5px;font-size:10px;color:var(--muted);margin-top:auto;}
+.dcount{display:flex;gap:5px;font-size:10px;color:var(--muted);margin-top:auto;align-items:center;}
+.dcount .pcnt.alldone{color:#fff;background:var(--mint);padding:1px 6px;border-radius:8px;font-weight:700;}
+.dvchk{font-size:13.5px;color:var(--ink-soft);padding:2px 0;}
+.dvchk.done{color:var(--faint);text-decoration:line-through;}
+.dvprog{font-size:11px;color:var(--lav-d);font-weight:600;margin-left:4px;}
 .mdiatitle{font-size:10px;color:var(--ink-soft);line-height:1.35;word-break:break-word;
   overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;margin-top:1px;}
 .mdiacond{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:3px;font-size:15px;line-height:1;}
@@ -1204,7 +1208,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="75", APP_BUILD="2026.07.25";
+const APP_VERSION="76", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1604,10 +1608,11 @@ function renderMonth(){
       singleEvs.slice(0,2).forEach(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
         chips+=`<div class="chip" style="background:${c.c}">${esc(ev.title)}</div>`;});
       if(singleEvs.length>2)chips+=`<div class="more">+${singleEvs.length-2}</div>`;
-      const tCount=countPlannerOn(ds), hasM=data.memos.some(mm=>mm.date===ds);
+      const ps=plannerStatOn(ds), hasM=data.memos.some(mm=>mm.date===ds);
       let foot="";
-      if(tCount||hasM){foot='<div class="dcount">'+
-        (tCount?`<span>✓ ${tCount}</span>`:"")+(hasM?`<span style="color:var(--lav-d)">📌</span>`:"")+'</div>';}
+      if(ps.total||hasM){const allDone=ps.total>0&&ps.done===ps.total;
+        foot='<div class="dcount">'+
+        (ps.total?`<span class="pcnt ${allDone?"alldone":""}">✓ ${ps.done}/${ps.total}</span>`:"")+(hasM?`<span style="color:var(--lav-d)">📌</span>`:"")+'</div>';}
       html+=`<div class="${cls.join(" ")}" data-date="${ds}"><div class="dnumrow"><span class="num">${d.getDate()}</span>${anvMark}</div>${holMark}${mileCell.length?`<div class="chip mile">💗${mileCell[0].label}</div>`:""}${chips}${foot}</div>`;
     }
   }
@@ -1769,6 +1774,14 @@ function countPlannerOn(ds){
   n+=data.planner.study.filter(a=>a.date===ds).length;
   n+=data.planner.todos.filter(a=>a.date===ds).length;
   return n;
+}
+// 그 날 플래너 체크리스트 완료/전체 (습관 제외)
+function plannerStatOn(ds){
+  let total=0,done=0; const chk=a=>{total++; if(a.done)done++;};
+  data.planner.appts.filter(a=>a.date===ds).forEach(chk);
+  data.planner.study.filter(a=>a.date===ds).forEach(chk);
+  data.planner.todos.filter(a=>a.date===ds).forEach(chk);
+  return {total,done};
 }
 
 /* ---- Day (diary body) ---- */
@@ -3737,6 +3750,14 @@ function dayViewerHTML(ds,scope){
   let h="";
   if(showPlan&&anv.length)h+=`<div class="dvsec"><h4>🎀 기념일</h4>${anv.map(a=>`<div class="dvrow">${a.emoji?esc(a.emoji)+" ":""}${esc(a.title)}</div>`).join("")}</div>`;
   if(showPlan&&evs.length)h+=`<div class="dvsec"><h4>📅 일정</h4>${evs.map(e=>`<div class="dvrow"><b>${e.time?esc(e.time):"종일"}</b> ${esc(e.title)}${e.memo?`<div class="dvmemo">${esc(e.memo)}</div>`:""}</div>`).join("")}</div>`;
+  if(showPlan){
+    const pl=[...data.planner.appts.filter(a=>a.date===ds),...data.planner.study.filter(a=>a.date===ds),...data.planner.todos.filter(a=>a.date===ds)];
+    if(pl.length){
+      const dn=pl.filter(x=>x.done).length;
+      h+=`<div class="dvsec"><h4>✓ 플래너 <span class="dvprog">${dn}/${pl.length}${dn===pl.length?" 완료":""}</span></h4>`
+       +pl.map(x=>`<div class="dvrow dvchk ${x.done?"done":""}">${x.done?"☑":"☐"} ${esc(x.title||x.subject||x.text||"")}</div>`).join("")+`</div>`;
+    }
+  }
   if(showMorning&&mm){
     let ml=""; const done=SAVERS.filter(([k])=>mm.savers[k]).map(([k,n])=>n).join("  ");
     if(done)ml+=`<div class="dvrow">${done}</div>`;
