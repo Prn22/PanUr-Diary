@@ -1204,7 +1204,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="74", APP_BUILD="2026.07.25";
+const APP_VERSION="75", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1617,7 +1617,7 @@ function renderMonth(){
   html+="</div>"; // .card
   main.innerHTML=html;
   if(monthMode!=="deco")
-    main.querySelectorAll(".cell[data-date]").forEach(c=>c.onclick=()=>openDayViewer(c.dataset.date));
+    main.querySelectorAll(".cell[data-date]").forEach(c=>c.onclick=()=>openDayViewer(c.dataset.date, monthMode));
   if(monthMode==="morning")bindMmLegend();
   if(monthMode==="deco")bindDeco(y,m,decoTarget);
 }
@@ -3729,14 +3729,15 @@ G("prev").onclick=()=>shift(-1); G("next").onclick=()=>shift(1);
 G("todayBtn").onclick=()=>{cursor=new Date();cursor.setHours(0,0,0,0);render();};
 G("refreshBtn").onclick=()=>{ if(G("refreshBtn"))G("refreshBtn").style.opacity=".4"; location.reload(); };
 /* ===== 월간 열람 뷰어 (읽기 전용) ===== */
-const dayViewer=G("dayViewer"); let dayViewerDs=null;
+const dayViewer=G("dayViewer"); let dayViewerDs=null, dayViewerScope=null;
 function _dvTitle(ds){const d=parseYmd(ds);const wd=["일","월","화","수","목","금","토"][d.getDay()];return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${wd})`;}
-function dayViewerHTML(ds){
+function dayViewerHTML(ds,scope){
   const dia=data.diary[ds]||{}, evs=eventsOn(parseYmd(ds)), anv=annivsOn(ds), mm=dia.mm?mmOf(ds):null;
+  const showPlan=!scope||scope==="plan", showMorning=!scope||scope==="morning", showDiary=!scope||scope==="diary";
   let h="";
-  if(anv.length)h+=`<div class="dvsec"><h4>🎀 기념일</h4>${anv.map(a=>`<div class="dvrow">${a.emoji?esc(a.emoji)+" ":""}${esc(a.title)}</div>`).join("")}</div>`;
-  if(evs.length)h+=`<div class="dvsec"><h4>📅 일정</h4>${evs.map(e=>`<div class="dvrow"><b>${e.time?esc(e.time):"종일"}</b> ${esc(e.title)}${e.memo?`<div class="dvmemo">${esc(e.memo)}</div>`:""}</div>`).join("")}</div>`;
-  if(mm){
+  if(showPlan&&anv.length)h+=`<div class="dvsec"><h4>🎀 기념일</h4>${anv.map(a=>`<div class="dvrow">${a.emoji?esc(a.emoji)+" ":""}${esc(a.title)}</div>`).join("")}</div>`;
+  if(showPlan&&evs.length)h+=`<div class="dvsec"><h4>📅 일정</h4>${evs.map(e=>`<div class="dvrow"><b>${e.time?esc(e.time):"종일"}</b> ${esc(e.title)}${e.memo?`<div class="dvmemo">${esc(e.memo)}</div>`:""}</div>`).join("")}</div>`;
+  if(showMorning&&mm){
     let ml=""; const done=SAVERS.filter(([k])=>mm.savers[k]).map(([k,n])=>n).join("  ");
     if(done)ml+=`<div class="dvrow">${done}</div>`;
     if(mm.cond)ml+=`<div class="dvrow">아침 컨디션 ${mm.cond}/5</div>`;
@@ -3749,7 +3750,7 @@ function dayViewerHTML(ds){
     if(ml)h+=`<div class="dvsec"><h4>🌄 미라클 모닝</h4>${ml}</div>`;
   }
   const hasDiary=dia.mood||dia.title||dia.cond||(dia.blocks&&dia.blocks.length);
-  if(hasDiary){
+  if(showDiary&&hasDiary){
     let dl="";
     if(dia.mood)dl+=`<div class="dvrow">오늘의 기분 ${moodHtml(dia.mood)}</div>`;
     if(dia.cond)dl+=`<div class="dvrow">하루 마무리 컨디션 ${dia.cond}/5</div>`;
@@ -3763,11 +3764,11 @@ function dayViewerHTML(ds){
   if(!h)h=`<div class="dvempty">이 날 기록이 없어요</div>`;
   return h;
 }
-function openDayViewer(ds){ dayViewerDs=ds; G("dvTitle").textContent=_dvTitle(ds); G("dvBody").innerHTML=dayViewerHTML(ds); dayViewer.classList.add("show"); }
+function openDayViewer(ds,scope){ dayViewerDs=ds; dayViewerScope=scope||null; G("dvTitle").textContent=_dvTitle(ds); G("dvBody").innerHTML=dayViewerHTML(ds,scope); dayViewer.classList.add("show"); }
 function closeDayViewer(){ dayViewer.classList.remove("show"); }
 G("dvClose").onclick=closeDayViewer;
 dayViewer.onclick=e=>{if(e.target===dayViewer)closeDayViewer();};
-G("dvEdit").onclick=()=>{ if(dayViewerDs){cursor=parseYmd(dayViewerDs);view="day";render();} closeDayViewer(); };
+G("dvEdit").onclick=()=>{ if(dayViewerDs){cursor=parseYmd(dayViewerDs);view="day"; if(dayViewerScope){daySub=dayViewerScope;jsave("panur_daysub",daySub);} render();} closeDayViewer(); };
 
 /* ===== 본문 좌우 스와이프로 이동 ===== */
 (function(){
