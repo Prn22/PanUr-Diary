@@ -775,9 +775,9 @@ body{
   <div class="subbar hide" id="daySeg">
     <div class="seg">
       <button data-day="morning">🌄 미라클</button>
+      <button data-day="diary">✎ 일기</button>
       <button data-day="plan">📅 일정</button>
       <button data-day="anniv">🎀 기념일</button>
-      <button data-day="diary">✎ 일기</button>
     </div>
   </div>
   <div class="subbar hide" id="yearSeg">
@@ -1204,7 +1204,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="73", APP_BUILD="2026.07.25";
+const APP_VERSION="74", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3806,7 +3806,7 @@ function animMain(dir){
   void main.offsetWidth;          // 리플로우로 애니메이션 재시작
   main.classList.add(cls);
 }
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{view=t.dataset.view;render();});
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{view=t.dataset.view; if(view==="day"){daySub="diary";jsave("panur_daysub","diary");} render();});
 monthSeg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
   monthMode=b.dataset.mode; monthSeg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); renderMonth();});
 /* (＋ 플로팅 버튼 제거됨 — 일정은 일간 뷰의 '일정 ＋', 플래너는 각 폼에서 추가) */
