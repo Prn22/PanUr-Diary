@@ -1204,7 +1204,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="72", APP_BUILD="2026.07.25";
+const APP_VERSION="73", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3812,7 +3812,16 @@ monthSeg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
 /* (＋ 플로팅 버튼 제거됨 — 일정은 일간 뷰의 '일정 ＋', 플래너는 각 폼에서 추가) */
 
 /* ============ Toast ============ */
-let toastT; function toast(m){const t=G("toast");t.textContent=m;t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),1900);}
+let toastT, _toastQ=[], _toastBusy=false;
+function toast(m){ _toastQ.push(m); if(!_toastBusy)_toastNext(); }
+function _toastNext(){
+  const t=G("toast"); if(!t){_toastBusy=false;return;}
+  if(!_toastQ.length){_toastBusy=false;return;}
+  _toastBusy=true;
+  t.textContent=_toastQ.shift(); t.classList.add("show");
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>{ t.classList.remove("show"); setTimeout(_toastNext,240); }, 1800);
+}
 
 /* ============ GitHub Sync ============ */
 const syncOverlay=G("syncOverlay"), syncDot=G("syncDot"), syncStatus=G("syncStatus");
