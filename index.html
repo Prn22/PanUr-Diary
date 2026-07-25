@@ -132,15 +132,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .ycell .yk{font-size:8.5px;line-height:1.15;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ycell .ydot{display:flex;gap:2px;flex-wrap:wrap;}
 .ycell .ydot i{width:5px;height:5px;border-radius:50%;display:inline-block;}
-/* 연간 틀고정: 왼쪽 날짜열 통째 고정 + 상단 월 헤더 고정 */
+/* 연간 틀고정: 좌측 날짜열 sticky + 상단 월헤더는 세로스크롤 밖(가로 JS동기화) */
+.yhead{display:flex;gap:3px;overflow:hidden;margin-bottom:3px;}
+.yhead .ycorner2{width:30px;flex:none;height:24px;}
+.ymhrow{display:flex;gap:3px;flex:none;}
+.ymhrow .ymhead{width:56px;flex:none;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--lav-d);}
 .yflex{display:flex;gap:3px;width:max-content;align-items:flex-start;}
 .ycolfix{position:sticky;left:0;z-index:6;display:flex;flex-direction:column;gap:3px;background:var(--panel);flex:none;}
-.ycolfix .ycorner2{height:24px;position:sticky;top:0;z-index:7;background:var(--panel);}
 .ycolfix .yrl{height:44px;width:30px;flex:none;display:flex;align-items:center;justify-content:center;
   font-family:var(--disp);font-weight:600;font-size:11px;color:var(--lav);background:var(--panel-2);border-radius:7px;}
 .ymgrid{display:grid;gap:3px;flex:none;}
-.ymgrid .ymhead{height:24px;position:sticky;top:0;z-index:4;background:var(--panel);
-  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--lav);}
 .ymgrid .ycell{height:44px;}
 
 /* ---- Month ---- */
@@ -1208,7 +1209,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="76", APP_BUILD="2026.07.25";
+const APP_VERSION="77", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1466,12 +1467,12 @@ function render(){
 /* ---- Year: 365 grid ---- */
 function buildYearBlock(y,mStart,mEnd){
   const cols=mEnd-mStart;
-  // 왼쪽 고정 컬럼: 모서리 + 1~31
-  let colfix='<div class="ycorner2"></div>';
-  for(let dnum=1;dnum<=31;dnum++) colfix+=`<div class="yrl">${dnum}</div>`;
-  // 월 헤더 + 셀 그리드
+  // 상단 고정 월 헤더 (세로 스크롤 밖 · 가로만 동기화)
+  let mh=""; for(let m=mStart;m<mEnd;m++) mh+=`<div class="ymhead">${MON[m]}</div>`;
+  // 왼쪽 고정 날짜열 1~31
+  let colfix=""; for(let dnum=1;dnum<=31;dnum++) colfix+=`<div class="yrl">${dnum}</div>`;
+  // 셀 그리드
   let grid="";
-  for(let m=mStart;m<mEnd;m++) grid+=`<div class="ymhead">${MON[m]}</div>`;
   for(let dnum=1;dnum<=31;dnum++){
     for(let m=mStart;m<mEnd;m++){
       const days=new Date(y,m+1,0).getDate();
@@ -1496,8 +1497,10 @@ function buildYearBlock(y,mStart,mEnd){
       grid+=`<div class="${cls.join(" ")}${note?" noted":""}" data-date="${ds}"><span class="yn">${WEEK[dt.getDay()]}</span>${kw?`<span class="yk">${kw}</span>`:""}${dots}</div>`;
     }
   }
-  const gs=`grid-template-columns:repeat(${cols},56px);grid-template-rows:24px;grid-auto-rows:44px;`;
-  return `<div class="yblock"><div class="yearscroll"><div class="yflex">`
+  const gs=`grid-template-columns:repeat(${cols},56px);grid-auto-rows:44px;`;
+  return `<div class="yblock">`
+    +`<div class="yhead"><div class="ycorner2"></div><div class="ymhrow">${mh}</div></div>`
+    +`<div class="yearscroll"><div class="yflex">`
     +`<div class="ycolfix">${colfix}</div>`
     +`<div class="ymgrid" style="${gs}">${grid}</div>`
     +`</div></div></div>`;
@@ -1521,6 +1524,11 @@ function bindYearCells(){
     c.addEventListener("pointerup",()=>{cancel();if(!longFired){openDayViewer(c.dataset.date);}});
     c.addEventListener("pointerleave",cancel);
     c.addEventListener("pointercancel",cancel);
+  });
+  // 월 헤더 가로 스크롤 동기화 (각 반기 블록마다)
+  main.querySelectorAll(".yblock").forEach(bl=>{
+    const ys=bl.querySelector(".yearscroll"), row=bl.querySelector(".ymhrow");
+    if(ys&&row){ const sync=()=>{row.style.transform=`translateX(${-ys.scrollLeft}px)`;}; ys.addEventListener("scroll",sync,{passive:true}); sync(); }
   });
 }
 function editYearNote(cell){
@@ -1783,15 +1791,17 @@ function plannerStatOn(ds){
   data.planner.todos.filter(a=>a.date===ds).forEach(chk);
   return {total,done};
 }
+// 완료 체크한 "다음날부터" 리스트에서 숨김 (완료일이 오늘보다 이전이면 숨김)
+function pStale(a){ return !!(a.done && a.doneDate && a.doneDate < ymd(new Date())); }
 
 /* ---- Day (diary body) ---- */
 function renderDay(){
   const ds=ymd(cursor);
   periodEl.textContent=`${cursor.getMonth()+1}월 ${cursor.getDate()}일`;
   const evs=eventsOn(cursor);
-  const appts=data.planner.appts.filter(a=>a.date===ds);
-  const study=data.planner.study.filter(a=>a.date===ds);
-  const todos=data.planner.todos.filter(a=>a.date===ds);
+  const appts=data.planner.appts.filter(a=>(a.date===ds||!a.date)&&!pStale(a));
+  const study=data.planner.study.filter(a=>a.date===ds&&!pStale(a));
+  const todos=data.planner.todos.filter(a=>(a.date===ds||!a.date)&&!pStale(a));
   const habits=data.planner.habits;
   const dia=data.diary[ds]||{mood:"",title:"",body:"",photos:[],cond:0};
 
@@ -2064,7 +2074,7 @@ function bindDayPlanner(ds){
     const type=row.dataset.ptype,id=row.dataset.pid;
     const arr=data.planner[type];
     const cb=row.querySelector("[data-pcheck]"), del=row.querySelector("[data-pdel]");
-    if(cb)cb.onclick=()=>{const it=arr.find(x=>x.id===id);if(it){it.done=cb.checked;persist();row.classList.toggle("done",it.done);}};
+    if(cb)cb.onclick=()=>{const it=arr.find(x=>x.id===id);if(it){it.done=cb.checked;it.doneDate=cb.checked?ymd(new Date()):"";persist();row.classList.toggle("done",it.done);}};
     if(del)del.onclick=()=>{const i=arr.findIndex(x=>x.id===id);if(i>=0){arr.splice(i,1);persist();renderDay();}};
     const ed=row.querySelector("[data-pedit]"); if(ed)ed.onclick=()=>openPtEdit(type,id);
   });
@@ -2144,7 +2154,7 @@ function renderPlannerBody(){
       <div class="row"><textarea id="aMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
       <div class="row"><label class="rlbl">🔔 알림<select id="aRemind">${remindOptions("")}</select></label></div>
       <button class="btn primary" id="aAdd">약속 추가</button></div>`;
-    const list=[...data.planner.appts].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+    const list=[...data.planner.appts].filter(a=>!pStale(a)).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
     h+= list.length? list.map(a=>plCard("appts",a,`${a.date} ${a.time||""} · ${a.who||""} ${a.place?"@"+a.place:""}`)).join(""):emptyP("약속을 추가해보세요");
   }else if(t==="work"){
     h+=`<div class="pform"><button class="btn primary" id="wAdd">＋ 작업 추가</button>
@@ -2228,7 +2238,7 @@ function renderPlannerBody(){
       <div class="row"><textarea id="tMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
       <div class="row"><label class="rlbl">🔔 알림<select id="tRemind">${remindOptions("",true)}</select></label></div>
       <button class="btn primary" id="tAdd">할 일 추가</button></div>`;
-    const list=[...data.planner.todos].sort((a,b)=>((a.date||"9999")).localeCompare(b.date||"9999"));
+    const list=[...data.planner.todos].filter(a=>!pStale(a)).sort((a,b)=>((a.date||"9999")).localeCompare(b.date||"9999"));
     h+= list.length? list.map(a=>plCard("todos",a,a.date||"미정")).join(""):emptyP("할 일을 추가해보세요");
   }else{
     h+=`<div class="pform"><div class="row"><input id="hName" placeholder="습관 이름 (예: 물 2L 마시기)"></div>
@@ -2407,7 +2417,7 @@ function bindPlannerForms(){
   document.querySelectorAll(".pitem[data-pid]").forEach(row=>{
     const type=row.dataset.ptype,id=row.dataset.pid,arr=data.planner[type];
     const cb=row.querySelector("[data-pcheck]"),del=row.querySelector("[data-pdel]");
-    if(cb)cb.onclick=()=>{const it=arr.find(x=>x.id===id);if(it){it.done=cb.checked;persist();row.classList.toggle("done",it.done);}};
+    if(cb)cb.onclick=()=>{const it=arr.find(x=>x.id===id);if(it){it.done=cb.checked;it.doneDate=cb.checked?ymd(new Date()):"";persist();row.classList.toggle("done",it.done);}};
     if(del)del.onclick=()=>{const i=arr.findIndex(x=>x.id===id);if(i>=0){arr.splice(i,1);persist();renderPlannerBody();}};
     const ed=row.querySelector("[data-pedit]"); if(ed)ed.onclick=()=>openPtEdit(type,id);
   });
