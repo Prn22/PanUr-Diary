@@ -819,8 +819,8 @@ body{
     <button class="tab active" data-view="month">월간</button>
     <button class="tab" data-view="day">일간</button>
     <button class="tab" data-view="planner">플래너</button>
-    <button class="tab" data-view="etc">기타</button>
     <button class="tab" data-view="focus">집중</button>
+    <button class="tab" data-view="etc">기타</button>
   </div>
   <div class="subbar hide" id="monthSeg">
     <div class="seg">
@@ -1263,7 +1263,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="101", APP_BUILD="2026.07.25";
+const APP_VERSION="102", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
