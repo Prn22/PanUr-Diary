@@ -362,14 +362,53 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .sleeprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);}
 .sleeprow input[type=time]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel-2);color:var(--ink);font-family:var(--body);}
 .sleepdur{color:var(--lav-d);font-weight:600;font-family:var(--disp);}
-.sleeptot{font-size:12px;color:var(--lav-d);font-weight:600;font-family:var(--disp);margin-left:4px;}
-.sleeplist{display:flex;flex-direction:column;gap:7px;margin-bottom:7px;}
+.sleeptot{font-size:12px;color:var(--lav-d);font-weight:600;font-family:var(--disp);margin-left:4px;}.sleeplist{display:flex;flex-direction:column;gap:7px;margin-bottom:7px;}
 .sleepseg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:7px 9px;}
 .sleepseg input[type=time]{border:1px solid var(--line);border-radius:8px;padding:5px 7px;background:var(--panel);color:var(--ink);font-family:var(--body);font-size:12.5px;}
 .sleepseg .seg-dur{color:var(--lav-d);font-weight:600;font-family:var(--disp);margin-left:auto;}
 .sleepseg .slp-del{border:none;background:none;color:var(--faint);cursor:pointer;font-size:13px;padding:0 2px;}
 .sleepempty{font-size:12px;color:var(--muted);padding:2px 2px 6px;}
 .sleephint{font-size:11px;color:var(--faint);margin-top:5px;}
+/* 집중 탭 */
+.focuscard{text-align:center;}
+.focusseg{display:flex;gap:6px;background:var(--panel-2);border-radius:12px;padding:4px;margin-bottom:12px;}
+.fseg{flex:1;border:none;background:none;border-radius:9px;padding:9px;font-size:13px;color:var(--ink-soft);cursor:pointer;font-family:var(--disp);font-weight:600;}
+.fseg.on{background:var(--rose);color:#fff;box-shadow:var(--shadow-sm);}
+.focustoday{font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+.focustoday b{color:var(--lav-d);font-family:var(--disp);}
+.ftime{font-size:52px;font-weight:700;font-family:var(--disp);color:var(--ink);letter-spacing:1px;margin:6px 0 12px;font-variant-numeric:tabular-nums;}
+.finput{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:14px;margin-bottom:6px;text-align:center;}
+.fbtns{display:flex;gap:8px;margin-bottom:10px;}
+.fbtn{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--panel-2);color:var(--ink-soft);cursor:pointer;font-family:var(--disp);font-weight:600;font-size:14px;}
+.fbtn.primary{background:var(--rose);color:#fff;border-color:transparent;}
+.fbtn:active{transform:scale(.98);}
+.fauto{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;}
+.pophase{display:inline-block;font-size:13px;font-weight:700;font-family:var(--disp);padding:5px 14px;border-radius:20px;margin-top:2px;}
+.pophase.p-focus{background:rgba(228,166,188,.2);color:var(--rose-d,#b06a86);}
+.pophase.p-break,.pophase.p-long{background:rgba(140,203,180,.22);color:#3a9e78;}
+.posetting{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px;font-size:12px;color:var(--ink-soft);}
+.posetting span{background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;padding:6px 9px;}
+.posetting input{width:42px;border:none;background:none;color:var(--ink);font-family:var(--disp);font-weight:600;text-align:center;font-size:13px;}
+.frecent{margin-top:16px;text-align:left;}
+.frecent h3{font-size:13px;color:var(--ink);margin:0 0 8px;}
+/* 집중 기록 리스트 */
+.fdays{display:flex;justify-content:space-between;align-items:flex-end;gap:5px;height:70px;margin:10px 2px 4px;}
+.fday{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;}
+.fbar-wrap{height:56px;display:flex;align-items:flex-end;}
+.fbar{width:16px;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,var(--rose),var(--lav));min-height:4px;}
+.fday.is-today .fbar{background:linear-gradient(180deg,var(--gold,#e6b422),var(--rose));}
+.fday-l{font-size:10px;color:var(--muted);}
+.fday.is-today .fday-l{color:var(--rose-d,#b06a86);font-weight:700;}
+.flog{margin-top:8px;text-align:left;}
+.flog-date{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-weight:700;margin:12px 0 4px;padding-bottom:3px;border-bottom:1px dashed var(--line-2);}
+.flog-date span{color:var(--lav-d);font-family:var(--disp);}
+.flbl{color:var(--ink-soft);}
+.flogdel{color:var(--faint);cursor:pointer;margin-left:6px;font-size:11px;font-weight:400;}
+.flogdel:hover{color:#d06a6a;}
+.fclear{width:100%;margin-top:14px;color:var(--muted);font-size:12.5px;}
+.frow{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-soft);padding:6px 0;border-bottom:1px solid var(--line-2);}
+.frow .fdur{color:var(--lav-d);font-weight:600;font-family:var(--disp);}
+.frow .fdur em{color:var(--faint);font-style:normal;font-size:11px;margin-left:4px;}
 .mmsv{font-family:var(--disp);font-weight:700;font-size:22px;color:var(--lav-d);}
 .mmsv small{font-size:12px;color:var(--muted);font-weight:500;}
 .mmsl{font-size:11px;color:var(--muted);margin-top:3px;}
@@ -778,6 +817,7 @@ body{
     <button class="tab" data-view="day">일간</button>
     <button class="tab" data-view="planner">플래너</button>
     <button class="tab" data-view="etc">기타</button>
+    <button class="tab" data-view="focus">집중</button>
   </div>
   <div class="subbar hide" id="monthSeg">
     <div class="seg">
@@ -1216,14 +1256,17 @@ const DEFAULT_DATA={
   studyFields:[],    // 학습 분야 라벨 ["3D · 블렌더", ...]
   studyNotes:[],     // 포스트형 학습 노트 [{id,field,title,body,images:[],date,ts}]
   trips:[],          // 여행 일정 [{id,title,subtitle,startDate,endDate,flightOut,flightRet,itinerary,notes}]
-  planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
+  planner:{ appts:[], study:[], todos:[], habits:[], work:[] },
+  focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="92", APP_BUILD="2026.07.25";
+const APP_VERSION="95", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
 if(!Array.isArray(data.studyFields))data.studyFields=[]; if(!Array.isArray(data.studyNotes))data.studyNotes=[]; if(!Array.isArray(data.trips))data.trips=[];
+if(!data.focus||typeof data.focus!=="object")data.focus={log:[],pomo:{focusMin:25,breakMin:5,longMin:15,rounds:4}};
+if(!Array.isArray(data.focus.log))data.focus.log=[]; if(!data.focus.pomo)data.focus.pomo={focusMin:25,breakMin:5,longMin:15,rounds:4};
 (data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture"; if(s.field==null)s.field="";});
 if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];
 if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};
@@ -1460,6 +1503,116 @@ daySeg.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{daySub=b.dataset
 yearSeg.querySelectorAll("[data-yr]").forEach(b=>b.onclick=()=>{yearRange=b.dataset.yr;jsave("panur_yearrange",yearRange);render();});
 plannerSeg.querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{plannerType=b.dataset.pt;render();});
 etcSeg.querySelectorAll("[data-etc]").forEach(b=>b.onclick=()=>{etcSub=b.dataset.etc;jsave("panur_etcsub",etcSub);render();});
+/* ============ 집중(기록 · 뽀모도로) ============ */
+let focusSub = jload("panur_focussub","list");   // "list" | "pomo"
+// 뽀모도로
+let poRun=false, poPhase="focus", poEnd=0, poRemain=0, poRound=1;
+function poCfg(){ return data.focus.pomo; }
+function poPhaseSec(ph){ const c=poCfg(); return (ph==="focus"?c.focusMin:ph==="long"?c.longMin:c.breakMin)*60; }
+function poInit(){ poRun=false; poPhase="focus"; poRound=1; poRemain=poPhaseSec("focus"); }
+function poStartPause(){ if(poRun){ poRemain=Math.max(0,(poEnd-Date.now())/1000); poRun=false; }
+  else { if(poRemain<=0)poRemain=poPhaseSec(poPhase); poEnd=Date.now()+poRemain*1000; poRun=true; } }
+function poReset(){ poInit(); }
+function poAdvance(){ const c=poCfg();
+  if(poPhase==="focus"){ logFocus(c.focusMin*60, "뽀모도로", "pomo");
+    const isLong=(poRound % c.rounds===0);
+    poPhase=isLong?"long":"break";
+    notify(isLong?"🎉 집중 완료! 긴 휴식이에요":"☕ 집중 완료! 잠깐 휴식하세요");
+  } else {
+    if(poPhase==="long")poRound=1; else poRound=poRound+1;
+    poPhase="focus"; notify("💪 휴식 끝! 다시 집중해요");
+  }
+  poRemain=poPhaseSec(poPhase); poEnd=Date.now()+poRemain*1000;
+}
+function logFocus(sec,label,kind){ data.focus.log.push({date:ymd(new Date()),sec:Math.round(sec),label:label||"",ts:Date.now(),kind:kind||"timer"}); persist(); }
+function focusTodaySec(){ const t=ymd(new Date()); return (data.focus.log||[]).filter(x=>x.date===t).reduce((a,x)=>a+(x.sec||0),0); }
+function focusByDay(n){ const out=[], now=new Date();
+  for(let i=n-1;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=ymd(d);
+    const sec=(data.focus.log||[]).filter(x=>x.date===ds).reduce((a,x)=>a+(x.sec||0),0);
+    out.push({ds,sec,wd:WEEK[d.getDay()]}); } return out; }
+function deleteFocusLog(ts){ data.focus.log=(data.focus.log||[]).filter(x=>String(x.ts)!==String(ts)); persist(); }
+function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return h>0?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`; }
+function fmtDurKo(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
+  return h>0?`${h}시간 ${m}분`:`${m}분`; }
+poInit();
+setInterval(()=>{
+  if(poRun){ const r=(poEnd-Date.now())/1000; if(r<=0)poAdvance(); else poRemain=r; }
+  if(view!=="focus")return;
+  const pot=document.getElementById("poTime"); if(pot)pot.textContent=fmtDur(poRemain);
+  const pg=document.getElementById("poToggle"); if(pg)pg.textContent=poRun?"⏸ 일시정지":"▶ 시작";
+  const tt=document.getElementById("focusToday"); if(tt)tt.textContent=fmtDurKo(focusTodaySec());
+},250);
+
+function focusListHTML(){
+  const days=focusByDay(7); const mx=Math.max(1,...days.map(d=>d.sec));
+  const log=(data.focus.log||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,50);
+  const groups={}; log.forEach(x=>{(groups[x.date]=groups[x.date]||[]).push(x);});
+  const gkeys=Object.keys(groups).sort().reverse();
+  const icon=k=>k==="pomo"?"🍅":k==="app"?"🖥":"⏱";
+  return `
+    <div class="focustoday">오늘 집중 <b id="focusToday">${fmtDurKo(focusTodaySec())}</b></div>
+    <div class="fdays">
+      ${days.map((d,i)=>`<div class="fday ${i===days.length-1?"is-today":""}">
+        <div class="fbar-wrap"><div class="fbar" style="height:${Math.round(4+(d.sec/mx)*52)}px" title="${fmtDurKo(d.sec)}"></div></div>
+        <div class="fday-l">${d.wd}</div></div>`).join("")}
+    </div>
+    <div class="flog">
+      ${gkeys.length? gkeys.map(dk=>`
+        <div class="flog-date">${dk.slice(5).replace("-","/")} <span>${fmtDurKo(groups[dk].reduce((a,x)=>a+(x.sec||0),0))}</span></div>
+        ${groups[dk].map(x=>`<div class="frow"><span class="flbl">${icon(x.kind)} ${esc(x.label||"작업")}</span>
+          <span class="fdur">${fmtDurKo(x.sec)} <b class="flogdel" data-flogdel="${x.ts}" title="삭제">✕</b></span></div>`).join("")}
+      `).join("") : '<div class="empty">아직 기록이 없어요<small>뽀모도로나 데스크톱 워커로 기록이 쌓여요</small></div>'}
+    </div>
+    ${gkeys.length?`<button class="fbtn fclear" id="focusClear">기록 전체 삭제</button>`:""}`;
+}
+function focusPomoHTML(c){
+  return `
+    <div class="focustoday">오늘 집중 <b id="focusToday">${fmtDurKo(focusTodaySec())}</b></div>
+    <div class="pophase p-${poPhase}">${poPhase==="focus"?"집중":poPhase==="long"?"긴 휴식":"휴식"} · ${poRound}/${c.rounds}회</div>
+    <div class="ftime" id="poTime">${fmtDur(poRemain||poPhaseSec("focus"))}</div>
+    <div class="fbtns">
+      <button class="fbtn primary" id="poToggle">${poRun?"⏸ 일시정지":"▶ 시작"}</button>
+      <button class="fbtn" id="poReset">↺ 리셋</button>
+    </div>
+    <div class="posetting">
+      <span>집중 <input type="number" id="poFocus" min="1" max="180" value="${c.focusMin}">분</span>
+      <span>휴식 <input type="number" id="poBreak" min="1" max="60" value="${c.breakMin}">분</span>
+      <span>긴휴식 <input type="number" id="poLong" min="1" max="60" value="${c.longMin}">분</span>
+      <span>세트 <input type="number" id="poRounds" min="1" max="12" value="${c.rounds}">회</span>
+    </div>`;
+}
+function renderFocus(){
+  periodEl.textContent="집중";
+  const c=poCfg();
+  main.innerHTML=`<div class="card focuscard">
+    <div class="focusseg">
+      <button class="fseg ${focusSub==="list"?"on":""}" data-fsub="list">집중 기록</button>
+      <button class="fseg ${focusSub==="pomo"?"on":""}" data-fsub="pomo">뽀모도로</button>
+    </div>
+    ${focusSub==="list"?focusListHTML():focusPomoHTML(c)}
+  </div>`;
+  bindFocus();
+}
+function bindFocus(){
+  document.querySelectorAll("[data-fsub]").forEach(b=>b.onclick=()=>{focusSub=b.dataset.fsub;jsave("panur_focussub",focusSub);renderFocus();});
+  if(focusSub==="list"){
+    main.querySelectorAll("[data-flogdel]").forEach(b=>b.onclick=()=>{deleteFocusLog(b.dataset.flogdel);renderFocus();});
+    const cl=G("focusClear"); if(cl)cl.onclick=()=>{ if(window.confirm("집중 기록을 모두 지울까요?")){data.focus.log=[];persist();renderFocus();toast("기록을 비웠어요");} };
+  } else {
+    const tg=G("poToggle"); if(tg)tg.onclick=()=>{ poStartPause(); renderFocus(); };
+    const rs=G("poReset"); if(rs)rs.onclick=()=>{ poReset(); renderFocus(); };
+    const save=()=>{ const c=poCfg();
+      c.focusMin=Math.max(1,Math.min(180,+G("poFocus").value||25));
+      c.breakMin=Math.max(1,Math.min(60,+G("poBreak").value||5));
+      c.longMin=Math.max(1,Math.min(60,+G("poLong").value||15));
+      c.rounds=Math.max(1,Math.min(12,+G("poRounds").value||4));
+      if(!poRun&&poPhase==="focus")poRemain=poPhaseSec("focus");
+      persist(); };
+    ["poFocus","poBreak","poLong","poRounds"].forEach(id=>{const el=G(id); if(el)el.onchange=()=>{save();renderFocus();};});
+  }
+}
+
 function render(){
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===view));
   monthSeg.classList.toggle("hide",view!=="month");
@@ -1476,6 +1629,7 @@ function render(){
   else if(view==="month")renderMonth();
   else if(view==="day")renderDay();
   else if(view==="planner")renderPlanner();
+  else if(view==="focus")renderFocus();
   else renderEtc();
 }
 
