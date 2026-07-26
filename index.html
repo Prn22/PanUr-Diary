@@ -675,6 +675,8 @@ body{
 .wxchip{background:var(--panel-2);border:1px solid var(--line-2);border-radius:20px;padding:6px 12px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
 .wxchip b{color:var(--faint);font-weight:400;cursor:pointer;}
 .wxchip b:hover{color:var(--rose);}
+.wxchip .wxbell{font-size:12px;opacity:.55;margin-right:1px;}
+.wxchip .wxbell.on{opacity:1;}
 .affrow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;padding:8px 11px;font-size:13px;color:var(--ink-soft);}
 .affrow b{color:var(--faint);cursor:pointer;font-weight:400;flex:none;padding-left:6px;}
 .affrow b:hover{color:var(--rose);}
@@ -1217,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="80", APP_BUILD="2026.07.25";
+const APP_VERSION="81", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3352,7 +3354,7 @@ function weatherBodyHTML(){
       <button class="btn" id="wxCityBtn">조회</button>
       <button class="btn" id="wxPresetAdd" title="현재 입력을 프리셋에 추가">＋프리셋</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px;">위치 권한을 허용하면 현재 위치, 거부하면 프리셋·도시명으로 조회해요.</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">위치 권한을 허용하면 현재 위치, 거부하면 프리셋·도시명으로 조회해요. 프리셋의 🔕/🔔을 눌러 그 지역 <b>비 예보 알림</b>을 켤 수 있어요(여러 지역 가능).</div>
   </div>`;
 }
 function wxSetLoc(t){const el=document.getElementById("wxLoc"); if(el)el.textContent="📍 "+t;}
@@ -3379,11 +3381,15 @@ function wxRenderHourly(times,temps,codes){
 function wxRenderPresets(){
   const el=document.getElementById("wxPresets"); if(!el)return;
   el.innerHTML=(data.wxPresets||[]).map((p,i)=>
-    `<span class="wxchip" data-q="${esc(p.q)}" data-label="${esc(p.label)}">${esc(p.label)}<b data-pdel="${i}">✕</b></span>`).join("");
+    `<span class="wxchip" data-q="${esc(p.q)}" data-label="${esc(p.label)}"><b class="wxbell ${p.alert?"on":""}" data-palert="${i}" title="이 지역 비 예보 알림">${p.alert?"🔔":"🔕"}</b>${esc(p.label)}<b data-pdel="${i}">✕</b></span>`).join("");
   el.querySelectorAll(".wxchip").forEach(c=>c.onclick=e=>{
-    if(e.target.dataset.pdel!=null)return;
+    if(e.target.dataset.pdel!=null||e.target.dataset.palert!=null)return;
     jsave("panur_wxcity",c.dataset.q); wxByQuery(c.dataset.q,c.dataset.label);
   });
+  el.querySelectorAll("[data-palert]").forEach(b=>b.onclick=e=>{e.stopPropagation();
+    const i=Number(b.dataset.palert); data.wxPresets[i].alert=!data.wxPresets[i].alert; persist(); wxRenderPresets();
+    toast(data.wxPresets[i].alert?`${data.wxPresets[i].label} 비 예보 알림 켬`:`${data.wxPresets[i].label} 알림 끔`);
+    checkRainAlert();});
   el.querySelectorAll("[data-pdel]").forEach(b=>b.onclick=e=>{e.stopPropagation();
     data.wxPresets.splice(Number(b.dataset.pdel),1);persist();wxRenderPresets();});
 }
@@ -4094,7 +4100,7 @@ function upcomingSummary(){
 if(sync.owner&&sync.repo&&sync.token){pull(false);}
 /* ---- 비 예보 알림 ---- */
 const RAIN_CODES=new Set([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99]);
-async function rainCheckAt(lat,lon){
+async function rainCheckAt(lat,lon,label){
   try{
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=weather_code,precipitation_probability&timezone=auto&forecast_days=1`;
     const r=await fetch(u); const j=await r.json();
@@ -4102,21 +4108,25 @@ async function rainCheckAt(lat,lon){
     const now=Date.now(); let hit=null;
     for(let i=0;i<times.length;i++){ const t=new Date(times[i]).getTime(); if(t<now-3600000)continue;
       if(RAIN_CODES.has(codes[i])||(probs[i]!=null&&probs[i]>=60)){hit={h:new Date(times[i]).getHours(),prob:probs[i]};break;} }
-    if(hit){ const key="panur_rain_"+ymd(new Date());
+    if(hit){ const key="panur_rain_"+(label||"loc")+"_"+ymd(new Date());
       if(!jload(key,false)){ jsave(key,true);
-        const msg=`☔ 오늘 비 소식 (${hit.h}시경${hit.prob!=null?`, 강수확률 ${hit.prob}%`:""}) · 우산을 챙기세요`;
+        const msg=`☔ ${label?label+" · ":""}오늘 비 소식 (${hit.h}시경${hit.prob!=null?`, 강수확률 ${hit.prob}%`:""}) · 우산을 챙기세요`;
         if(("Notification"in window)&&Notification.permission==="granted")notify(msg); else toast(msg);
       }
     }
   }catch(e){}
 }
+function rainCheckCity(q,label){
+  fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=ko`)
+    .then(r=>r.json()).then(j=>{if(j.results&&j.results.length)rainCheckAt(j.results[0].latitude,j.results[0].longitude,label||j.results[0].name||q);}).catch(()=>{});
+}
 function checkRainAlert(){
+  const alerts=(data.wxPresets||[]).filter(p=>p.alert);
+  if(alerts.length){ alerts.forEach(p=>rainCheckCity(p.q,p.label)); return; } // 지정한 알림 지역들
   const city=jload("panur_wxcity","");
-  if(city){
-    fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=ko`)
-      .then(r=>r.json()).then(j=>{if(j.results&&j.results.length)rainCheckAt(j.results[0].latitude,j.results[0].longitude);}).catch(()=>{});
-  } else if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(p=>rainCheckAt(p.coords.latitude,p.coords.longitude),()=>{},{timeout:8000,maximumAge:3600000});
+  if(city){ rainCheckCity(city); }
+  else if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(p=>rainCheckAt(p.coords.latitude,p.coords.longitude,"현재 위치"),()=>{},{timeout:8000,maximumAge:3600000});
   }
 }
 setTimeout(checkRainAlert,3000);
