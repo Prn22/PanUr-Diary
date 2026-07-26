@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="86", APP_BUILD="2026.07.25";
+const APP_VERSION="87", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1260,6 +1260,7 @@ let _bkT=0;
 function maybeBackup(){ const n=Date.now(); if(n-_bkT<20000)return; _bkT=n; makeBackup(false); } // persist 폭주 방지(20초 최소 간격 후 15분 규칙)
 function restoreBackup(ts){
   const arr=loadBackups(), b=arr.find(x=>x.ts===ts); if(!b)return;
+  if(!b.data||!String(b.data).trim()){ toast("이 백업은 내용이 비어 있어 복원할 수 없어요"); return; }
   if(!window.confirm(fmtBkTime(ts)+" 시점으로 되돌릴까요?\n(되돌리기 전 현재 상태도 백업돼요)"))return;
   makeBackup(true); // 복원 직전 상태 보관
   let obj; try{ obj=JSON.parse(b.data); }catch(e){ return toast("백업을 읽지 못했어요"); }
@@ -1267,6 +1268,7 @@ function restoreBackup(ts){
   if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
   persist(); applyTheme(jload("panur_theme","rose")); applyFont(jload("panur_font","dodum")); render();
   toast("백업을 복원했어요");
+  if(sync.owner&&sync.repo&&sync.token && window.confirm("복원한 이 내용을 저장소에도 바로 올릴까요?\n(저장소의 기존 내용은 자동으로 백업돼요)")){ push(true); }
 }
 function fmtBkTime(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,"0");
   return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`; }
@@ -3990,12 +3992,16 @@ async function push(verbose){
       }catch(e){}
       res=await doPut(sha);
     }
-    if(!res.ok){throw new Error("HTTP "+res.status);}
+    if(!res.ok){ let msg="HTTP "+res.status; try{const t=await res.json(); if(t&&t.message)msg+=" · "+t.message;}catch(e){}
+      const kb=Math.round(JSON.stringify(data).length/1024);
+      if(kb>1000)msg+=` (데이터 ${kb}KB — 깃허브 1MB 한도 초과 가능)`;
+      throw new Error(msg); }
     const j=await res.json(); sync.sha=j.content.sha; jsave(LS_SYNC,sync);
     if(verbose)syncStatus.textContent="올렸어요 ✓"; setDot("ok"); if(verbose)toast("동기화: 올렸어요");
   }catch(e){if(verbose)syncStatus.textContent="실패: "+e.message;setDot("err");}
 }
 function backupRemote(str){ // 저장소에 있던(덮어써질) 버전을 로컬 백업 슬롯에 보존
+  if(!str||!String(str).trim())return; // 빈 내용은 백업하지 않음
   try{ const arr=loadBackups(); arr.push({ts:Date.now(),size:str.length,data:str,note:"동기화 충돌 저장소본"}); writeBackups(arr); }catch(e){}
 }
 let autoT; function scheduleAuto(){clearTimeout(autoT);autoT=setTimeout(()=>push(false),2500);}
