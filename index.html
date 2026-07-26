@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="87", APP_BUILD="2026.07.25";
+const APP_VERSION="88", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3937,11 +3937,49 @@ function b64encode(str){return btoa(unescape(encodeURIComponent(str)));}
 function b64decode(b64){return decodeURIComponent(escape(atob(b64)));}
 function ghHeaders(){return{"Authorization":`Bearer ${sync.token}`,"Accept":"application/vnd.github+json"};}
 function ghUrl(){return `https://api.github.com/repos/${sync.owner}/${sync.repo}/contents/${encodeURIComponent(sync.path).replace(/%2F/g,"/")}`;}
+function ghApi(){return `https://api.github.com/repos/${sync.owner}/${sync.repo}`;}
+async function ghErr(res){ try{const j=await res.json(); return j&&j.message?(" · "+j.message):"";}catch(e){return "";} }
+// 파일 읽기 (1MB 초과 시 blob으로) → {sha,text} | {notfound:true}
+async function ghGetFile(){
+  const res=await fetch(ghUrl()+`?ref=${sync.branch}`,{headers:ghHeaders()});
+  if(res.status===404)return {notfound:true};
+  if(!res.ok)throw new Error("HTTP "+res.status+await ghErr(res));
+  const j=await res.json();
+  let text;
+  if(j.content && j.encoding==="base64" && j.content.trim()){ text=b64decode(j.content.replace(/\n/g,"")); }
+  else { const b=await fetch(ghApi()+`/git/blobs/${j.sha}`,{headers:ghHeaders()});
+    if(!b.ok)throw new Error("blob HTTP "+b.status+await ghErr(b));
+    const bj=await b.json(); text=b64decode((bj.content||"").replace(/\n/g,"")); }
+  return {sha:j.sha, text};
+}
+// 파일 쓰기 (blob→tree→commit→ref): 1MB 초과도 가능
+async function ghPutBlob(jsonStr){
+  const A=ghApi(), H=ghHeaders(), HJ=Object.assign({"Content-Type":"application/json"},H);
+  let r=await fetch(A+"/git/blobs",{method:"POST",headers:HJ,body:JSON.stringify({content:b64encode(jsonStr),encoding:"base64"})});
+  if(!r.ok)throw new Error("blob "+r.status+await ghErr(r));
+  const blobSha=(await r.json()).sha;
+  r=await fetch(A+`/git/ref/heads/${sync.branch}`,{headers:H});
+  if(!r.ok)throw new Error("ref "+r.status+await ghErr(r));
+  const commitSha=(await r.json()).object.sha;
+  r=await fetch(A+`/git/commits/${commitSha}`,{headers:H});
+  if(!r.ok)throw new Error("commit "+r.status+await ghErr(r));
+  const baseTree=(await r.json()).tree.sha;
+  r=await fetch(A+"/git/trees",{method:"POST",headers:HJ,body:JSON.stringify({base_tree:baseTree,tree:[{path:sync.path,mode:"100644",type:"blob",sha:blobSha}]})});
+  if(!r.ok)throw new Error("tree "+r.status+await ghErr(r));
+  const newTree=(await r.json()).sha;
+  r=await fetch(A+"/git/commits",{method:"POST",headers:HJ,body:JSON.stringify({message:"diary update "+new Date().toISOString(),tree:newTree,parents:[commitSha]})});
+  if(!r.ok)throw new Error("newcommit "+r.status+await ghErr(r));
+  const newCommit=(await r.json()).sha;
+  r=await fetch(A+`/git/refs/heads/${sync.branch}`,{method:"PATCH",headers:HJ,body:JSON.stringify({sha:newCommit,force:false})});
+  if(!r.ok)throw new Error("updateref "+r.status+await ghErr(r));
+  return true;
+}
 function setDot(s){syncDot.className="sync-dot"+(s==="ok"?" ok":s==="err"?" err":"");}
 function openSync(){
   G("gOwner").value=sync.owner;G("gRepo").value=sync.repo;G("gBranch").value=sync.branch||"main";
   G("gPath").value=sync.path||"data.json";G("gToken").value=sync.token;G("gAuto").checked=!!sync.auto;
-  syncStatus.textContent=""; syncOverlay.classList.add("show");
+  const kb=Math.round(JSON.stringify(data).length/1024);
+  syncStatus.textContent=`현재 데이터 ${kb}KB`; syncOverlay.classList.add("show");
 }
 function readSyncForm(){
   sync.owner=G("gOwner").value.trim();sync.repo=G("gRepo").value.trim();
@@ -3957,11 +3995,10 @@ async function pull(verbose){
   if(!sync.owner||!sync.repo||!sync.token){if(verbose)syncStatus.textContent="사용자명·저장소·토큰을 먼저 입력해요";return;}
   try{
     syncStatus.textContent="불러오는 중…";
-    const res=await fetch(ghUrl()+`?ref=${sync.branch}`,{headers:ghHeaders()});
-    if(res.status===404){syncStatus.textContent="저장소에 아직 파일이 없어요. '올리기'로 처음 저장하세요.";setDot("");return;}
-    if(!res.ok)throw new Error("HTTP "+res.status);
-    const j=await res.json(); sync.sha=j.sha; jsave(LS_SYNC,sync);
-    const remote=JSON.parse(b64decode(j.content.replace(/\n/g,"")));
+    const gf=await ghGetFile();
+    if(gf.notfound){syncStatus.textContent="저장소에 아직 파일이 없어요. '올리기'로 처음 저장하세요.";setDot("");return;}
+    sync.sha=gf.sha; jsave(LS_SYNC,sync);
+    const remote=JSON.parse(gf.text);
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
     if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!Array.isArray(data.userHols))data.userHols=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
@@ -3973,31 +4010,18 @@ async function pull(verbose){
 async function push(verbose){
   if(!sync.owner||!sync.repo||!sync.token){if(verbose)syncStatus.textContent="사용자명·저장소·토큰을 먼저 입력해요";return;}
   try{
-    if(verbose)syncStatus.textContent="올리는 중…";
-    let sha=sync.sha;
-    try{const g=await fetch(ghUrl()+`?ref=${sync.branch}`,{headers:ghHeaders()});
-      if(g.ok){const gj=await g.json();sha=gj.sha;}}catch(e){}
-    const doPut=(useSha)=>{
-      const body={message:"diary update "+new Date().toISOString(),content:b64encode(JSON.stringify(data)),branch:sync.branch};
-      if(useSha)body.sha=useSha;
-      return fetch(ghUrl(),{method:"PUT",headers:ghHeaders(),body:JSON.stringify(body)});
-    };
-    let res=await doPut(sha);
-    if(res.status===409||res.status===422){ // 충돌: 저장소 현재본 로컬 백업 후 최신 sha로 1회 재시도
-      if(verbose)syncStatus.textContent="충돌 감지 — 저장소본 백업 후 재시도…";
-      try{ const g2=await fetch(ghUrl()+`?ref=${sync.branch}`,{headers:ghHeaders()});
-        if(g2.ok){ const gj2=await g2.json(); sha=gj2.sha;
-          try{ backupRemote(b64decode(gj2.content.replace(/\n/g,""))); }catch(e){}
-        }
-      }catch(e){}
-      res=await doPut(sha);
+    const jsonStr=JSON.stringify(data), kb=Math.round(jsonStr.length/1024);
+    if(verbose)syncStatus.textContent=`올리는 중… (${kb}KB)`;
+    try{ await ghPutBlob(jsonStr); }
+    catch(e){
+      if(/updateref|422|409/.test(String(e.message))){ // 충돌: 저장소본 백업 후 1회 재시도
+        if(verbose)syncStatus.textContent="충돌 감지 — 저장소본 백업 후 재시도…";
+        try{ const gf=await ghGetFile(); if(gf&&gf.text)backupRemote(gf.text); }catch(_){}
+        await ghPutBlob(jsonStr);
+      } else throw e;
     }
-    if(!res.ok){ let msg="HTTP "+res.status; try{const t=await res.json(); if(t&&t.message)msg+=" · "+t.message;}catch(e){}
-      const kb=Math.round(JSON.stringify(data).length/1024);
-      if(kb>1000)msg+=` (데이터 ${kb}KB — 깃허브 1MB 한도 초과 가능)`;
-      throw new Error(msg); }
-    const j=await res.json(); sync.sha=j.content.sha; jsave(LS_SYNC,sync);
-    if(verbose)syncStatus.textContent="올렸어요 ✓"; setDot("ok"); if(verbose)toast("동기화: 올렸어요");
+    try{ const gf=await ghGetFile(); if(gf&&gf.sha){sync.sha=gf.sha;jsave(LS_SYNC,sync);} }catch(_){}
+    if(verbose)syncStatus.textContent=`올렸어요 ✓ (${kb}KB)`; setDot("ok"); if(verbose)toast("동기화: 올렸어요");
   }catch(e){if(verbose)syncStatus.textContent="실패: "+e.message;setDot("err");}
 }
 function backupRemote(str){ // 저장소에 있던(덮어써질) 버전을 로컬 백업 슬롯에 보존
