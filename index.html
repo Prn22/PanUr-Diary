@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="90", APP_BUILD="2026.07.25";
+const APP_VERSION="91", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1809,6 +1809,7 @@ function countPlannerOn(ds){
   n+=data.planner.appts.filter(a=>a.date===ds).length;
   n+=data.planner.study.filter(a=>a.date===ds).length;
   n+=data.planner.todos.filter(a=>a.date===ds).length;
+  n+=(data.planner.work||[]).filter(w=>w.due===ds&&!workStale(w)).length;
   return n;
 }
 // 그 날 플래너 체크리스트 완료/전체 (습관 제외)
@@ -1817,10 +1818,12 @@ function plannerStatOn(ds){
   data.planner.appts.filter(a=>a.date===ds).forEach(chk);
   data.planner.study.filter(a=>a.date===ds).forEach(chk);
   data.planner.todos.filter(a=>a.date===ds).forEach(chk);
+  (data.planner.work||[]).filter(w=>w.due===ds&&!workStale(w)).forEach(w=>{total++;if(w.status==="완료")done++;});
   return {total,done};
 }
 // 완료 체크한 "다음날부터" 리스트에서 숨김 (완료일이 오늘보다 이전이면 숨김)
 function pStale(a){ return !!(a.done && a.doneDate && a.doneDate < ymd(new Date())); }
+function workStale(w){ return !!(w.status==="완료" && w.doneDate && w.doneDate < ymd(new Date())); }
 
 /* ---- Day (diary body) ---- */
 function renderDay(){
@@ -1830,6 +1833,7 @@ function renderDay(){
   const appts=data.planner.appts.filter(a=>(a.date===ds||!a.date)&&!pStale(a));
   const study=data.planner.study.filter(a=>a.date===ds&&!pStale(a));
   const todos=data.planner.todos.filter(a=>(a.date===ds||!a.date)&&!pStale(a));
+  const work=(data.planner.work||[]).filter(w=>(w.due===ds||!w.due)&&!workStale(w));
   const habits=data.planner.habits;
   const dia=data.diary[ds]||{mood:"",title:"",body:"",photos:[],cond:0};
 
@@ -1858,12 +1862,15 @@ function renderDay(){
       : `<div class="empty">일정이 없어요</div>`;
     h+=`</div>`;
     // 플래너(그 날)
-    const pAll=[...appts,...study,...todos];
+    const pAll=[...appts,...study,...todos,...work];
     h+=`<div class="section"><h3>플래너</h3>`;
     if(pAll.length||habits.length){
       appts.forEach(a=>{h+=pRow("appts",a,`${a.time?a.time+" · ":""}${a.who?a.who+" · ":""}${a.place||""}`);});
       study.forEach(a=>{h+=pRow("study",a,`${a.subject||""}${a.amount?" · "+a.amount:""}${a.progress?" · "+a.progress:""}`);});
       todos.forEach(a=>{h+=pRow("todos",a,"");});
+      work.forEach(w=>{const on=w.status==="완료";
+        h+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-wcheck="${w.id}" ${on?"checked":""}>
+          <span class="txt">${esc(w.nick||w.content||"작업")}</span><span class="meta">🎨 ${w.due?dday(w.due):"작업"}</span></div>`;});
       habits.forEach(hb=>{const on=hb.done&&hb.done[ds];
         h+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-habit="${hb.id}" ${on?"checked":""}>
           <span class="txt">${esc(hb.name)}</span><span class="meta">습관</span></div>`;});
@@ -1949,6 +1956,11 @@ function renderDay(){
   main.querySelectorAll("[data-habit]").forEach(cb=>cb.onclick=()=>{
     const hb=data.planner.habits.find(x=>x.id===cb.dataset.habit); if(!hb)return;
     hb.done=hb.done||{}; if(cb.checked)hb.done[ds]=true; else delete hb.done[ds];
+    persist(); renderDay();
+  });
+  main.querySelectorAll("[data-wcheck]").forEach(cb=>cb.onclick=()=>{
+    const w=data.planner.work.find(x=>x.id===cb.dataset.wcheck); if(!w)return;
+    if(cb.checked){w.status="완료";w.doneDate=ymd(new Date());} else {w.status="작업중";delete w.doneDate;}
     persist(); renderDay();
   });
   if(daySub==="plan")bindDayPlanner(ds);
@@ -2436,6 +2448,7 @@ function bindPlannerForms(){
   document.querySelectorAll("[data-wstatus]").forEach(b=>b.onclick=()=>{
     const w=data.planner.work.find(x=>x.id===b.dataset.wstatus);if(!w)return;
     const cyc=["대기","작업중","완료"]; w.status=cyc[(cyc.indexOf(w.status||"대기")+1)%3];
+    if(w.status==="완료")w.doneDate=ymd(new Date()); else delete w.doneDate; // 완료 다음날 숨김용
     persist(); renderPlannerBody();
   });
   document.querySelectorAll("[data-lecdel]").forEach(b=>b.onclick=()=>{
@@ -3880,10 +3893,12 @@ function dayViewerHTML(ds,scope){
   if(showPlan&&evs.length)h+=`<div class="dvsec"><h4>📅 일정</h4>${evs.map(e=>`<div class="dvrow"><b>${e.time?esc(e.time):"종일"}</b> ${esc(e.title)}${e.memo?`<div class="dvmemo">${esc(e.memo)}</div>`:""}</div>`).join("")}</div>`;
   if(showPlan){
     const pl=[...data.planner.appts.filter(a=>a.date===ds),...data.planner.study.filter(a=>a.date===ds),...data.planner.todos.filter(a=>a.date===ds)];
-    if(pl.length){
-      const dn=pl.filter(x=>x.done).length;
-      h+=`<div class="dvsec"><h4>✓ 플래너 <span class="dvprog">${dn}/${pl.length}${dn===pl.length?" 완료":""}</span></h4>`
-       +pl.map(x=>`<div class="dvrow dvchk ${x.done?"done":""}">${x.done?"☑":"☐"} ${esc(x.title||x.subject||x.text||"")}</div>`).join("")+`</div>`;
+    const wk=(data.planner.work||[]).filter(w=>w.due===ds&&!workStale(w)).map(w=>({title:w.nick||w.content||"작업",done:w.status==="완료"}));
+    const all=[...pl,...wk];
+    if(all.length){
+      const dn=all.filter(x=>x.done).length;
+      h+=`<div class="dvsec"><h4>✓ 플래너 <span class="dvprog">${dn}/${all.length}${dn===all.length?" 완료":""}</span></h4>`
+       +all.map(x=>`<div class="dvrow dvchk ${x.done?"done":""}">${x.done?"☑":"☐"} ${esc(x.title||x.subject||x.text||"")}</div>`).join("")+`</div>`;
     }
   }
   if(showMorning&&mm){
