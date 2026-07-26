@@ -762,7 +762,7 @@ body{
   </div>
 
   <div class="banner hide" id="notifBanner">
-    <span>🌙 알림을 켜면 일정 시간과 미리 알림을 받을 수 있어요.</span>
+    <span id="notifBannerText">🌙 알림을 켜면 일정·일기·미라클 알림을 받을 수 있어요.</span>
     <button id="enableNotif">알림 켜기</button>
   </div>
   <div class="banner hide" id="installBanner">
@@ -1217,7 +1217,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="77", APP_BUILD="2026.07.25";
+const APP_VERSION="79", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3942,13 +3942,36 @@ syncOverlay.onclick=e=>{if(e.target===syncOverlay){readSyncForm();syncOverlay.cl
 
 /* ============ Notifications ============ */
 const banner=G("notifBanner");
-if(("Notification"in window)&&Notification.permission!=="granted"&&!jload(LS_BANNER,false))banner.classList.remove("hide");
-G("enableNotif").onclick=async()=>{
+function refreshNotifBanner(){
+  if(!("Notification"in window)){banner.classList.add("hide");return;}
+  const perm=Notification.permission;
+  const txt=G("notifBannerText"), btn=G("enableNotif");
+  if(perm==="granted"){ banner.classList.add("hide"); return; }
+  banner.classList.remove("hide");
+  if(perm==="denied"){
+    txt.textContent="🔔 알림이 차단돼 있어요. 주소창의 자물쇠(ⓘ)→ 알림→ 허용으로 바꿔주세요.";
+    btn.textContent="켜는 방법";
+  }else{
+    txt.textContent="🌙 알림을 켜면 일정·일기·미라클 알림을 받을 수 있어요.";
+    btn.textContent="알림 켜기";
+  }
+}
+async function askNotif(){
   if(!("Notification"in window)){toast("이 브라우저는 알림 미지원");return;}
-  const p=await Notification.requestPermission();
-  toast(p==="granted"?"알림이 켜졌어요 🌙":"브라우저 설정에서 허용해주세요");
-  banner.classList.add("hide");jsave(LS_BANNER,true);
-};
+  if(Notification.permission==="denied"){
+    toast("브라우저 설정에서 이 사이트 알림을 '허용'으로 바꿔주세요");
+    refreshNotifBanner(); return;
+  }
+  try{ const p=await Notification.requestPermission();
+    if(p==="granted"){toast("알림이 켜졌어요 🌙");} 
+    else if(p==="denied"){toast("차단됐어요. 주소창 자물쇠(ⓘ)→ 알림에서 허용할 수 있어요");}
+  }catch(e){}
+  refreshNotifBanner();
+}
+G("enableNotif").onclick=askNotif;
+refreshNotifBanner();
+// 앱 켤 때마다: 아직 결정 전이면 허용창 시도(윈도우·맥·모바일). 거부 상태면 안내 배너 유지.
+if(("Notification"in window)&&Notification.permission==="default"){ setTimeout(()=>{ Notification.requestPermission().then(refreshNotifBanner).catch(()=>{}); }, 1200); }
 /* ---- 홈 화면에 추가(PWA 설치) ---- */
 const installBanner=G("installBanner"), installBtn=G("installBtn");
 let deferredPrompt=null;
@@ -3998,6 +4021,16 @@ function checkReminders(){
   (data.planner.appts||[]).forEach(a=>add(a.id,a.date,a.time,a.remind,`약속 · ${a.title||""}`));
   (data.planner.todos||[]).forEach(a=>add(a.id,a.date,null,a.remind,`할 일 · ${a.text||""}`));
   (data.planner.work||[]).forEach(w=>add(w.id,w.due,null,w.remind,`작업 마감 · ${w.nick||w.content||""}`));
+  // 고정 알림: 미라클(오전 6시)·일기(오후 11시) — 아직 안 썼을 때만
+  const t0=ymd(now);
+  if(!(data.diary[t0]&&data.diary[t0].mm)) fireDaily("miracle",6,0,90,"🌄 미라클 모닝을 작성할 시간이에요");
+  if(!diaryHasContent(data.diary[t0])) fireDaily("diary",23,0,90,"✎ 오늘 하루를 일기로 남겨볼까요?");
+}
+function fireDaily(name,h,mi,winMin,body){
+  const now=new Date(), target=new Date(); target.setHours(h,mi,0,0);
+  const diff=now-target; if(diff<0||diff>=winMin*60000)return;
+  const k="panur_dfire_"+name+"_"+ymd(now); if(jload(k,false))return;
+  jsave(k,true); notify(body);
 }
 function fire(key,when,now,body){
   const k=key+"_"+ymd(when);if(fired.has(k))return;
@@ -4028,15 +4061,21 @@ upcomingSummary();
 function upcomingSummary(){
   const now=new Date(), t0=ymd(now);
   const tmr=new Date(now);tmr.setDate(now.getDate()+1);const t1=ymd(tmr);
-  let todayCnt=0, soonDue=0;
-  data.events.forEach(ev=>{if(occursOn(ev,new Date(t0)))todayCnt++;});
-  (data.planner.appts||[]).forEach(a=>{if(a.date===t0)todayCnt++;});
-  (data.planner.todos||[]).forEach(a=>{if(a.date===t0)todayCnt++;});
-  (data.planner.work||[]).forEach(w=>{if(w.status!=="완료"&&(w.due===t0||w.due===t1))soonDue++;});
-  const parts=[];
-  if(todayCnt)parts.push(`오늘 일정·할 일 ${todayCnt}건`);
-  if(soonDue)parts.push(`곧 마감 작업 ${soonDue}건`);
-  if(parts.length)setTimeout(()=>toast("📌 "+parts.join(" · ")),700);
+  const items=[];
+  data.events.forEach(ev=>{ if(occursOn(ev,new Date(t0))) items.push({time:ev.time||"",label:ev.title||"일정"}); });
+  (data.planner.appts||[]).forEach(a=>{ if(a.date===t0) items.push({time:a.time||"",label:a.title||"약속"}); });
+  items.sort((a,b)=>(a.time||"99").localeCompare(b.time||"99"));
+  const lines=items.slice(0,5).map(x=>x.time?`${x.time} ${x.label}`:x.label);
+  if(items.length>5)lines.push(`외 ${items.length-5}건`);
+  const todos=(data.planner.todos||[]).filter(a=>a.date===t0&&!a.done).length;
+  if(todos)lines.push(`할 일 ${todos}건`);
+  const soonDue=(data.planner.work||[]).filter(w=>w.status!=="완료"&&(w.due===t0||w.due===t1)).length;
+  if(soonDue)lines.push(`곧 마감 작업 ${soonDue}건`);
+  if(!lines.length)return;
+  const body="오늘 · "+lines.join(" · ");
+  const key="panur_digest_"+t0, granted=("Notification"in window)&&Notification.permission==="granted";
+  if(granted&&!jload(key,false)){ jsave(key,true); setTimeout(()=>notify(body),800); }
+  else setTimeout(()=>toast("📌 "+body),700);
 }
 // 시작 시 동기화 설정돼 있으면 조용히 불러오기
 if(sync.owner&&sync.repo&&sync.token){pull(false);}
