@@ -332,9 +332,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .blk-img img{width:100%;border-radius:8px;display:block;}
 .blockadd{display:flex;gap:8px;}
 .fxcalc h3{font-size:14px;color:var(--ink);margin:0 0 8px;}
-.fxcalcrow{display:flex;gap:8px;}
-.fxcalcrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:15px;}
-.fxcalcrow select{flex:0 0 auto;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:var(--panel-2);color:var(--ink);}
+.fxcalcrow{display:flex;gap:8px;flex-wrap:wrap;}
+.fxcalcrow input{flex:1 1 120px;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:15px;}
+.fxcalcrow select{flex:1 1 auto;min-width:0;max-width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel-2);color:var(--ink);font-family:var(--body);font-size:14px;}
 .fxout{margin-top:8px;background:var(--panel-2);border-radius:10px;padding:11px 13px;font-size:15px;font-weight:600;color:var(--lav-d);font-family:var(--disp);}
 .fxout.ok{color:#3a9e78;background:rgba(140,203,180,.16);}
 .fxout.warn{color:#c0392b;background:rgba(228,166,188,.18);}
@@ -709,7 +709,7 @@ body{
 .fxcard .fxu{font-size:11px;color:var(--muted);}
 .fxmeta{font-size:11px;color:var(--muted);margin-bottom:8px;}
 .fxhist{font-size:12px;color:var(--ink-soft);}
-.fxhist div{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line-2);}
+.fxhist div{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--line-2);}
 .recordrow{display:flex;gap:8px;margin-top:8px;}
 .recordrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--panel-2);color:var(--ink);font-size:13px;}
 
@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="82", APP_BUILD="2026.07.25";
+const APP_VERSION="83", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
