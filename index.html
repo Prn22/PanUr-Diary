@@ -1217,7 +1217,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="79", APP_BUILD="2026.07.25";
+const APP_VERSION="80", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1525,16 +1525,29 @@ function renderYear(){
     <div style="font-size:11px;color:var(--muted);margin-top:10px;">짧게 누르면 그 날 미리보기 · <b>길게 누르면</b> 칸에 단어 메모 · <span style="color:var(--mint)">●</span> 일기</div></div>`;
   bindYearCells();
 }
-// 롱프레스(입력) vs 짧은 탭(일간 이동)
+// 롱프레스(입력) vs 짧은 탭(미리보기) — 스크롤/드리프트 시 오작동 방지
 function bindYearCells(){
-  main.querySelectorAll(".ycell[data-date]").forEach(c=>{
-    let timer=null, longFired=false;
-    const startPress=()=>{longFired=false;timer=setTimeout(()=>{longFired=true;editYearNote(c);},480);};
-    const cancel=()=>{clearTimeout(timer);};
-    c.addEventListener("pointerdown",startPress);
-    c.addEventListener("pointerup",()=>{cancel();if(!longFired){openDayViewer(c.dataset.date);}});
-    c.addEventListener("pointerleave",cancel);
-    c.addEventListener("pointercancel",cancel);
+  main.querySelectorAll(".ymgrid").forEach(grid=>{
+    let origin=null, timer=null, longFired=false, sx=0, sy=0, moved=false;
+    const clear=()=>{clearTimeout(timer);};
+    grid.addEventListener("pointerdown",e=>{
+      const cell=e.target.closest(".ycell[data-date]");
+      origin=cell; longFired=false; moved=false;
+      if(!cell)return; sx=e.clientX; sy=e.clientY;
+      timer=setTimeout(()=>{ if(moved||!origin)return; longFired=true; editYearNote(cell); },480);
+    });
+    grid.addEventListener("pointermove",e=>{
+      if(!origin||moved)return;
+      if(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10){ moved=true; clear(); } // 스크롤/드래그로 간주
+    });
+    grid.addEventListener("pointerup",e=>{
+      clear();
+      const cell=e.target.closest(".ycell[data-date]");
+      if(!longFired && !moved && cell && cell===origin) openDayViewer(cell.dataset.date); // 누른 칸과 뗀 칸이 같을 때만
+      origin=null;
+    });
+    grid.addEventListener("pointercancel",()=>{ clear(); moved=true; origin=null; });
+    grid.addEventListener("pointerleave",()=>{ clear(); });
   });
   // 월 헤더 가로 스크롤 동기화 (각 반기 블록마다)
   main.querySelectorAll(".yblock").forEach(bl=>{
