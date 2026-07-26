@@ -1263,7 +1263,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="97", APP_BUILD="2026.07.25";
+const APP_VERSION="100", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1510,7 +1510,18 @@ etcSeg.querySelectorAll("[data-etc]").forEach(b=>b.onclick=()=>{etcSub=b.dataset
 let focusSub = jload("panur_focussub","list");   // "list" | "pomo"
 // 뽀모도로
 let poRun=false, poPhase="focus", poEnd=0, poRemain=0, poRound=1;
-function poCfg(){ return data.focus.pomo; }
+function ensureFocus(){
+  if(!data.focus||typeof data.focus!=="object")data.focus={log:[],pomo:null};
+  if(!Array.isArray(data.focus.log))data.focus.log=[];
+  if(!data.focus.pomo||typeof data.focus.pomo!=="object")data.focus.pomo={focusMin:25,breakMin:5,longMin:15,rounds:4};
+  return data.focus;
+}
+function poCfg(){
+  const p=ensureFocus().pomo;
+  if(!(p.focusMin>0))p.focusMin=25; if(!(p.breakMin>0))p.breakMin=5;
+  if(!(p.longMin>0))p.longMin=15; if(!(p.rounds>0))p.rounds=4;
+  return p;
+}
 function poPhaseSec(ph){ const c=poCfg(); return (ph==="focus"?c.focusMin:ph==="long"?c.longMin:c.breakMin)*60; }
 function poInit(){ poRun=false; poPhase="focus"; poRound=1; poRemain=poPhaseSec("focus"); }
 function poStartPause(){ if(poRun){ poRemain=Math.max(0,(poEnd-Date.now())/1000); poRun=false; }
@@ -1527,13 +1538,13 @@ function poAdvance(){ const c=poCfg();
   }
   poRemain=poPhaseSec(poPhase); poEnd=Date.now()+poRemain*1000;
 }
-function logFocus(sec,label,kind){ data.focus.log.push({date:ymd(new Date()),sec:Math.round(sec),label:label||"",ts:Date.now(),kind:kind||"timer"}); persist(); }
-function focusTodaySec(){ const t=ymd(new Date()); return (data.focus.log||[]).filter(x=>x.date===t).reduce((a,x)=>a+(x.sec||0),0); }
-function focusByDay(n){ const out=[], now=new Date();
+function logFocus(sec,label,kind){ ensureFocus().log.push({date:ymd(new Date()),sec:Math.round(sec),label:label||"",ts:Date.now(),kind:kind||"timer"}); persist(); }
+function focusTodaySec(){ const t=ymd(new Date()); return ensureFocus().log.filter(x=>x.date===t).reduce((a,x)=>a+(x.sec||0),0); }
+function focusByDay(n){ const out=[], now=new Date(); const lg=ensureFocus().log;
   for(let i=n-1;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=ymd(d);
-    const sec=(data.focus.log||[]).filter(x=>x.date===ds).reduce((a,x)=>a+(x.sec||0),0);
+    const sec=lg.filter(x=>x.date===ds).reduce((a,x)=>a+(x.sec||0),0);
     out.push({ds,sec,wd:WEEK[d.getDay()]}); } return out; }
-function deleteFocusLog(ts){ data.focus.log=(data.focus.log||[]).filter(x=>String(x.ts)!==String(ts)); persist(); }
+function deleteFocusLog(ts){ ensureFocus(); data.focus.log=data.focus.log.filter(x=>String(x.ts)!==String(ts)); persist(); }
 function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   return h>0?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`; }
 function fmtDurKo(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
@@ -1549,7 +1560,7 @@ setInterval(()=>{
 
 function focusListHTML(){
   const days=focusByDay(7); const mx=Math.max(1,...days.map(d=>d.sec));
-  const log=(data.focus.log||[]).slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,50);
+  const log=ensureFocus().log.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,50);
   const groups={}; log.forEach(x=>{(groups[x.date]=groups[x.date]||[]).push(x);});
   const gkeys=Object.keys(groups).sort().reverse();
   const icon=k=>k==="pomo"?"🍅":k==="app"?"🖥":"⏱";
@@ -1586,6 +1597,7 @@ function focusPomoHTML(c){
     </div>`;
 }
 function renderFocus(){
+  ensureFocus();
   periodEl.textContent="집중";
   const c=poCfg();
   main.innerHTML=`<div class="card focuscard">
@@ -4310,7 +4322,7 @@ if("serviceWorker" in navigator){
   navigator.serviceWorker.ready.then(r=>{swReg=r;}).catch(()=>{});
 }
 function notify(body){
-  const title="PanUr 🌙", opts={body,icon:"icon-192.png",badge:"icon-192.png"};
+  const title="파뉴땅 🌙", opts={body,badge:"icon-192.png"};
   toast("🔔 "+body);
   if(!("Notification"in window)||Notification.permission!=="granted")return;
   const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
