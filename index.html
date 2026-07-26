@@ -763,8 +763,8 @@ body{
   .iconbtn{width:36px;height:36px;font-size:15px;}
   .period{min-width:0;flex:1;font-size:15px;}
   .today-btn{padding:8px 12px;font-size:13px;}
-  .tabs{padding:9px 12px 13px;gap:9px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;}
-  .tab{flex:0 0 auto;padding:8px 14px;font-size:13px;}
+  .tabs{padding:9px 10px 12px;gap:5px;flex-wrap:nowrap;overflow:visible;justify-content:space-between;align-items:center;}
+  .tab{flex:1 1 0;min-width:0;padding:8px 4px;font-size:12.5px;text-align:center;white-space:nowrap;}
   .seg{margin-left:0;}
   .main{padding:2px 12px 20px;}
   .card{padding:12px;border-radius:16px;}
@@ -1263,7 +1263,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="96", APP_BUILD="2026.07.25";
+const APP_VERSION="97", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
