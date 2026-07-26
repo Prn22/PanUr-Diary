@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="88", APP_BUILD="2026.07.25";
+const APP_VERSION="89", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1687,7 +1687,7 @@ function bindDeco(y,m,mode){
   const addBtn=document.getElementById("decoAdd"), input=document.getElementById("decoInput");
   addBtn.onclick=()=>input.click();
   input.onchange=e=>{const f=e.target.files[0]; if(!f)return;
-    optimizeToDataURL(f,600,"image/png",undefined,durl=>{
+    optimizeToDataURL(f,512,"image/png",undefined,durl=>{
       const s={id:uid(),img:durl,x:50,y:35,w:110,rot:0};
       data.deco[key].push(s); decoSelId=s.id; persist(); renderMonth(); toast("스티커 추가 ✦");
     });};
@@ -2568,11 +2568,48 @@ function optimizeToDataURL(file, maxLong, mime, quality, cb, removeBg){
   };
   reader.readAsDataURL(file);
 }
+// 저장된 이미지 재압축 (png는 png 유지·축소, 그 외 jpeg로)
+function recompressDataURL(durl,maxLong){
+  return new Promise(res=>{
+    if(!durl||typeof durl!=="string"||!durl.startsWith("data:image")){res(durl);return;}
+    const isPng=durl.startsWith("data:image/png");
+    const img=new Image();
+    img.onload=()=>{ try{
+      const long=Math.max(img.width,img.height), scale=long>maxLong?maxLong/long:1;
+      const w=Math.max(1,Math.round(img.width*scale)), h=Math.max(1,Math.round(img.height*scale));
+      const cv=document.createElement("canvas");cv.width=w;cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      const out=isPng?cv.toDataURL("image/png"):cv.toDataURL("image/jpeg",0.6);
+      res(out.length<durl.length?out:durl); // 더 작을 때만 교체
+    }catch(e){res(durl);} };
+    img.onerror=()=>res(durl);
+    img.src=durl;
+  });
+}
+async function recompressAllImages(){
+  if(!window.confirm("저장된 사진·스티커를 다시 압축해 용량을 줄일까요?\n화질이 약간 낮아질 수 있고, 진행 전 자동으로 백업돼요."))return;
+  makeBackup(true);
+  const before=JSON.stringify(data).length;
+  toast("이미지 압축 중… 잠시만 기다려요");
+  for(const ds in data.diary){ const d=data.diary[ds];
+    if(Array.isArray(d.blocks))for(const b of d.blocks){ if(b&&b.type==="img"&&b.v)b.v=await recompressDataURL(b.v,1024); }
+    if(Array.isArray(d.photos))for(let i=0;i<d.photos.length;i++)d.photos[i]=await recompressDataURL(d.photos[i],1024);
+  }
+  for(const m of (data.memos||[])) if(Array.isArray(m.images))for(let i=0;i<m.images.length;i++)m.images[i]=await recompressDataURL(m.images[i],1024);
+  for(const x of (data.materials||[])) if(Array.isArray(x.images))for(let i=0;i<x.images.length;i++)x.images[i]=await recompressDataURL(x.images[i],1024);
+  for(const n of (data.studyNotes||[])) if(Array.isArray(n.images))for(let i=0;i<n.images.length;i++)n.images[i]=await recompressDataURL(n.images[i],1024);
+  for(const ds in (data.deco||{})){ const arr=data.deco[ds]; if(Array.isArray(arr))for(const s of arr){ if(s&&s.img)s.img=await recompressDataURL(s.img,512); } }
+  for(const mo of (data.moods||[])) if(mo&&mo.img)mo.img=await recompressDataURL(mo.img,128);
+  persist();
+  const after=JSON.stringify(data).length;
+  if(view==="etc")renderEtc();
+  toast(`압축 완료: ${Math.round(before/1024)}KB → ${Math.round(after/1024)}KB`);
+}
 // 메모/소재 편집 중 이미지 첨부(모달의 임시 배열에 추가)
 G("memoImgInput").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
-  optimizeToDataURL(f,1000,"image/jpeg",0.7,durl=>{mImagesArr.push(durl);renderMImages();toast("이미지 추가(최적화됨)");});};
+  optimizeToDataURL(f,1024,"image/jpeg",0.6,durl=>{mImagesArr.push(durl);renderMImages();toast("이미지 추가(최적화됨)");});};
 G("matImgInput").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
-  optimizeToDataURL(f,1000,"image/jpeg",0.7,durl=>{xImagesArr.push(durl);renderXImages();toast("이미지 추가(최적화됨)");});};
+  optimizeToDataURL(f,1024,"image/jpeg",0.6,durl=>{xImagesArr.push(durl);renderXImages();toast("이미지 추가(최적화됨)");});};
 G("moodInput").onchange=e=>{
   const file=e.target.files[0]; e.target.value=""; if(!file)return;
   optimizeToDataURL(file,128,"image/png",undefined,durl=>{
@@ -2582,7 +2619,7 @@ G("moodInput").onchange=e=>{
 };
 G("photoInput").onchange=e=>{
   const file=e.target.files[0]; e.target.value=""; if(!file||!photoTargetDate)return;
-  optimizeToDataURL(file,1280,"image/jpeg",0.7,durl=>{
+  optimizeToDataURL(file,1024,"image/jpeg",0.6,durl=>{
     const cur=data.diary[photoTargetDate]||{}; cur.blocks=cur.blocks||[]; cur.blocks.push({type:"img",v:durl});
     data.diary[photoTargetDate]=cur; persist();
     if(view==="day")renderDay(); toast("이미지 블록을 추가했어요 (최적화됨)");
@@ -2915,7 +2952,7 @@ function renderNImages(){
   G("nImages").querySelectorAll("[data-nimdel]").forEach(b=>b.onclick=()=>{noteImagesArr.splice(Number(b.dataset.nimdel),1);renderNImages();});
 }
 G("noteImgInput").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
-  optimizeToDataURL(f,1280,"image/jpeg",0.7,durl=>{noteImagesArr.push(durl);renderNImages();toast("사진 추가(최적화됨)");});};
+  optimizeToDataURL(f,1024,"image/jpeg",0.6,durl=>{noteImagesArr.push(durl);renderNImages();toast("사진 추가(최적화됨)");});};
 G("nImgAdd").onclick=()=>G("noteImgInput").click();
 let noteKind="note";
 function noteKindLabel(k){return k==="log"?"학습 기록":"노트";}
@@ -3285,6 +3322,10 @@ function optionsBodyHTML(){
       <div id="bkList" style="display:flex;flex-direction:column;gap:6px;"></div>
       <button class="btn" id="bkNow" style="margin-top:8px;">지금 백업</button>
     </div>
+    <div class="optblk"><div class="optlbl">🗜 이미지 정리</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">저장된 사진·스티커를 다시 압축해 용량을 줄여요. 동기화가 무거우면 눌러보세요.</div>
+      <button class="btn" id="recompressBtn">이미지 일괄 재압축</button>
+    </div>
     <div class="optblk"><div class="optlbl">🔔 알림 진단</div>
       <div id="notifDiag" style="font-size:12px;color:var(--ink-soft);line-height:1.7;">확인 중…</div>
       <button class="btn" id="notifTest" style="margin-top:8px;">테스트 알림 보내기</button>
@@ -3341,6 +3382,7 @@ function bindOptions(){
   const bkNow=document.getElementById("bkNow");
   if(bkNow)bkNow.onclick=()=>{ makeBackup(true); renderBackups(); toast("지금 상태를 백업했어요"); };
   renderNotifDiag();
+  const rc=document.getElementById("recompressBtn"); if(rc)rc.onclick=recompressAllImages;
   const nt=document.getElementById("notifTest");
   if(nt)nt.onclick=async()=>{
     if(!("Notification"in window))return toast("이 브라우저는 알림 미지원");
