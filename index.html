@@ -369,6 +369,9 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .sleepseg .slp-del{border:none;background:none;color:var(--faint);cursor:pointer;font-size:13px;padding:0 2px;}
 .sleepempty{font-size:12px;color:var(--muted);padding:2px 2px 6px;}
 .sleephint{font-size:11px;color:var(--faint);margin-top:5px;}
+/* 데스크톱 앱(프레임리스) 창 이동용 드래그 영역 — 브라우저/모바일엔 영향 없음 */
+.brand{-webkit-app-region:drag;}
+.top .iconbtn,.top .today-btn,.top .nav,button,input,select,textarea,a{-webkit-app-region:no-drag;}
 /* 집중 탭 */
 .focuscard{text-align:center;}
 .focusseg{display:flex;gap:6px;background:var(--panel-2);border-radius:12px;padding:4px;margin-bottom:12px;}
@@ -791,7 +794,7 @@ body{
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><span class="moon"></span>PanUr <small>다이어리</small></div>
+    <div class="brand"><span class="moon"></span>파뉴땅 <small>다이어리</small></div>
     <button class="iconbtn sparkle" id="refreshBtn" title="새로고침" aria-label="새로고침"><span>✨</span></button>
     <div class="nav">
       <button class="iconbtn" id="syncBtn" title="동기화">☁<span class="sync-dot" id="syncDot"></span></button>
@@ -1260,7 +1263,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="95", APP_BUILD="2026.07.25";
+const APP_VERSION="96", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
