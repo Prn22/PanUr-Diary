@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="83", APP_BUILD="2026.07.25";
+const APP_VERSION="84", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3283,6 +3283,10 @@ function optionsBodyHTML(){
       <div id="bkList" style="display:flex;flex-direction:column;gap:6px;"></div>
       <button class="btn" id="bkNow" style="margin-top:8px;">지금 백업</button>
     </div>
+    <div class="optblk"><div class="optlbl">🔔 알림 진단</div>
+      <div id="notifDiag" style="font-size:12px;color:var(--ink-soft);line-height:1.7;">확인 중…</div>
+      <button class="btn" id="notifTest" style="margin-top:8px;">테스트 알림 보내기</button>
+    </div>
     <div class="optver">Ver ${APP_VERSION} · ${APP_BUILD}</div>
   </div>`;
 }
@@ -3334,6 +3338,31 @@ function bindOptions(){
   renderBackups();
   const bkNow=document.getElementById("bkNow");
   if(bkNow)bkNow.onclick=()=>{ makeBackup(true); renderBackups(); toast("지금 상태를 백업했어요"); };
+  renderNotifDiag();
+  const nt=document.getElementById("notifTest");
+  if(nt)nt.onclick=async()=>{
+    if(!("Notification"in window))return toast("이 브라우저는 알림 미지원");
+    if(Notification.permission!=="granted"){ let p="denied"; try{p=await Notification.requestPermission();}catch(e){} if(p!=="granted"){renderNotifDiag();return toast("권한을 허용해야 알림이 떠요");} }
+    notify("테스트 알림 · 잘 보이면 성공! 🎉");
+    setTimeout(renderNotifDiag,300);
+  };
+}
+async function renderNotifDiag(){
+  const el=document.getElementById("notifDiag"); if(!el)return;
+  const Y="✅", N="❌", W="⚠️";
+  const https=(location.protocol==="https:"||location.hostname==="localhost");
+  const notifOK=("Notification"in window);
+  const perm=notifOK?Notification.permission:"미지원";
+  const swOK=("serviceWorker"in navigator);
+  let reg=null; try{ if(swOK)reg=await navigator.serviceWorker.getRegistration(); }catch(e){}
+  const rows=[
+    `${https?Y:N} 주소: ${location.protocol}//${https?"":" ← 다운받은 파일(file/content)로 열면 알림이 안 떠요. 깃허브 https 주소로 열어주세요"}`,
+    `${notifOK?Y:N} 알림 기능 지원`,
+    `${perm==="granted"?Y:(perm==="denied"?N:W)} 알림 권한: ${perm}`,
+    `${swOK?Y:N} 서비스워커 지원`,
+    `${reg?Y:N} sw.js 등록: ${reg?((reg.active?"활성":"대기중")+" · "+reg.scope):"안 됨 (index.html과 같은 폴더에 sw.js가 있는지 확인)"}`
+  ];
+  el.innerHTML=rows.map(r=>`<div>${esc(r)}</div>`).join("");
 }
 function renderBackups(){
   const el=document.getElementById("bkList"); if(!el)return;
@@ -4024,13 +4053,12 @@ if("serviceWorker" in navigator){
 }
 function notify(body){
   const title="PanUr 🌙", opts={body,icon:"icon-192.png",badge:"icon-192.png"};
-  try{
-    if(("Notification"in window)&&Notification.permission==="granted"){
-      if(swReg&&swReg.showNotification){ swReg.showNotification(title,opts).catch(()=>{try{new Notification(title,opts);}catch(e){}}); } // 모바일: 서비스워커로
-      else { try{ new Notification(title,opts); }catch(e){} }                                                                       // 데스크톱 폴백
-    }
-  }catch(e){}
   toast("🔔 "+body);
+  if(!("Notification"in window)||Notification.permission!=="granted")return;
+  const show=(reg)=>{ if(reg&&reg.showNotification){ reg.showNotification(title,opts).catch(()=>{try{new Notification(title,opts);}catch(e){}}); } else { try{ new Notification(title,opts); }catch(e){} } };
+  if(swReg){ show(swReg); }
+  else if("serviceWorker"in navigator){ navigator.serviceWorker.ready.then(r=>{swReg=r;show(r);}).catch(()=>show(null)); }
+  else show(null);
 }
 function checkReminders(){
   if(!("Notification"in window)||Notification.permission!=="granted")return;
