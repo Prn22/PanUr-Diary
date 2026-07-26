@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="84", APP_BUILD="2026.07.25";
+const APP_VERSION="86", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3367,7 +3367,7 @@ async function renderNotifDiag(){
 function renderBackups(){
   const el=document.getElementById("bkList"); if(!el)return;
   const arr=loadBackups().slice().reverse(); // 최신 먼저
-  el.innerHTML=arr.length?arr.map(b=>`<div class="affrow"><span>💾 ${fmtBkTime(b.ts)} <span style="color:var(--faint);font-size:11px;">(${Math.round((b.size||0)/1024)}KB)</span></span><button class="btn" data-bkrestore="${b.ts}" style="padding:5px 12px;font-size:12px;">복원</button></div>`).join("")
+  el.innerHTML=arr.length?arr.map(b=>`<div class="affrow"><span>💾 ${fmtBkTime(b.ts)} <span style="color:var(--faint);font-size:11px;">(${Math.round((b.size||0)/1024)}KB${b.note?" · "+esc(b.note):""})</span></span><button class="btn" data-bkrestore="${b.ts}" style="padding:5px 12px;font-size:12px;">복원</button></div>`).join("")
     :'<div style="font-size:12px;color:var(--muted)">백업이 아직 없어요</div>';
   el.querySelectorAll("[data-bkrestore]").forEach(b=>b.onclick=()=>restoreBackup(Number(b.dataset.bkrestore)));
 }
@@ -3972,18 +3972,31 @@ async function push(verbose){
   if(!sync.owner||!sync.repo||!sync.token){if(verbose)syncStatus.textContent="사용자명·저장소·토큰을 먼저 입력해요";return;}
   try{
     if(verbose)syncStatus.textContent="올리는 중…";
-    // 최신 sha 확보(충돌 방지)
     let sha=sync.sha;
     try{const g=await fetch(ghUrl()+`?ref=${sync.branch}`,{headers:ghHeaders()});
       if(g.ok){const gj=await g.json();sha=gj.sha;}}catch(e){}
-    const body={message:"diary update "+new Date().toISOString(),
-      content:b64encode(JSON.stringify(data)),branch:sync.branch};
-    if(sha)body.sha=sha;
-    const res=await fetch(ghUrl(),{method:"PUT",headers:ghHeaders(),body:JSON.stringify(body)});
-    if(!res.ok){const t=await res.text();throw new Error("HTTP "+res.status);}
+    const doPut=(useSha)=>{
+      const body={message:"diary update "+new Date().toISOString(),content:b64encode(JSON.stringify(data)),branch:sync.branch};
+      if(useSha)body.sha=useSha;
+      return fetch(ghUrl(),{method:"PUT",headers:ghHeaders(),body:JSON.stringify(body)});
+    };
+    let res=await doPut(sha);
+    if(res.status===409||res.status===422){ // 충돌: 저장소 현재본 로컬 백업 후 최신 sha로 1회 재시도
+      if(verbose)syncStatus.textContent="충돌 감지 — 저장소본 백업 후 재시도…";
+      try{ const g2=await fetch(ghUrl()+`?ref=${sync.branch}`,{headers:ghHeaders()});
+        if(g2.ok){ const gj2=await g2.json(); sha=gj2.sha;
+          try{ backupRemote(b64decode(gj2.content.replace(/\n/g,""))); }catch(e){}
+        }
+      }catch(e){}
+      res=await doPut(sha);
+    }
+    if(!res.ok){throw new Error("HTTP "+res.status);}
     const j=await res.json(); sync.sha=j.content.sha; jsave(LS_SYNC,sync);
     if(verbose)syncStatus.textContent="올렸어요 ✓"; setDot("ok"); if(verbose)toast("동기화: 올렸어요");
   }catch(e){if(verbose)syncStatus.textContent="실패: "+e.message;setDot("err");}
+}
+function backupRemote(str){ // 저장소에 있던(덮어써질) 버전을 로컬 백업 슬롯에 보존
+  try{ const arr=loadBackups(); arr.push({ts:Date.now(),size:str.length,data:str,note:"동기화 충돌 저장소본"}); writeBackups(arr); }catch(e){}
 }
 let autoT; function scheduleAuto(){clearTimeout(autoT);autoT=setTimeout(()=>push(false),2500);}
 syncOverlay.onclick=e=>{if(e.target===syncOverlay){readSyncForm();syncOverlay.classList.remove("show");}};
@@ -4055,10 +4068,17 @@ function notify(body){
   const title="PanUr 🌙", opts={body,icon:"icon-192.png",badge:"icon-192.png"};
   toast("🔔 "+body);
   if(!("Notification"in window)||Notification.permission!=="granted")return;
-  const show=(reg)=>{ if(reg&&reg.showNotification){ reg.showNotification(title,opts).catch(()=>{try{new Notification(title,opts);}catch(e){}}); } else { try{ new Notification(title,opts); }catch(e){} } };
-  if(swReg){ show(swReg); }
-  else if("serviceWorker"in navigator){ navigator.serviceWorker.ready.then(r=>{swReg=r;show(r);}).catch(()=>show(null)); }
-  else show(null);
+  const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  const viaSW=(reg)=>{ if(reg&&reg.showNotification){ reg.showNotification(title,opts).catch(()=>{try{new Notification(title,opts);}catch(e){}}); } else { try{ new Notification(title,opts); }catch(e){} } };
+  if(!isMobile){ // 데스크톱: 배너가 잘 뜨는 new Notification 우선, 실패 시 서비스워커
+    try{ new Notification(title,opts); return; }catch(e){}
+    if(swReg)viaSW(swReg); else if("serviceWorker"in navigator)navigator.serviceWorker.ready.then(r=>{swReg=r;viaSW(r);}).catch(()=>{});
+    return;
+  }
+  // 모바일: 서비스워커 필수
+  if(swReg)viaSW(swReg);
+  else if("serviceWorker"in navigator)navigator.serviceWorker.ready.then(r=>{swReg=r;viaSW(r);}).catch(()=>viaSW(null));
+  else viaSW(null);
 }
 function checkReminders(){
   if(!("Notification"in window)||Notification.permission!=="granted")return;
