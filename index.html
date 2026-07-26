@@ -1219,7 +1219,7 @@ const DEFAULT_DATA={
   planner:{ appts:[], study:[], todos:[], habits:[], work:[] }
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="81", APP_BUILD="2026.07.25";
+const APP_VERSION="82", APP_BUILD="2026.07.25";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -4017,7 +4017,21 @@ function remindOptions(sel,withMorning){
   if(withMorning)opts=[["","끔"],["morning","당일 아침 (오전 8시)"]].concat(REMIND_OPTS.slice(1));
   return opts.map(([v,n])=>`<option value="${v}" ${String(sel??"")===v?"selected":""}>${n}</option>`).join("");
 }
-function notify(body){try{new Notification("PanUr 🌙",{body,icon:"icon-192.png"});}catch(e){}toast("🔔 "+body);}
+let swReg=null;
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").then(r=>{swReg=r;}).catch(()=>{});
+  navigator.serviceWorker.ready.then(r=>{swReg=r;}).catch(()=>{});
+}
+function notify(body){
+  const title="PanUr 🌙", opts={body,icon:"icon-192.png",badge:"icon-192.png"};
+  try{
+    if(("Notification"in window)&&Notification.permission==="granted"){
+      if(swReg&&swReg.showNotification){ swReg.showNotification(title,opts).catch(()=>{try{new Notification(title,opts);}catch(e){}}); } // 모바일: 서비스워커로
+      else { try{ new Notification(title,opts); }catch(e){} }                                                                       // 데스크톱 폴백
+    }
+  }catch(e){}
+  toast("🔔 "+body);
+}
 function checkReminders(){
   if(!("Notification"in window)||Notification.permission!=="granted")return;
   const now=new Date(), today=new Date();today.setHours(0,0,0,0);
