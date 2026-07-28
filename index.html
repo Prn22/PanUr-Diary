@@ -1285,7 +1285,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="127", APP_BUILD="2026.07.28";
+const APP_VERSION="128", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1672,6 +1672,12 @@ function render(){
 }
 
 /* ---- Year: 365 grid ---- */
+function isStudySessionEvent(e){
+  if(e.studyOf)return true;
+  const t=e.title||"";
+  // studyOf 태그가 없는(예전 버전에서 만들어진 등) 학습 세션도 제목 패턴으로 함께 잡아냄
+  return /^Sec\d/i.test(t)||/여유[·ㆍ]?복습|예비[·ㆍ]?복습/.test(t);
+}
 function buildYearBlock(y,mStart,mEnd){
   const cols=mEnd-mStart;
   // 상단 고정 월 헤더 (세로 스크롤 밖 · 가로만 동기화)
@@ -1685,7 +1691,7 @@ function buildYearBlock(y,mStart,mEnd){
       const days=new Date(y,m+1,0).getDate();
       if(dnum>days){grid+=`<div class="ycell empty"></div>`;continue;}
       const dt=new Date(y,m,dnum), ds=ymd(dt);
-      const evs=eventsOn(dt).filter(e=>!e.studyOf), dia=data.diary[ds], note=data.yearNotes[ds], anv=annivsOn(ds);
+      const evs=eventsOn(dt).filter(e=>!isStudySessionEvent(e)), dia=data.diary[ds], note=data.yearNotes[ds], anv=annivsOn(ds);
       const holN=holidayName(ds), mileY=milestonesOn(ds);
       const cls=["ycell"]; if(isToday(dt))cls.push("today");
       if(dt.getDay()===0)cls.push("sun"); if(dt.getDay()===6)cls.push("sat");
