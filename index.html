@@ -1272,7 +1272,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="112", APP_BUILD="2026.07.28";
+const APP_VERSION="113", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3035,12 +3035,16 @@ function parseLessonMeta(title){
 }
 function lecUnits(lec){
   const ls=lec.lessons||[]; const hasSec=ls.some(x=>x.sec);
-  const isBook=lec&&lec.type==="book"; const secKind=isBook?"부":"Sec", itemKind=isBook?"장":"강";
-  if(hasSec){ const u=[]; let cur=null,idx=0;
-    ls.forEach(x=>{ if(x.sec){idx++;cur={kind:secKind,n:idx,title:x.t,items:[],min:0,thryMin:0,pracMin:0};u.push(cur);}
-      else{ if(!cur){idx++;cur={kind:secKind,n:idx,title:"",items:[],min:0,thryMin:0,pracMin:0};u.push(cur);}
-        const meta=parseLessonMeta(x.t); cur.items.push(meta.title); cur.min+=meta.min;
-        cur.thryMin+=meta.thryMin; cur.pracMin+=meta.pracMin; } });
+  const isBook=lec&&lec.type==="book"; const itemKind=isBook?"장":"강";
+  if(hasSec){
+    const u=[]; let secN=0, secTitle="", lesN=0;
+    ls.forEach(x=>{
+      if(x.sec){ secN++; secTitle=x.t; lesN=0; return; } // 섹션 헤더는 라벨용 메타데이터만 남기고 패킹 대상에서 제외
+      lesN++;
+      const meta=parseLessonMeta(x.t);
+      u.push({kind:itemKind,n:lesN,secN,secTitle,title:meta.title,items:[meta.title],
+        min:meta.min,thryMin:meta.thryMin,pracMin:meta.pracMin});
+    });
     return u;
   }
   return ls.map((x,i)=>{const meta=parseLessonMeta(x.t);
@@ -3049,7 +3053,7 @@ function lecUnits(lec){
 }
 function schedDaysSelected(){return [...document.querySelectorAll("#scDays .dc.on")].map(el=>Number(el.dataset.wd)).sort((a,b)=>a-b);}
 
-// 하루 학습시간(분) 안에 들어가는 만큼 유닛을 그리디하게 채워 세션(하루 분량)으로 나눔
+// 하루 학습시간(분) 안에 들어가는 만큼 유닛(=낱개 강의)을 그리디하게 채워 세션(하루 분량)으로 나눔
 function packUnits(units,capMin){
   const sessions=[]; let cur=[],curMin=0,curThry=0,curPrac=0;
   units.forEach(u=>{
@@ -3062,15 +3066,23 @@ function packUnits(units,capMin){
 }
 function sessionTitle(sess){
   const first=sess.units[0], last=sess.units[sess.units.length-1];
-  const range=first.n===last.n?pad2(first.n):pad2(first.n)+"~"+pad2(last.n);
   let rep=sess.units.map(u=>u.title).filter(Boolean).join(" · ");
   if(rep.length>18)rep=rep.slice(0,18)+"…";
+  if(first.secN!=null){
+    const sameSec=first.secN===last.secN;
+    const label=sameSec
+      ? `Sec${pad2(first.secN)}${first.secTitle?" "+first.secTitle:""} ${pad2(first.n)}~${pad2(last.n)}${first.kind}`
+      : `Sec${pad2(first.secN)}~${pad2(last.secN)}`;
+    return `${label}${rep?" "+rep:""}`;
+  }
+  const range=first.n===last.n?pad2(first.n):pad2(first.n)+"~"+pad2(last.n);
   return `${first.kind} ${range}${rep?" "+rep:""}`;
 }
 function sessionMemo(sess){
-  const body=sess.units.map(u=>u.kind==="Sec"
-      ? `• ${u.kind} ${pad2(u.n)} ${u.title}${u.items.length?` (${u.items.length}강)`:""}`
-      : `• ${pad2(u.n)}. ${u.title}`).join("\n");
+  const body=sess.units.map(u=>{
+    const label=u.secN!=null?`Sec${pad2(u.secN)}-${pad2(u.n)}`:`${pad2(u.n)}.`;
+    return `• ${label} ${u.title}`;
+  }).join("\n");
   const parts=[`예상 ${sess.min}분`]; if(sess.thryMin)parts.push(`이론 ${sess.thryMin}분`); if(sess.pracMin)parts.push(`실습 ${sess.pracMin}분`);
   return body+`\n(${parts.join(" · ")})`;
 }
