@@ -1296,7 +1296,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="133", APP_BUILD="2026.07.28";
+const APP_VERSION="134", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3114,7 +3114,7 @@ function parseLessonMeta(title){
   const mc=t.match(/\(\s*이론\s*(\d{1,3})\s*분\s*[·,]?\s*실습\s*(\d{1,3})\s*분\s*\)\s*$/);
   if(mc){ const thry=parseInt(mc[1],10), prac=parseInt(mc[2],10);
     return {title:t.slice(0,mc.index).trim(), min:thry+prac, thryMin:thry, pracMin:prac, explicit:true}; }
-  const mt=t.match(/\(\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s*\)\s*$/);
+  const mt=t.match(/\(?\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s*\)?\s*$/);
   if(mt){
     const hh=mt[1]?parseInt(mt[1],10):0, mm=parseInt(mt[2],10), ss=parseInt(mt[3],10);
     const watchMin=Math.max(1,Math.ceil(hh*60+mm+ss/60));
@@ -3391,7 +3391,7 @@ G("lecPasteBtn").onclick=()=>{
 function stripLessonAnnotation(t){
   return String(t||"")
     .replace(/\(\s*이론\s*\d{1,3}\s*분\s*[·,]?\s*실습\s*\d{1,3}\s*분\s*\)\s*$/,"")
-    .replace(/\(\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s*\)\s*$/,"")
+    .replace(/\(?\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s*\)?\s*$/,"")
     .replace(/\(\s*(실습|이론)?\s*\d{1,3}\s*분\s*\)\s*$/,"").trim();
 }
 let _geminiModelCache=null;
