@@ -990,24 +990,29 @@ body{
   <div class="modal">
     <h2>📅 학습 일정 만들기</h2>
     <div id="schedLecName" style="font-size:12.5px;color:var(--muted);margin:-8px 0 14px;"></div>
-    <div class="row2">
-      <div class="field"><label>시작일</label><input type="date" id="scStart"></div>
-      <div class="field"><label>하루 학습시간(분)</label><input type="number" id="scDailyMin" min="20" max="240" step="5" value="70"></div>
+    <div class="field">
+      <label>시작일</label><input type="date" id="scStart">
     </div>
     <div class="field">
       <label>학습 요일</label>
       <div class="daychips" id="scDays"></div>
     </div>
     <div class="row2">
-      <div class="field"><label>시작 시간</label><input type="time" id="scStartTime" value="21:00"></div>
-      <div class="field"><label>여유 비율</label>
-        <select id="scBuffer">
-          <option value="0">0% (꽉 채우기)</option>
-          <option value="15">15%</option>
-          <option value="25" selected>25% (기본)</option>
-          <option value="35">35% (널널하게)</option>
-        </select>
-      </div>
+      <div class="field"><label>평일 시작 시간</label><input type="time" id="scStartTime" value="21:00"></div>
+      <div class="field"><label>평일 하루 학습시간(분)</label><input type="number" id="scDailyMin" min="20" max="240" step="5" value="120"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>주말 시작 시간</label><input type="time" id="scWeekendTime" value="10:00"></div>
+      <div class="field"><label>주말 하루 학습시간(분)</label><input type="number" id="scWeekendDailyMin" min="20" max="600" step="5" value="250"></div>
+    </div>
+    <div class="field">
+      <label>여유 비율</label>
+      <select id="scBuffer">
+        <option value="0">0% (꽉 채우기)</option>
+        <option value="15">15%</option>
+        <option value="25" selected>25% (기본)</option>
+        <option value="35">35% (널널하게)</option>
+      </select>
     </div>
     <div style="font-size:11px;color:var(--muted);margin:-4px 0 8px;">여유 비율만큼 하루 학습시간에서 덜어내 실제 배정 시간을 줄여요. 시간을 따로 안 적은 강의는 "이론 설명 + 따라 하는 실습"이 함께 있다고 보고 기본 45분(이론 15분·실습 30분)으로 계산해요. 실습이 없거나 시간이 다르면 줄 끝에 "(15분)" "(실습 60분)" "(이론 5분)"처럼 적어 덮어쓸 수 있고, 커리큘럼 편집 화면의 "🤖 AI로 강의별 시간 추정" 버튼을 쓰면 강의마다 자동으로 채워줘요.</div>
     <div class="field" style="margin-bottom:8px;">
@@ -1280,7 +1285,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="119", APP_BUILD="2026.07.28";
+const APP_VERSION="122", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3098,15 +3103,17 @@ function nextSelectedDay(d,dayset){ const x=new Date(d); while(!dayset.has(x.get
 // 학습 요일에 하루 한 세션씩 순서대로 배정 + N일마다 여유일 자동 삽입(밀려도 따라잡을 수 있게)
 const SCHED_BUFFER_EVERY=4;
 function schedCapInfo(){
-  const capMin=Math.max(20,parseInt(G("scDailyMin").value,10)||70);
+  const capMinWD=Math.max(20,parseInt(G("scDailyMin").value,10)||70);
+  const capMinWE=Math.max(20,parseInt(G("scWeekendDailyMin").value,10)||capMinWD);
   const bufferPct=Math.max(0,Math.min(90,parseInt(G("scBuffer").value,10)||0));
-  const effCap=Math.max(15,Math.round(capMin*(1-bufferPct/100)));
-  return {capMin,bufferPct,effCap};
+  const effCapWD=Math.max(15,Math.round(capMinWD*(1-bufferPct/100)));
+  const effCapWE=Math.max(15,Math.round(capMinWE*(1-bufferPct/100)));
+  return {capMinWD,capMinWE,bufferPct,effCapWD,effCapWE};
 }
 // 평일/주말 가용시간 모델
 // - 평일(월~금): 07~21시는 실습 불가(직장/이동 시간으로 상정) → 실습은 21시~약 01시(취침 0~1시 상정, 240분 창)에만.
-//   이론은 짬짬이 시간에 들을 수 있다고 보고 실습 창의 제약을 받지 않음(대신 하루 총량 effCap은 그대로 지킴).
-// - 주말: 수면 8~10시간만 지키면 시간 제약 없음 → effCap을 그대로 하루 예산으로 사용.
+//   이론은 짬짬이 시간에 들을 수 있다고 보고 실습 창의 제약을 받지 않음(대신 하루 총량 effCapWD는 그대로 지킴).
+// - 주말: 수면 8~10시간만 지키면 시간 제약 없음 → 주말용 하루 학습시간(effCapWE)을 그대로 하루 예산으로 사용.
 const WD_EVE_WINDOW_MIN=240; // 21:00~약 01:00
 function isWeekendDate(d){ const wd=d.getDay(); return wd===0||wd===6; }
 // 그 날 이미 잡혀 있는 다른 일정(월간 뷰에 보이는 data.events, 이 강의 자체가 만든 것은 제외)을 반영.
@@ -3136,8 +3143,13 @@ function dayAvailInfo(ds,excludeStudyOf,effCap,skipBusy,weekend){
 function buildScheduleEvents(lec){
   const days=schedDaysSelected(); if(!days.length)return [];
   const dayset=new Set(days);
-  const {capMin,effCap}=schedCapInfo();
-  const startVal=G("scStart").value; const startTime=G("scStartTime").value||"21:00";
+  const {capMinWD,capMinWE,effCapWD,effCapWE}=schedCapInfo();
+  const startVal=G("scStart").value;
+  const wdTime=G("scStartTime").value||"21:00";
+  const weTime=(G("scWeekendTime")&&G("scWeekendTime").value)||wdTime;
+  const timeFor=d=>isWeekendDate(d)?weTime:wdTime;
+  const capMinFor=d=>isWeekendDate(d)?capMinWE:capMinWD;
+  const effCapFor=d=>isWeekendDate(d)?effCapWE:effCapWD;
   const insertBuffer=G("scReview").checked;
   const skipBusyEl=G("scSkipBusy"); const skipBusy=skipBusyEl?skipBusyEl.checked:true;
 
@@ -3150,7 +3162,7 @@ function buildScheduleEvents(lec){
 
   while(qi<units.length&&guard<3650){
     guard++;
-    const ds=ymd(d), weekend=isWeekendDate(d);
+    const ds=ymd(d), weekend=isWeekendDate(d), startTime=timeFor(d), effCap=effCapFor(d);
     const avail=dayAvailInfo(ds,lec.id,effCap,skipBusy,weekend);
     const bad=avail.allDay||avail.cap<10;
     if(bad){ if(qi===stuckAt)stuckStreak++; else {stuckAt=qi;stuckStreak=1;} }
@@ -3180,14 +3192,17 @@ function buildScheduleEvents(lec){
     sessionCount++; stuckAt=-1; stuckStreak=0;
     d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
     if(insertBuffer&&sessionCount%SCHED_BUFFER_EVERY===0){
-      evs.push({date:ymd(d),time:startTime,endTime:addMinutesToTime(startTime,capMin),
+      const bt=timeFor(d), bcap=capMinFor(d);
+      evs.push({date:ymd(d),time:bt,endTime:addMinutesToTime(bt,bcap),
         title:"✨ 여유·복습일 (밀린 학습 따라잡기)",memo:"밀린 세션을 여기서 보충해요.",review:true});
       d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
     }
   }
-  if(insertBuffer)
-    evs.push({date:ymd(d),time:startTime,endTime:addMinutesToTime(startTime,capMin),
+  if(insertBuffer){
+    const bt=timeFor(d), bcap=capMinFor(d);
+    evs.push({date:ymd(d),time:bt,endTime:addMinutesToTime(bt,bcap),
       title:"✨ 예비·복습 주 (밀리면 여기서 따라잡기)",memo:"전체 진도 중 밀린 부분을 이 날 보충해요.",review:true});
+  }
   evs._skippedBusy=skippedBusy; // 미리보기 요약용(배열 자체에 슬쩍 얹어둠)
   return evs;
 }
@@ -3195,16 +3210,17 @@ function renderSchedPreview(){
   const lec=data.planner.study.find(x=>x.id===schedLecId); if(!lec)return;
   const days=schedDaysSelected();
   const dnames=days.map(d=>WD_LABEL[d]).join("·")||"(요일 선택)";
-  const {capMin,bufferPct,effCap}=schedCapInfo();
+  const {capMinWD,capMinWE,bufferPct,effCapWD,effCapWE}=schedCapInfo();
   const evs=buildScheduleEvents(lec);
   const contentCount=evs.filter(e=>!e.review).length, bufferCount=evs.length-contentCount;
   const units=lecUnits(lec);
   const maxUnitMin=units.length?Math.max(...units.map(u=>u.min||0)):0;
-  const warn=maxUnitMin>effCap
-    ?`<div style="margin-top:4px;color:var(--rose);">⚠️ 강의 하나(최대 ${maxUnitMin}분)가 이 하루 시간보다 길어서, 하루 학습시간을 늘려도 하루 1개씩만 배정될 수 있어요.</div>`:"";
+  const minEffCap=Math.min(effCapWD,effCapWE);
+  const warn=maxUnitMin>minEffCap
+    ?`<div style="margin-top:4px;color:var(--rose);">⚠️ 강의 하나(최대 ${maxUnitMin}분)가 하루 학습시간보다 길어서, 하루 학습시간을 늘려도 하루 1개씩만 배정될 수 있어요.</div>`:"";
   const skipNote=evs._skippedBusy?`<div style="margin-top:2px;color:var(--muted);">📅 이미 다른 일정이 있어 건너뛴 날: ${evs._skippedBusy}일</div>`:"";
   G("schedPreview").innerHTML=evs.map(e=>`<div>${e.date} ${e.time}~${e.endTime} · ${esc(e.title)}</div>`).join("")
-    +`<div style="margin-top:6px;color:var(--muted);">→ 하루 학습시간 ${capMin}분 · 여유 ${bufferPct}% 반영 시 실제 ${effCap}분/일 · ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`
+    +`<div style="margin-top:6px;color:var(--muted);">→ 평일 ${capMinWD}분(실제 ${effCapWD}분) · 주말 ${capMinWE}분(실제 ${effCapWE}분) · 여유 ${bufferPct}% · ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`
     +skipNote+warn;
 }
 function openSchedModal(lecId){
@@ -3212,11 +3228,11 @@ function openSchedModal(lecId){
   if(!(lec.lessons||[]).length)return toast("먼저 커리큘럼을 불러와요");
   G("schedLecName").textContent=lec.name+(lec.platform?" · "+lec.platform:"");
   G("scStart").value=ymd(new Date());
-  G("scDailyMin").value="70"; G("scStartTime").value="21:00"; G("scBuffer").value="25"; G("scReview").checked=true; G("scSkipBusy").checked=true;
-  const def=[1,2];
+  G("scDailyMin").value="120"; G("scStartTime").value="21:00"; G("scWeekendTime").value="10:00"; G("scWeekendDailyMin").value="250"; G("scBuffer").value="25"; G("scReview").checked=true; G("scSkipBusy").checked=true;
+  const def=[0,1,2,3,4,5,6];
   G("scDays").innerHTML=WD_LABEL.map((w,i)=>`<div class="dc${def.includes(i)?" on":""}" data-wd="${i}">${w}</div>`).join("");
   document.querySelectorAll("#scDays .dc").forEach(el=>el.onclick=()=>{el.classList.toggle("on");renderSchedPreview();});
-  ["scStart","scDailyMin","scStartTime","scBuffer","scReview","scSkipBusy"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
+  ["scStart","scDailyMin","scStartTime","scWeekendTime","scWeekendDailyMin","scBuffer","scReview","scSkipBusy"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
   renderSchedPreview(); schedOverlay.classList.add("show");
 }
 function closeSched(){schedOverlay.classList.remove("show");}
