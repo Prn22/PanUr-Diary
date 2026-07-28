@@ -1276,11 +1276,11 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="116", APP_BUILD="2026.07.28";
+const APP_VERSION="117", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
-if(!Array.isArray(data.studyFields))data.studyFields=[]; if(!Array.isArray(data.studyNotes))data.studyNotes=[]; if(!Array.isArray(data.trips))data.trips=[]; if(!Array.isArray(data.pushSubs))data.pushSubs=[]; if(data.studyNotifyOn==null)data.studyNotifyOn=true; if(!Array.isArray(data.studyNotified))data.studyNotified=[];
+if(!Array.isArray(data.studyFields))data.studyFields=[]; if(!Array.isArray(data.studyNotes))data.studyNotes=[]; if(!Array.isArray(data.trips))data.trips=[]; if(!Array.isArray(data.pushSubs))data.pushSubs=[]; if(data.studyNotifyOn==null)data.studyNotifyOn=true; if(!Array.isArray(data.studyNotified))data.studyNotified=[]; if(data.geminiKey==null)data.geminiKey="";
 if(!data.focus||typeof data.focus!=="object")data.focus={log:[],pomo:{focusMin:25,breakMin:5,longMin:15,rounds:4}};
 if(!Array.isArray(data.focus.log))data.focus.log=[]; if(!data.focus.pomo)data.focus.pomo={focusMin:25,breakMin:5,longMin:15,rounds:4};
 (data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture"; if(s.field==null)s.field="";});
@@ -3192,7 +3192,7 @@ function stripLessonAnnotation(t){
     .replace(/\(\s*(실습|이론)?\s*\d{1,3}\s*분\s*\)\s*$/,"").trim();
 }
 async function aiEstimateLessonTimes(){
-  const key=jload("panur_ai_key","");
+  const key=data.geminiKey||"";
   if(!key){toast("⚙️ 옵션에서 Gemini API 키를 먼저 넣어주세요");return;}
   const lines=G("lecPreview").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   const lessonIdx=[]; const lessonTitles=[];
@@ -3725,8 +3725,8 @@ function optionsBodyHTML(){
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">플래너 · 공부에서 만든 학습 일정의 시작/종료 시간에 울려요. 앱이 꺼져 있어도 와요.</div>
     </div>
     <div class="optblk"><div class="optlbl">🤖 AI 강의시간 추정</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">커리큘럼 편집 화면의 "AI로 강의별 시간 추정" 버튼에서 써요. 강의 제목만 보고 이론/실습 시간을 각각 추정해줘요. Google Gemini API 키가 필요해요(무료 티어로 충분히 쓸 수 있어요). 이 브라우저에만 저장되고 동기화 안 되니, 절대 남과 공유하지 마세요.</div>
-      <input type="password" id="optAiKey" placeholder="AIza..." value="${jload('panur_ai_key','')}" style="width:100%;box-sizing:border-box;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">커리큘럼 편집 화면의 "AI로 강의별 시간 추정" 버튼에서 써요. 강의 제목만 보고 이론/실습 시간을 각각 추정해줘요. Google Gemini API 키가 필요해요(무료 티어로 충분히 쓸 수 있어요). 이 키는 data.json에 실려 기기 간에 동기화돼요 — PanUr-DiaryData가 비공개 저장소인 걸 감안해 일부러 그렇게 해뒀어요.</div>
+      <input type="password" id="optAiKey" placeholder="AIza..." value="${data.geminiKey||''}" style="width:100%;box-sizing:border-box;">
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">aistudio.google.com/apikey 에서 구글 계정으로 무료로 발급받을 수 있어요.</div>
     </div>
     <div class="optver">Ver ${APP_VERSION} · ${APP_BUILD}</div>
@@ -3792,7 +3792,7 @@ function bindOptions(){
   const sn=document.getElementById("optStudyNotify");
   if(sn)sn.onchange=()=>{ data.studyNotifyOn=sn.checked; persist(); toast(sn.checked?"학습 일정 알림을 켰어요 🔔":"학습 일정 알림을 껐어요"); };
   const aik=document.getElementById("optAiKey");
-  if(aik)aik.onchange=()=>{ jsave("panur_ai_key",aik.value.trim()); toast(aik.value.trim()?"API 키를 저장했어요 (이 브라우저에만)":"API 키를 지웠어요"); };
+  if(aik)aik.onchange=()=>{ data.geminiKey=aik.value.trim(); persist(); toast(aik.value.trim()?"API 키를 저장했어요 (기기 간 동기화됨)":"API 키를 지웠어요"); };
 }
 async function renderNotifDiag(){
   const el=document.getElementById("notifDiag"); if(!el)return;
@@ -4449,7 +4449,7 @@ async function pull(verbose){
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
     if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!Array.isArray(data.userHols))data.userHols=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
-    if(!Array.isArray(data.studyFields))data.studyFields=[];if(!Array.isArray(data.studyNotes))data.studyNotes=[];if(!Array.isArray(data.trips))data.trips=[];if(!Array.isArray(data.pushSubs))data.pushSubs=[];if(data.studyNotifyOn==null)data.studyNotifyOn=true;if(!Array.isArray(data.studyNotified))data.studyNotified=[];(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture";if(s.field==null)s.field="";});
+    if(!Array.isArray(data.studyFields))data.studyFields=[];if(!Array.isArray(data.studyNotes))data.studyNotes=[];if(!Array.isArray(data.trips))data.trips=[];if(!Array.isArray(data.pushSubs))data.pushSubs=[];if(data.studyNotifyOn==null)data.studyNotifyOn=true;if(!Array.isArray(data.studyNotified))data.studyNotified=[];if(data.geminiKey==null)data.geminiKey="";(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture";if(s.field==null)s.field="";});
     jsave(LS_DATA,data); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
