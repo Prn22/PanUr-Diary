@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PanUr">
+<link rel="icon" href="favicon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -1295,7 +1296,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="137", APP_BUILD="2026.07.28";
+const APP_VERSION="138", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1577,8 +1578,7 @@ function focusByDay(n){ const out=[], now=new Date(); const lg=ensureFocus().log
   for(let i=n-1;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); const ds=ymd(d);
     const sec=lg.filter(x=>x.date===ds).reduce((a,x)=>a+(x.sec||0),0);
     out.push({ds,sec,wd:WEEK[d.getDay()]}); } return out; }
-// ts 하나 또는 쉼표로 이어진 여러 개(합쳐진 행)를 받아 해당 항목들을 지움
-function deleteFocusLog(ts){ ensureFocus(); const kill=new Set(String(ts).split(",")); data.focus.log=data.focus.log.filter(x=>!kill.has(String(x.ts))); persist(); }
+function deleteFocusLog(ts){ ensureFocus(); data.focus.log=data.focus.log.filter(x=>String(x.ts)!==String(ts)); persist(); }
 function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   return h>0?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`; }
 function fmtDurKo(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
@@ -1594,17 +1594,8 @@ setInterval(()=>{
 
 function focusListHTML(){
   const days=focusByDay(7); const mx=Math.max(1,...days.map(d=>d.sec));
-  // 같은 날짜·같은 활동(kind+label)은 한 줄로 합침. 워커가 flush_min마다 항목을 새로 쌓아서
-  // 5분짜리 행이 여러 개로 쪼개져 보이던 문제 해결. 합친 행의 ✕는 속한 항목 전부를 지움.
-  const merged={};
-  ensureFocus().log.forEach(x=>{
-    const k=JSON.stringify([x.date,x.kind||"timer",x.label||""]);
-    const m=merged[k]||(merged[k]={date:x.date,kind:x.kind,label:x.label,sec:0,tss:[],n:0});
-    m.sec+=(x.sec||0); m.n++; m.tss.push(x.ts);
-  });
-  // 날짜 최신순 → 같은 날짜 안에서는 시간 많은 순
-  const rows=Object.values(merged).sort((a,b)=>a.date===b.date?(b.sec-a.sec):(a.date<b.date?1:-1)).slice(0,50);
-  const groups={}; rows.forEach(x=>{(groups[x.date]=groups[x.date]||[]).push(x);});
+  const log=ensureFocus().log.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,50);
+  const groups={}; log.forEach(x=>{(groups[x.date]=groups[x.date]||[]).push(x);});
   const gkeys=Object.keys(groups).sort().reverse();
   const icon=k=>k==="pomo"?"🍅":k==="app"?"🖥":"⏱";
   return `
@@ -1618,7 +1609,7 @@ function focusListHTML(){
       ${gkeys.length? gkeys.map(dk=>`
         <div class="flog-date">${dk.slice(5).replace("-","/")} <span>${fmtDurKo(groups[dk].reduce((a,x)=>a+(x.sec||0),0))}</span></div>
         ${groups[dk].map(x=>`<div class="frow"><span class="flbl">${icon(x.kind)} ${esc(x.label||"작업")}</span>
-          <span class="fdur">${x.sec<60?Math.round(x.sec)+"초":fmtDurKo(x.sec)}${x.n>1?`<em>${x.n}회</em>`:""} <b class="flogdel" data-flogdel="${x.tss.join(",")}" title="${x.n>1?x.n+"건 모두 삭제":"삭제"}">✕</b></span></div>`).join("")}
+          <span class="fdur">${fmtDurKo(x.sec)} <b class="flogdel" data-flogdel="${x.ts}" title="삭제">✕</b></span></div>`).join("")}
       `).join("") : '<div class="empty">아직 기록이 없어요<small>뽀모도로나 데스크톱 워커로 기록이 쌓여요</small></div>'}
     </div>
     ${gkeys.length?`<button class="fbtn fclear" id="focusClear">기록 전체 삭제</button>`:""}`;
@@ -4950,9 +4941,11 @@ function upcomingSummary(){
   if(soonDue)lines.push(`곧 마감 작업 ${soonDue}건`);
   if(!lines.length)return;
   const body="오늘 · "+lines.join(" · ");
-  const key="panur_digest_"+t0, granted=("Notification"in window)&&Notification.permission==="granted";
-  if(granted&&!jload(key,false)){ jsave(key,true); setTimeout(()=>notify(body),800); }
-  else setTimeout(()=>toast("📌 "+body),700);
+  // 예전엔 앱을 "여는 순간"(아무 때나, 심지어 새벽에도) 시스템 알림으로 띄웠는데,
+  // 이제 진짜 알림은 서버가 아침(미라클모닝과 같은 시간)에 보내줘서 여기서는 안 띄움.
+  // 앱을 켰을 때 화면에서 살짝 보여주는 조용한 인앱 토스트만 남겨둠(하루 한 번).
+  const key="panur_digest_"+t0;
+  if(!jload(key,false)){ jsave(key,true); setTimeout(()=>toast("📌 "+body),700); }
 }
 // 시작 시 동기화 설정돼 있으면 조용히 불러오기
 if(sync.owner&&sync.repo&&sync.token){pull(false);}
