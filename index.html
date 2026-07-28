@@ -1285,7 +1285,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="130", APP_BUILD="2026.07.28";
+const APP_VERSION="131", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3085,19 +3085,19 @@ function lecUnits(lec){
 }
 function schedDaysSelected(){return [...document.querySelectorAll("#scDays .dc.on")].map(el=>Number(el.dataset.wd)).sort((a,b)=>a-b);}
 
-function sessionTitle(sess){
+function sessionTitle(sess,lec){
+  return (lec&&lec.name)?lec.name:"학습";
+}
+function sessionRangeLabel(sess){
   const first=sess.units[0], last=sess.units[sess.units.length-1];
-  let rep=sess.units.map(u=>u.title).filter(Boolean).join(" · ");
-  if(rep.length>18)rep=rep.slice(0,18)+"…";
   if(first.secN!=null){
     const sameSec=first.secN===last.secN;
-    const label=sameSec
+    return sameSec
       ? `Sec${pad2(first.secN)}${first.secTitle?" "+first.secTitle:""} ${pad2(first.n)}~${pad2(last.n)}${first.kind}`
       : `Sec${pad2(first.secN)}~${pad2(last.secN)}`;
-    return `${label}${rep?" "+rep:""}`;
   }
   const range=first.n===last.n?pad2(first.n):pad2(first.n)+"~"+pad2(last.n);
-  return `${first.kind} ${range}${rep?" "+rep:""}`;
+  return `${first.kind} ${range}`;
 }
 function sessionMemo(sess){
   const body=sess.units.map(u=>{
@@ -3105,7 +3105,7 @@ function sessionMemo(sess){
     return `• ${label} ${u.title}`;
   }).join("\n");
   const parts=[`예상 ${sess.min}분`]; if(sess.thryMin)parts.push(`이론 ${sess.thryMin}분`); if(sess.pracMin)parts.push(`실습 ${sess.pracMin}분`);
-  return body+`\n(${parts.join(" · ")})`;
+  return `${sessionRangeLabel(sess)}\n`+body+`\n(${parts.join(" · ")})`;
 }
 function addMinutesToTime(hhmm,min){
   const[h,m]=(hhmm||"21:00").split(":").map(Number);
@@ -3248,7 +3248,7 @@ function buildScheduleEvents(lec){
     if(!cur.length){ const u=units[qi]; cur=[u]; curMin=u.min||15; curThry=u.thryMin||0; curPrac=u.pracMin||0; qi++; }
     const s={units:cur,min:curMin,thryMin:curThry,pracMin:curPrac};
     const startTime=addMinutesToTime("00:00",slot.allDay?timeStrToMin(timeFor(d)):slot.startMin);
-    evs.push({date:ds,time:startTime,endTime:addMinutesToTime(startTime,s.min),title:sessionTitle(s),memo:sessionMemo(s),review:false});
+    evs.push({date:ds,time:startTime,endTime:addMinutesToTime(startTime,s.min),title:sessionTitle(s,lec),memo:sessionMemo(s),review:false});
     sessionCount++; stuckAt=-1; stuckStreak=0;
     d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
     if(insertBuffer&&sessionCount%SCHED_BUFFER_EVERY===0){
@@ -3283,7 +3283,10 @@ function renderSchedPreview(){
   const warn=maxUnitMin>minEffCap
     ?`<div style="margin-top:4px;color:var(--rose);">⚠️ 강의 하나(최대 ${maxUnitMin}분)가 하루 학습시간보다 길어서, 하루 학습시간을 늘려도 하루 1개씩만 배정될 수 있어요.</div>`:"";
   const skipNote=evs._skippedBusy?`<div style="margin-top:2px;color:var(--muted);">📅 이미 다른 일정이 있어 건너뛴 날: ${evs._skippedBusy}일</div>`:"";
-  G("schedPreview").innerHTML=evs.map(e=>`<div>${e.date} ${e.time}~${e.endTime} · ${esc(e.title)}</div>`).join("")
+  G("schedPreview").innerHTML=evs.map(e=>{
+    const rangeLabel=e.review?"":(e.memo||"").split("\n")[0];
+    return `<div>${e.date} ${e.time}~${e.endTime} · ${rangeLabel?esc(rangeLabel)+" — ":""}${esc(e.title)}</div>`;
+  }).join("")
     +`<div style="margin-top:6px;color:var(--muted);">→ 평일 ${capMinWD}분(실제 ${effCapWD}분) · 주말 ${capMinWE}분(실제 ${effCapWE}분) · 여유 ${bufferPct}% · ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`
     +skipNote+warn;
 }
