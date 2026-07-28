@@ -1272,7 +1272,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="113", APP_BUILD="2026.07.28";
+const APP_VERSION="114", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3095,12 +3095,16 @@ function nextSelectedDay(d,dayset){ const x=new Date(d); while(!dayset.has(x.get
 
 // 학습 요일에 하루 한 세션씩 순서대로 배정 + N일마다 여유일 자동 삽입(밀려도 따라잡을 수 있게)
 const SCHED_BUFFER_EVERY=4;
-function buildScheduleEvents(lec){
-  const days=schedDaysSelected(); if(!days.length)return [];
-  const dayset=new Set(days);
+function schedCapInfo(){
   const capMin=Math.max(20,parseInt(G("scDailyMin").value,10)||70);
   const bufferPct=Math.max(0,Math.min(90,parseInt(G("scBuffer").value,10)||0));
   const effCap=Math.max(15,Math.round(capMin*(1-bufferPct/100)));
+  return {capMin,bufferPct,effCap};
+}
+function buildScheduleEvents(lec){
+  const days=schedDaysSelected(); if(!days.length)return [];
+  const dayset=new Set(days);
+  const {capMin,effCap}=schedCapInfo();
   const startVal=G("scStart").value; const startTime=G("scStartTime").value||"21:00";
   const insertBuffer=G("scReview").checked;
 
@@ -3127,10 +3131,16 @@ function renderSchedPreview(){
   const lec=data.planner.study.find(x=>x.id===schedLecId); if(!lec)return;
   const days=schedDaysSelected();
   const dnames=days.map(d=>WD_LABEL[d]).join("·")||"(요일 선택)";
+  const {capMin,bufferPct,effCap}=schedCapInfo();
   const evs=buildScheduleEvents(lec);
   const contentCount=evs.filter(e=>!e.review).length, bufferCount=evs.length-contentCount;
+  const units=lecUnits(lec);
+  const maxUnitMin=units.length?Math.max(...units.map(u=>u.min||0)):0;
+  const warn=maxUnitMin>effCap
+    ?`<div style="margin-top:4px;color:var(--rose);">⚠️ 강의 하나(최대 ${maxUnitMin}분)가 이 하루 시간보다 길어서, 하루 학습시간을 늘려도 하루 1개씩만 배정될 수 있어요.</div>`:"";
   G("schedPreview").innerHTML=evs.map(e=>`<div>${e.date} ${e.time}~${e.endTime} · ${esc(e.title)}</div>`).join("")
-    +`<div style="margin-top:6px;color:var(--muted);">→ ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`;
+    +`<div style="margin-top:6px;color:var(--muted);">→ 하루 학습시간 ${capMin}분 · 여유 ${bufferPct}% 반영 시 실제 ${effCap}분/일 · ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`
+    +warn;
 }
 function openSchedModal(lecId){
   schedLecId=lecId; const lec=data.planner.study.find(x=>x.id===lecId); if(!lec)return;
