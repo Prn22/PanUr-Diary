@@ -531,6 +531,16 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .ssechd .scount{font-size:11px;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:1px 7px;font-weight:500;}
 .ssechd .saddbtn{margin-left:auto;border:none;background:var(--rose);color:#fff;border-radius:9px;
   padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
+/* 학습 기록: 강의명 목록 ↔ 상세 */
+.loglist{display:flex;flex-direction:column;gap:6px;}
+.logleclink{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:11px;padding:11px 13px;cursor:pointer;transition:background .12s;}
+.logleclink:active{background:var(--line);}
+.logleclink .loglecname{flex:1;font-weight:600;color:var(--ink);}
+.logleclink .scount{font-size:11px;color:var(--muted);background:var(--panel);border-radius:8px;padding:1px 7px;font-weight:500;}
+.logdetailhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 9px;}
+.logdetailhd .loglecname{font-family:var(--disp);font-weight:700;font-size:14px;color:var(--lav);margin-right:auto;}
+.logdetailhd .ftbtn{flex-shrink:0;}
 /* 노트·학습기록: 게시판형 (제목 한 줄 → 클릭 시 본문 펼침) */
 .noteitem{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;margin-bottom:6px;overflow:hidden;}
 .noterow{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;}
@@ -1042,7 +1052,8 @@ body{
       </div>
     </div>
     <div class="row2">
-      <div class="field"><label>분야</label><select id="noteField"></select></div>
+      <div class="field" id="noteFieldWrap"><label>분야</label><select id="noteField"></select></div>
+      <div class="field" id="noteLecWrap" style="display:none;"><label>강의</label><select id="noteLec"></select></div>
       <div class="field"><label>날짜</label><input type="date" id="nDate"></div>
     </div>
     <div class="field"><label>제목</label><input id="nTitle" placeholder="예: 노드 머테리얼 핵심 정리"></div>
@@ -1285,7 +1296,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="131", APP_BUILD="2026.07.28";
+const APP_VERSION="133", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1359,6 +1370,7 @@ let studyField="전체"; // 공부 분야 필터 ("전체"|"__none"|분야명)
 let studySort=jload("panur_studysort","added"); // 자료 정렬
 let studyFold=jload("panur_studyfold",{}); // 섹션 접힘 {src,note,log}
 let noteSort=jload("panur_notesort","new"); // 노트·학습기록 정렬
+let studyLogLecId=null; // 학습 기록: 지금 어느 강의의 기록 목록을 펼쳐 보고 있는지 (null=강의 목록 화면, "__none"=미분류 기록)
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -2473,25 +2485,53 @@ function renderPlannerBody(){
       else srcList.forEach(lec=>{h+=sourceCard(lec);});
     }
     h+=`</div>`;
-    // 노트 / 학습 기록 (기능 동일, 용도 분류만 다름)
+    // 노트 (기존 방식 그대로)
     const filtered=notes.filter(inField);
     const nSortOpts=[["new","최신순"],["old","오래된순"],["title","제목순"]]
       .map(o=>`<option value="${o[0]}"${noteSort===o[0]?" selected":""}>${o[1]}</option>`).join("");
-    const buckets=[
-      {kind:"note", icon:"📝", label:"노트", add:"sAddNote", empty:"기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)"},
-      {kind:"log",  icon:"📖", label:"학습 기록", add:"sAddLog", empty:"오늘 공부한 내용을 기록으로 남겨보세요"}
-    ];
-    buckets.forEach(bk=>{
-      const arr=sortNotes(filtered.filter(n=>(n.kind||"note")===bk.kind),noteSort);
-      h+=`<div class="ssec"><div class="ssechd" data-fold="${bk.kind}"><span class="scaret">${caret(bk.kind)}</span>${bk.icon} ${bk.label}<span class="scount">${arr.length}</span>
+    {
+      const arr=sortNotes(filtered.filter(n=>(n.kind||"note")==="note"),noteSort);
+      h+=`<div class="ssec"><div class="ssechd" data-fold="note"><span class="scaret">${caret("note")}</span>📝 노트<span class="scount">${arr.length}</span>
         <select class="ssort" data-notesort onclick="event.stopPropagation()">${nSortOpts}</select>
-        <button class="saddbtn" data-addnote="${bk.kind}" id="${bk.add}" onclick="event.stopPropagation()">＋ ${bk.label}</button></div>`;
-      if(!studyFold[bk.kind]){
-        if(!arr.length)h+=emptyP(bk.empty);
+        <button class="saddbtn" data-addnote="note" id="sAddNote" onclick="event.stopPropagation()">＋ 노트</button></div>`;
+      if(!studyFold.note){
+        if(!arr.length)h+=emptyP("기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)");
         else arr.forEach(n=>{h+=noteCard(n);});
       }
       h+=`</div>`;
-    });
+    }
+    // 학습 기록: 강의명 목록 ↔ 그 강의의 기록 상세, 두 화면을 토글 (분야 필터는 자료 목록과 동일하게 적용)
+    {
+      const logNotes=filtered.filter(n=>(n.kind||"note")==="log");
+      const lecList=srcList.slice(); // 위 "자료" 섹션과 같은(분야 필터 적용된) 강의 목록 재사용
+      const knownIds=new Set(lecList.map(l=>l.id));
+      const orphanCnt=logNotes.filter(n=>!n.lecId||!knownIds.has(n.lecId)).length;
+      h+=`<div class="ssec"><div class="ssechd" data-fold="log"><span class="scaret">${caret("log")}</span>📖 학습 기록<span class="scount">${logNotes.length}</span></div>`;
+      if(!studyFold.log){
+        if(studyLogLecId==null){
+          if(!lecList.length&&!orphanCnt) h+=emptyP("강의를 추가하면 강의별로 학습 기록을 남길 수 있어요");
+          else{
+            h+=`<div class="loglist">`;
+            lecList.forEach(lec=>{
+              const cnt=logNotes.filter(n=>n.lecId===lec.id).length;
+              h+=`<div class="logleclink" data-openlog="${lec.id}"><span class="loglecname">${esc(lec.name)}</span><span class="scount">${cnt}</span></div>`;
+            });
+            if(orphanCnt) h+=`<div class="logleclink" data-openlog="__none"><span class="loglecname">미분류 기록</span><span class="scount">${orphanCnt}</span></div>`;
+            h+=`</div>`;
+          }
+        }else{
+          const lec=lecList.find(x=>x.id===studyLogLecId);
+          const lecName=studyLogLecId==="__none"?"미분류 기록":(lec?lec.name:"(삭제된 강의)");
+          const theseNotes=sortNotes(logNotes.filter(n=>studyLogLecId==="__none"?(!n.lecId||!knownIds.has(n.lecId)):n.lecId===studyLogLecId),noteSort);
+          h+=`<div class="logdetailhd"><button class="ftbtn" id="logBack">← 목록</button><span class="loglecname">${esc(lecName)}</span>
+            <select class="ssort" data-notesort onclick="event.stopPropagation()">${nSortOpts}</select>
+            ${studyLogLecId!=="__none"?`<button class="saddbtn" data-addnote="log" id="sAddLog" onclick="event.stopPropagation()">＋ 학습 기록</button>`:""}</div>`;
+          if(!theseNotes.length)h+=emptyP("이 강의로 공부한 내용을 기록으로 남겨보세요");
+          else theseNotes.forEach(n=>{h+=noteCard(n);});
+        }
+      }
+      h+=`</div>`;
+    }
   }else if(t==="todos"){
     h+=`<div class="pform"><div class="row"><input id="tDate" type="date"><input id="tTime" type="time"></div>
       <div class="row"><input id="tText" placeholder="할 일 / 약속 (날짜 비우면 미정)"></div>
@@ -2538,7 +2578,20 @@ function plCard(type,a,meta){
     <button class="del" data-pdel>✕</button></div>`;
 }
 function emptyP(msg){return `<div class="empty">${msg}</div>`;}
-function srcProg(lec){const t=(lec.lessons||[]).filter(x=>!x.sec).length,d=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;return t?d/t:0;}
+// 강의 진도 계산: 강의 중 하나라도 시간이 명시적으로 적혀 있으면(explicit) 그 강의 전체를 "총 시간 대비 완료 시간"
+// 기준으로 계산하고, 하나도 없으면(전부 기본값 추정) 예전처럼 "강의 개수" 기준으로 계산함.
+function lecProgress(lec){
+  const items=(lec.lessons||[]).filter(x=>!x.sec);
+  const metas=items.map(x=>({done:!!x.done, meta:parseLessonMeta(x.t||"")}));
+  const count={done:metas.filter(m=>m.done).length,total:metas.length};
+  if(metas.some(m=>m.meta.explicit)){
+    let doneMin=0,totalMin=0;
+    metas.forEach(m=>{ totalMin+=m.meta.min; if(m.done)doneMin+=m.meta.min; });
+    return {pct:totalMin?Math.round(doneMin/totalMin*100):0, byTime:true, doneMin, totalMin, count};
+  }
+  return {pct:count.total?Math.round(count.done/count.total*100):0, byTime:false, count};
+}
+function srcProg(lec){return lecProgress(lec).pct/100;}
 function sortSources(list,mode){
   const a=list.slice();
   if(mode==="progA"||mode==="progD"){
@@ -2554,10 +2607,13 @@ function sortSources(list,mode){
 }
 function sourceCard(lec){
   const isBook=lec.type==="book", unit=isBook?"장":"강", icon=isBook?"📖":"🎓";
-  const total=(lec.lessons||[]).filter(x=>!x.sec).length, done=(lec.lessons||[]).filter(x=>x.done&&!x.sec).length;
-  const p=total?Math.round(done/total*100):0;
+  const prog=lecProgress(lec);
+  const total=prog.count.total, done=prog.count.done;
+  const p=prog.pct;
   const sub=esc(lec.platform||"");
-  const meta=[sub, total?`${done}/${total}${unit}`:(isBook?"목차 없음":"커리큘럼 없음"), lec.field?esc(lec.field):""].filter(Boolean).join(" · ");
+  const countTxt=total?`${done}/${total}${unit}`:(isBook?"목차 없음":"커리큘럼 없음");
+  const timeTxt=prog.byTime?`${Math.round(prog.doneMin)}/${Math.round(prog.totalMin)}분`:"";
+  const meta=[sub, countTxt, timeTxt, lec.field?esc(lec.field):""].filter(Boolean).join(" · ");
   return `<div class="lec" data-lec="${lec.id}">
     <div class="lechead"><div><div class="lecname">${icon} ${esc(lec.name)}</div>
       <div class="lecplat">${meta}</div></div>
@@ -2638,7 +2694,7 @@ function bindPlannerForms(){
   if(g("aAdd"))g("aAdd").onclick=()=>{const ti=g("aTitle").value.trim();if(!ti)return toast("약속 제목을 입력해요");
     add("appts",{title:ti,date:g("aDate").value||ymd(new Date()),time:g("aTime").value,who:g("aWho").value.trim(),place:g("aPlace").value.trim(),memo:g("aMemo").value.trim(),remind:g("aRemind").value||null});};
   if(g("sAddLec"))g("sAddLec").onclick=()=>openStudyModal(null);
-  document.querySelectorAll("[data-addnote]").forEach(b=>b.onclick=()=>openNoteModal(null,b.dataset.addnote));
+  document.querySelectorAll("[data-addnote]").forEach(b=>b.onclick=()=>openNoteModal(null,b.dataset.addnote,b.dataset.addnote==="log"&&studyLogLecId&&studyLogLecId!=="__none"?studyLogLecId:null));
   if(g("fieldAdd"))g("fieldAdd").onclick=addStudyField;
   if(g("fieldRename"))g("fieldRename").onclick=renameStudyField;
   if(g("fieldDelete"))g("fieldDelete").onclick=deleteStudyField;
@@ -2646,7 +2702,9 @@ function bindPlannerForms(){
   document.querySelectorAll("[data-fold]").forEach(el=>el.onclick=(e)=>{
     if(e.target.closest("button,select"))return; // 안쪽 버튼·드롭다운 클릭은 접기 아님
     const k=el.dataset.fold;studyFold[k]=!studyFold[k];jsave("panur_studyfold",studyFold);renderPlannerBody();});
-  document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;renderPlannerBody();});
+  document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;studyLogLecId=null;renderPlannerBody();});
+  document.querySelectorAll("[data-openlog]").forEach(el=>el.onclick=()=>{studyLogLecId=el.dataset.openlog;renderPlannerBody();});
+  if(g("logBack"))g("logBack").onclick=()=>{studyLogLecId=null;renderPlannerBody();};
   document.querySelectorAll("[data-notetoggle]").forEach(row=>row.onclick=e=>{
     if(e.target.closest("[data-noteedit]"))return;
     const item=row.closest(".noteitem"), body=item.querySelector(".notebody"), car=row.querySelector(".ncaret");
@@ -2682,10 +2740,15 @@ function bindPlannerForms(){
   document.querySelectorAll("[data-ll]").forEach(cb=>cb.onclick=()=>{
     const lec=data.planner.study.find(x=>x.id===cb.dataset.ll);if(!lec)return;
     lec.lessons[Number(cb.dataset.li)].done=cb.checked;persist();
-    // 진도율/카운트만 갱신 (섹션 헤더 제외)
-    const total=lec.lessons.filter(x=>!x.sec).length,done=lec.lessons.filter(x=>x.done&&!x.sec).length,p=total?Math.round(done/total*100):0;
+    // 진도율/카운트만 갱신 (섹션 헤더 제외) — 시간 표기가 있으면 시간 기준, 없으면 개수 기준
+    const prog=lecProgress(lec), total=prog.count.total, done=prog.count.done, p=prog.pct;
+    const unit=lec.type==="book"?"장":"강";
     const card=cb.closest(".lec");if(card){card.querySelector(".bar i").style.width=p+"%";card.querySelector(".lecpct").textContent=p+"%";
-      const plat=card.querySelector(".lecplat");if(plat)plat.textContent=(lec.platform?esc(lec.platform)+" · ":"")+`${done}/${total}강`;}});
+      const plat=card.querySelector(".lecplat");
+      if(plat){
+        const timeTxt=prog.byTime?` · ${Math.round(prog.doneMin)}/${Math.round(prog.totalMin)}분`:"";
+        plat.textContent=(lec.platform?esc(lec.platform)+" · ":"")+`${done}/${total}${unit}`+timeTxt+(lec.field?" · "+esc(lec.field):"");
+      }}});
   if(g("tAdd"))g("tAdd").onclick=()=>{const tx=g("tText").value.trim();if(!tx)return toast("내용을 입력해요");
     add("todos",{text:tx,date:g("tDate").value||null,time:g("tTime").value||null,place:g("tPlace").value.trim()||null,memo:g("tMemo").value.trim(),remind:g("tRemind").value||null});};
   if(g("hAdd"))g("hAdd").onclick=()=>{const nm=g("hName").value.trim();if(!nm)return toast("습관 이름을 입력해요");
@@ -3050,20 +3113,20 @@ function parseLessonMeta(title){
   let t=String(title||"");
   const mc=t.match(/\(\s*이론\s*(\d{1,3})\s*분\s*[·,]?\s*실습\s*(\d{1,3})\s*분\s*\)\s*$/);
   if(mc){ const thry=parseInt(mc[1],10), prac=parseInt(mc[2],10);
-    return {title:t.slice(0,mc.index).trim(), min:thry+prac, thryMin:thry, pracMin:prac}; }
+    return {title:t.slice(0,mc.index).trim(), min:thry+prac, thryMin:thry, pracMin:prac, explicit:true}; }
   const mt=t.match(/\(\s*(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\s*\)\s*$/);
   if(mt){
     const hh=mt[1]?parseInt(mt[1],10):0, mm=parseInt(mt[2],10), ss=parseInt(mt[3],10);
     const watchMin=Math.max(1,Math.ceil(hh*60+mm+ss/60));
-    return {title:t.slice(0,mt.index).trim(), min:watchMin+DEFAULT_PRAC_MIN, thryMin:watchMin, pracMin:DEFAULT_PRAC_MIN};
+    return {title:t.slice(0,mt.index).trim(), min:watchMin+DEFAULT_PRAC_MIN, thryMin:watchMin, pracMin:DEFAULT_PRAC_MIN, explicit:true};
   }
   let m2,kind=null,minOverride=null;
   m2=t.match(/\(\s*(실습|이론)?\s*(\d{1,3})\s*분\s*\)\s*$/);
   if(m2){ minOverride=parseInt(m2[2],10); kind=m2[1]==="실습"?"prac":(m2[1]==="이론"?"thry":null); t=t.slice(0,m2.index).trim(); }
-  if(minOverride==null) return {title:t,min:DEFAULT_THRY_MIN+DEFAULT_PRAC_MIN,thryMin:DEFAULT_THRY_MIN,pracMin:DEFAULT_PRAC_MIN};
-  if(kind==="prac") return {title:t,min:minOverride,thryMin:0,pracMin:minOverride};
-  if(kind==="thry") return {title:t,min:minOverride,thryMin:minOverride,pracMin:0};
-  return {title:t,min:minOverride,thryMin:0,pracMin:0}; // 종류 안 밝히고 총 시간만 지정 → 분류 없이 그 값 그대로
+  if(minOverride==null) return {title:t,min:DEFAULT_THRY_MIN+DEFAULT_PRAC_MIN,thryMin:DEFAULT_THRY_MIN,pracMin:DEFAULT_PRAC_MIN,explicit:false};
+  if(kind==="prac") return {title:t,min:minOverride,thryMin:0,pracMin:minOverride,explicit:true};
+  if(kind==="thry") return {title:t,min:minOverride,thryMin:minOverride,pracMin:0,explicit:true};
+  return {title:t,min:minOverride,thryMin:0,pracMin:0,explicit:true}; // 종류 안 밝히고 총 시간만 지정 → 분류 없이 그 값 그대로
 }
 function lecUnits(lec){
   const ls=lec.lessons||[]; const hasSec=ls.some(x=>x.sec);
@@ -3484,7 +3547,19 @@ G("noteImgInput").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f
 G("nImgAdd").onclick=()=>G("noteImgInput").click();
 let noteKind="note";
 function noteKindLabel(k){return k==="log"?"학습 기록":"노트";}
-function openNoteModal(id,kindDefault){
+function fillLecSelect(sel,current){
+  const lecs=data.planner.study||[];
+  let opts=lecs.length?"":`<option value="">(강의를 먼저 추가하세요)</option>`;
+  lecs.forEach(l=>{opts+=`<option value="${l.id}">${esc(l.name)}${l.platform?" · "+esc(l.platform):""}</option>`;});
+  sel.innerHTML=opts;
+  sel.value=(current&&lecs.some(l=>l.id===current))?current:(lecs[0]?lecs[0].id:"");
+}
+function updateNoteScopeUI(){
+  const isLog=noteKind==="log";
+  G("noteFieldWrap").style.display=isLog?"none":"";
+  G("noteLecWrap").style.display=isLog?"":"none";
+}
+function openNoteModal(id,kindDefault,lecIdForNew){
   noteEditId=id||null;
   const n=id?data.studyNotes.find(x=>x.id===id):null;
   noteKind=n?(n.kind||"note"):(kindDefault||"note");
@@ -3492,13 +3567,17 @@ function openNoteModal(id,kindDefault){
   document.querySelectorAll("#noteKind .dc").forEach(el=>{
     el.classList.toggle("on",el.dataset.nk===noteKind);
     el.onclick=()=>{noteKind=el.dataset.nk;document.querySelectorAll("#noteKind .dc").forEach(x=>x.classList.toggle("on",x===el));
-      G("noteTitle").textContent=(noteEditId?"✦ ":"✦ 새 ")+noteKindLabel(noteKind)+(noteEditId?" 편집":"");};
+      G("noteTitle").textContent=(noteEditId?"✦ ":"✦ 새 ")+noteKindLabel(noteKind)+(noteEditId?" 편집":"");
+      updateNoteScopeUI();};
   });
   G("nTitle").value=n?n.title:""; G("nBody").value=n?(n.body||""):"";
   G("nDate").value=n?(n.date||""):ymd(new Date());
   noteImagesArr=n?JSON.parse(JSON.stringify(n.images||[])):[];
   const defField=n?(n.field||""):((studyField!=="전체"&&studyField!=="__none")?studyField:"");
   setupFieldSelect(G("noteField"),defField);
+  const defLec=n?(n.lecId||""):(lecIdForNew||"");
+  fillLecSelect(G("noteLec"),defLec);
+  updateNoteScopeUI();
   renderNImages();
   G("noteDelete").style.display=id?"inline-block":"none";
   noteOverlay.classList.add("show"); setTimeout(()=>G("nTitle").focus(),50);
@@ -3508,8 +3587,16 @@ G("noteCancel").onclick=closeNote; noteOverlay.onclick=e=>{if(e.target===noteOve
 G("noteSave").onclick=()=>{
   const title=G("nTitle").value.trim(), body=G("nBody").value.trim();
   if(!title&&!body&&!noteImagesArr.length)return toast("내용을 입력해요");
-  let field=G("noteField").value; if(field==="__new")field="";
-  const obj={field,title,body,images:noteImagesArr,date:G("nDate").value||"",kind:noteKind};
+  const obj={title,body,images:noteImagesArr,date:G("nDate").value||"",kind:noteKind};
+  if(noteKind==="log"){
+    const lecId=G("noteLec").value||"";
+    if(!lecId)return toast("먼저 강의를 추가해주세요");
+    const lec=(data.planner.study||[]).find(x=>x.id===lecId);
+    obj.lecId=lecId; obj.field=lec?(lec.field||""):"";
+  }else{
+    let field=G("noteField").value; if(field==="__new")field="";
+    obj.field=field; obj.lecId=null;
+  }
   if(noteEditId){Object.assign(data.studyNotes.find(x=>x.id===noteEditId),obj);}
   else{obj.id=uid();obj.ts=Date.now();data.studyNotes.push(obj);}
   persist(); closeNote(); renderPlannerBody(); toast(noteKindLabel(noteKind)+"을 저장했어요 ✦");
