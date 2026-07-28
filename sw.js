@@ -12,8 +12,8 @@ self.addEventListener('push', (e) => {
   const title = data.title || '파뉴땅 🌙';
   const options = {
     body: data.body || '',
-    icon: data.icon || 'icon-192.png',
-    badge: data.badge || 'icon-192.png',
+    icon: data.icon || 'heart-icon.png',   // 큰 아이콘: 십자수 하트 (앱 실행 중 알림과 동일)
+    badge: data.badge || 'icon-192.png',   // 작은 상태바 아이콘
     tag: data.tag || undefined,
   };
   e.waitUntil(self.registration.showNotification(title, options));
