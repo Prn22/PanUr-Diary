@@ -532,16 +532,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .saddbtn{border:none;background:var(--rose);color:#fff;border-radius:9px;
   padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
 .ssechd .saddbtn{margin-left:auto;}
-/* 학습 기록: 강의명 목록 ↔ 상세 */
-.loglist{display:flex;flex-direction:column;gap:6px;}
-.logleclink{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
-  border-radius:11px;padding:11px 13px;cursor:pointer;transition:background .12s;}
-.logleclink:active{background:var(--line);}
-.logleclink .loglecname{flex:1;font-weight:600;font-size:14px;color:var(--ink);}
-.logleclink .scount{font-size:11px;color:var(--muted);background:var(--panel);border-radius:8px;padding:1px 7px;font-weight:500;}
-.logdetailhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 9px;}
-.logdetailhd .loglecname{font-family:var(--disp);font-weight:700;font-size:14px;color:var(--lav);margin-right:auto;}
-.logdetailhd .ftbtn{flex-shrink:0;}
+/* 학습 기록: 강의 카드 안에서 펼쳐지는 상자 */
+.loglecbox{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);}
+.logboxhd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.logboxhd .ssort{margin-left:0;}
+.logboxhd .saddbtn{margin-left:auto;}
 /* 노트·학습기록: 게시판형 (제목 한 줄 → 클릭 시 본문 펼침) */
 .noteitem{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;margin-bottom:6px;overflow:hidden;}
 .noterow{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;}
@@ -1301,7 +1296,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="136", APP_BUILD="2026.07.28";
+const APP_VERSION="137", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1375,7 +1370,7 @@ let studyField="전체"; // 공부 분야 필터 ("전체"|"__none"|분야명)
 let studySort=jload("panur_studysort","added"); // 자료 정렬
 let studyFold=jload("panur_studyfold",{}); // 섹션 접힘 {src,note,log}
 let noteSort=jload("panur_notesort","new"); // 노트·학습기록 정렬
-let studyLogLecId=null; // 학습 기록: 지금 어느 강의의 기록 목록을 펼쳐 보고 있는지 (null=강의 목록 화면, "__none"=미분류 기록)
+let studyLogOpen=new Set(); // 학습 기록: 지금 펼쳐져 있는 강의 id들 (강의 카드마다 개별 토글)
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -2490,7 +2485,7 @@ function renderPlannerBody(){
       else srcList.forEach(lec=>{h+=sourceCard(lec);});
     }
     h+=`</div>`;
-    // 노트 (기존 방식 그대로)
+    // 노트
     const filtered=notes.filter(inField);
     const nSortOpts=[["new","최신순"],["old","오래된순"],["title","제목순"]]
       .map(o=>`<option value="${o[0]}"${noteSort===o[0]?" selected":""}>${o[1]}</option>`).join("");
@@ -2502,38 +2497,6 @@ function renderPlannerBody(){
       if(!studyFold.note){
         if(!arr.length)h+=emptyP("기억하고 싶은 내용을 노트로 남겨보세요 (사진 첨부 가능)");
         else arr.forEach(n=>{h+=noteCard(n);});
-      }
-      h+=`</div>`;
-    }
-    // 학습 기록: 강의명 목록 ↔ 그 강의의 기록 상세, 두 화면을 토글 (분야 필터는 자료 목록과 동일하게 적용)
-    {
-      const logNotes=filtered.filter(n=>(n.kind||"note")==="log");
-      const lecList=srcList.slice(); // 위 "자료" 섹션과 같은(분야 필터 적용된) 강의 목록 재사용
-      const knownIds=new Set(lecList.map(l=>l.id));
-      const orphanCnt=logNotes.filter(n=>!n.lecId||!knownIds.has(n.lecId)).length;
-      h+=`<div class="ssec"><div class="ssechd" data-fold="log"><span class="scaret">${caret("log")}</span>📖 학습 기록<span class="scount">${logNotes.length}</span></div>`;
-      if(!studyFold.log){
-        if(studyLogLecId==null){
-          if(!lecList.length&&!orphanCnt) h+=emptyP("강의를 추가하면 강의별로 학습 기록을 남길 수 있어요");
-          else{
-            h+=`<div class="loglist">`;
-            lecList.forEach(lec=>{
-              const cnt=logNotes.filter(n=>n.lecId===lec.id).length;
-              h+=`<div class="logleclink" data-openlog="${lec.id}"><span class="loglecname">${esc(lec.name)}</span><span class="scount">${cnt}</span></div>`;
-            });
-            if(orphanCnt) h+=`<div class="logleclink" data-openlog="__none"><span class="loglecname">미분류 기록</span><span class="scount">${orphanCnt}</span></div>`;
-            h+=`</div>`;
-          }
-        }else{
-          const lec=lecList.find(x=>x.id===studyLogLecId);
-          const lecName=studyLogLecId==="__none"?"미분류 기록":(lec?lec.name:"(삭제된 강의)");
-          const theseNotes=sortNotes(logNotes.filter(n=>studyLogLecId==="__none"?(!n.lecId||!knownIds.has(n.lecId)):n.lecId===studyLogLecId),noteSort);
-          h+=`<div class="logdetailhd"><button class="ftbtn" id="logBack">← 목록</button><span class="loglecname">${esc(lecName)}</span>
-            <select class="ssort" data-notesort onclick="event.stopPropagation()">${nSortOpts}</select>
-            ${studyLogLecId!=="__none"?`<button class="saddbtn" data-addnote="log" id="sAddLog" onclick="event.stopPropagation()">＋ 학습 기록</button>`:""}</div>`;
-          if(!theseNotes.length)h+=emptyP("이 강의로 공부한 내용을 기록으로 남겨보세요");
-          else theseNotes.forEach(n=>{h+=noteCard(n);});
-        }
       }
       h+=`</div>`;
     }
@@ -2619,18 +2582,35 @@ function sourceCard(lec){
   const countTxt=total?`${done}/${total}${unit}`:(isBook?"목차 없음":"커리큘럼 없음");
   const timeTxt=prog.byTime?`${Math.round(prog.doneMin)}/${Math.round(prog.totalMin)}분`:"";
   const meta=[sub, countTxt, timeTxt, lec.field?esc(lec.field):""].filter(Boolean).join(" · ");
+  const logNotes=sortNotes((data.studyNotes||[]).filter(n=>(n.kind||"note")==="log"&&n.lecId===lec.id),noteSort);
+  const logOpen=studyLogOpen.has(lec.id);
   return `<div class="lec" data-lec="${lec.id}">
     <div class="lechead"><div><div class="lecname">${icon} ${esc(lec.name)}</div>
       <div class="lecplat">${meta}</div></div>
       <div class="lechbtns"><button class="lecedit" data-lecedit="${lec.id}">✎</button><button class="del" data-lecdel="${lec.id}">✕</button></div></div>
     <div class="bar"><i style="width:${p}%"></i></div>
     <div class="lecpct">${p}%</div>
-    ${total?`<div class="lecbtns"><button class="lectoggle" data-lectog="${lec.id}">진도 ▾</button><button class="lecsched" data-lecsched="${lec.id}">📅 학습 일정</button>${data.events.some(e=>e.studyOf===lec.id)?`<button class="lecsched" data-lecscheddel="${lec.id}">🗑 일정 삭제</button>`:""}</div>
-      <div class="lessons" id="lessons-${lec.id}" style="display:none;">
+    <div class="lecbtns">
+      ${total?`<button class="lectoggle" data-lectog="${lec.id}">진도 ▾</button><button class="lecsched" data-lecsched="${lec.id}">📅 학습 일정</button>${data.events.some(e=>e.studyOf===lec.id)?`<button class="lecsched" data-lecscheddel="${lec.id}">🗑 일정 삭제</button>`:""}`
+        :`<button class="lectoggle" data-lecimport="${lec.id}">${isBook?"목차 가져오기":"커리큘럼 가져오기"}</button>`}
+      <button class="lecsched" data-lectoglog="${lec.id}">${logOpen?"📖 학습 기록 ▴":"📖 학습 기록"+(logNotes.length?` (${logNotes.length})`:"")}</button>
+    </div>
+    ${total?`<div class="lessons" id="lessons-${lec.id}" style="display:none;">
       ${lec.lessons.map((ls,i)=>ls.sec
         ?`<div class="lesson sechd">📂 <span>${esc(ls.t)}</span></div>`
         :`<label class="lesson"><input type="checkbox" data-ll="${lec.id}" data-li="${i}" ${ls.done?"checked":""}><span>${esc(ls.t)}</span></label>`).join("")}
-      </div>`:`<button class="lectoggle" data-lecimport="${lec.id}">${isBook?"목차 가져오기":"커리큘럼 가져오기"}</button>`}
+      </div>`:""}
+    <div class="loglecbox" id="logbox-${lec.id}" style="display:${logOpen?"block":"none"};">
+      <div class="logboxhd">
+        <select class="ssort" data-notesort onclick="event.stopPropagation()">
+          <option value="new"${noteSort==="new"?" selected":""}>최신순</option>
+          <option value="old"${noteSort==="old"?" selected":""}>오래된순</option>
+          <option value="title"${noteSort==="title"?" selected":""}>제목순</option>
+        </select>
+        <button class="saddbtn" data-addnote="log" data-addnotelec="${lec.id}">＋ 학습 기록</button>
+      </div>
+      ${logNotes.length?logNotes.map(n=>noteCard(n)).join(""):emptyP("이 강의로 공부한 내용을 기록으로 남겨보세요")}
+    </div>
   </div>`;
 }
 function noteDateKey(n){return n.date||(n.ts?ymd(new Date(n.ts)):"");}
@@ -2718,7 +2698,7 @@ function bindPlannerForms(){
   if(g("aAdd"))g("aAdd").onclick=()=>{const ti=g("aTitle").value.trim();if(!ti)return toast("약속 제목을 입력해요");
     add("appts",{title:ti,date:g("aDate").value||ymd(new Date()),time:g("aTime").value,who:g("aWho").value.trim(),place:g("aPlace").value.trim(),memo:g("aMemo").value.trim(),remind:g("aRemind").value||null});};
   if(g("sAddLec"))g("sAddLec").onclick=()=>openStudyModal(null);
-  document.querySelectorAll("[data-addnote]").forEach(b=>b.onclick=()=>openNoteModal(null,b.dataset.addnote,b.dataset.addnote==="log"&&studyLogLecId&&studyLogLecId!=="__none"?studyLogLecId:null));
+  document.querySelectorAll("[data-addnote]").forEach(b=>b.onclick=()=>openNoteModal(null,b.dataset.addnote,b.dataset.addnotelec||null));
   if(g("fieldAdd"))g("fieldAdd").onclick=addStudyField;
   if(g("fieldRename"))g("fieldRename").onclick=renameStudyField;
   if(g("fieldDelete"))g("fieldDelete").onclick=deleteStudyField;
@@ -2726,9 +2706,7 @@ function bindPlannerForms(){
   document.querySelectorAll("[data-fold]").forEach(el=>el.onclick=(e)=>{
     if(e.target.closest("button,select"))return; // 안쪽 버튼·드롭다운 클릭은 접기 아님
     const k=el.dataset.fold;studyFold[k]=!studyFold[k];jsave("panur_studyfold",studyFold);renderPlannerBody();});
-  document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;studyLogLecId=null;renderPlannerBody();});
-  document.querySelectorAll("[data-openlog]").forEach(el=>el.onclick=()=>{studyLogLecId=el.dataset.openlog;renderPlannerBody();});
-  if(g("logBack"))g("logBack").onclick=()=>{studyLogLecId=null;renderPlannerBody();};
+  document.querySelectorAll("[data-field]").forEach(el=>el.onclick=()=>{studyField=el.dataset.field;renderPlannerBody();});
   document.querySelectorAll("[data-notetoggle]").forEach(row=>row.onclick=e=>{
     if(e.target.closest("[data-noteedit]"))return;
     const item=row.closest(".noteitem"), body=item.querySelector(".notebody"), car=row.querySelector(".ncaret");
@@ -2746,10 +2724,22 @@ function bindPlannerForms(){
     persist(); renderPlannerBody();
   });
   document.querySelectorAll("[data-lecdel]").forEach(b=>b.onclick=()=>{
-    data.planner.study=data.planner.study.filter(x=>x.id!==b.dataset.lecdel);persist();renderPlannerBody();});
+    const id=b.dataset.lecdel;
+    data.planner.study=data.planner.study.filter(x=>x.id!==id);
+    data.studyNotes=(data.studyNotes||[]).filter(n=>!((n.kind||"note")==="log"&&n.lecId===id)); // 이 강의의 학습기록도 같이 정리
+    persist();renderPlannerBody();});
   document.querySelectorAll("[data-lectog]").forEach(b=>b.onclick=()=>{
     const box=document.getElementById("lessons-"+b.dataset.lectog);
     if(box){const show=box.style.display==="none";box.style.display=show?"block":"none";b.textContent=show?"진도 ▴":"진도 ▾";}});
+  document.querySelectorAll("[data-lectoglog]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.lectoglog, box=document.getElementById("logbox-"+id);
+    if(!box)return;
+    const show=box.style.display==="none";
+    box.style.display=show?"block":"none";
+    if(show)studyLogOpen.add(id); else studyLogOpen.delete(id);
+    const cnt=(data.studyNotes||[]).filter(n=>(n.kind||"note")==="log"&&n.lecId===id).length;
+    b.textContent=show?"📖 학습 기록 ▴":"📖 학습 기록"+(cnt?` (${cnt})`:"");
+  });
   document.querySelectorAll("[data-lecimport]").forEach(b=>b.onclick=()=>openStudyModal(b.dataset.lecimport));
   document.querySelectorAll("[data-lecedit]").forEach(b=>b.onclick=()=>openStudyModal(b.dataset.lecedit));
   document.querySelectorAll("[data-lecsched]").forEach(b=>b.onclick=()=>openSchedModal(b.dataset.lecsched));
