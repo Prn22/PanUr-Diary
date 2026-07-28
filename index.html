@@ -988,7 +988,7 @@ body{
     <div id="schedLecName" style="font-size:12.5px;color:var(--muted);margin:-8px 0 14px;"></div>
     <div class="row2">
       <div class="field"><label>시작일</label><input type="date" id="scStart"></div>
-      <div class="field"><label>주당 섹션 수</label><input type="number" id="scPerWeek" min="1" max="6" value="2"></div>
+      <div class="field"><label>하루 학습시간(분)</label><input type="number" id="scDailyMin" min="20" max="240" step="5" value="70"></div>
     </div>
     <div class="field">
       <label>학습 요일</label>
@@ -996,10 +996,18 @@ body{
     </div>
     <div class="row2">
       <div class="field"><label>시작 시간</label><input type="time" id="scStartTime" value="21:00"></div>
-      <div class="field"><label>끝 시간</label><input type="time" id="scEndTime" value="22:30"></div>
+      <div class="field"><label>여유 비율</label>
+        <select id="scBuffer">
+          <option value="0">0% (꽉 채우기)</option>
+          <option value="15">15%</option>
+          <option value="25" selected>25% (기본)</option>
+          <option value="35">35% (널널하게)</option>
+        </select>
+      </div>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin:-4px 0 8px;">강의 시간을 고려해 하루 분량을 자동으로 나눠요. 여유 비율만큼 하루 학습시간에서 덜어내 실제 배정 시간을 줄여요. 이론/실습 시간은 커리큘럼 줄 끝에 "(15분)" "(실습 40분)"처럼 적으면 반영되고, 안 적으면 자동 추정돼요(이론 15분·실습 40분).</div>
     <div class="field" style="margin-bottom:8px;">
-      <label class="rlbl" style="cursor:pointer;"><input type="checkbox" id="scReview" checked style="width:16px;height:16px;accent-color:var(--lav);"> 마지막에 ✨ 예비·복습 주 추가 (밀리면 따라잡기)</label>
+      <label class="rlbl" style="cursor:pointer;"><input type="checkbox" id="scReview" checked style="width:16px;height:16px;accent-color:var(--lav);"> 자동 여유일 삽입 — 4일마다 1일 + 맨 마지막 예비주 (컨디션 난조로 밀려도 여기서 따라잡기)</label>
     </div>
     <div id="schedPreview" style="font-size:12px;color:var(--ink-soft);background:var(--panel-2);border-radius:11px;padding:10px 12px;max-height:160px;overflow:auto;line-height:1.6;"></div>
     <div style="font-size:11px;color:var(--muted);margin-top:6px;">기존에 이 강의로 만든 학습 일정은 새로 만들 때 자동으로 정리돼요.</div>
@@ -1264,11 +1272,11 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="107", APP_BUILD="2026.07.28";
+const APP_VERSION="109", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
-if(!Array.isArray(data.studyFields))data.studyFields=[]; if(!Array.isArray(data.studyNotes))data.studyNotes=[]; if(!Array.isArray(data.trips))data.trips=[]; if(!Array.isArray(data.pushSubs))data.pushSubs=[];
+if(!Array.isArray(data.studyFields))data.studyFields=[]; if(!Array.isArray(data.studyNotes))data.studyNotes=[]; if(!Array.isArray(data.trips))data.trips=[]; if(!Array.isArray(data.pushSubs))data.pushSubs=[]; if(data.studyNotifyOn==null)data.studyNotifyOn=true; if(!Array.isArray(data.studyNotified))data.studyNotified=[];
 if(!data.focus||typeof data.focus!=="object")data.focus={log:[],pomo:{focusMin:25,breakMin:5,longMin:15,rounds:4}};
 if(!Array.isArray(data.focus.log))data.focus.log=[]; if(!data.focus.pomo)data.focus.pomo={focusMin:25,breakMin:5,longMin:15,rounds:4};
 (data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture"; if(s.field==null)s.field="";});
@@ -2998,71 +3006,119 @@ function applyLecTypeLabels(){
 }
 function closeStudy(){studyOverlay.classList.remove("show");}
 
-/* ===== 학습 일정 만들기 (커리큘럼 → 달력 일정) ===== */
+/* ===== 학습 일정 만들기 (커리큘럼 → 달력 일정, 강의시간 기반 패킹) ===== */
 const schedOverlay=G("schedOverlay"); let schedLecId=null;
 const WD_LABEL=["일","월","화","수","목","금","토"];
-function weekMonday(d){const x=new Date(d);const off=(x.getDay()+6)%7;x.setDate(x.getDate()-off);x.setHours(0,0,0,0);return x;}
 function pad2(n){n=String(n);return n.length<2?"0"+n:n;}
+
+// 커리큘럼 줄 끝의 "(15분)" "(실습 40분)" 표기를 분·이론/실습 종류로 해석.
+// 표기가 없으면 제목의 키워드로 실습 여부를 추정하고 기본 분량(이론 15분·실습 40분)을 적용.
+const PRAC_WORDS=/(실습|프로젝트|과제|따라하기|직접|만들기|구현|핸즈온|워크숍|실전\s*연습)/;
+function parseLessonMeta(title){
+  let t=String(title||""), min=null, kind=null;
+  const m=t.match(/\(\s*(실습|이론)?\s*(\d{1,3})\s*분\s*\)\s*$/);
+  if(m){ min=parseInt(m[2],10); kind=m[1]==="실습"?"prac":(m[1]==="이론"?"thry":null); t=t.slice(0,m.index).trim(); }
+  if(!kind) kind=PRAC_WORDS.test(t)?"prac":"thry";
+  if(min==null) min=kind==="prac"?40:15;
+  return {title:t,min,kind};
+}
 function lecUnits(lec){
   const ls=lec.lessons||[]; const hasSec=ls.some(x=>x.sec);
   const isBook=lec&&lec.type==="book"; const secKind=isBook?"부":"Sec", itemKind=isBook?"장":"강";
   if(hasSec){ const u=[]; let cur=null,idx=0;
-    ls.forEach(x=>{ if(x.sec){idx++;cur={kind:secKind,n:idx,title:x.t,items:[]};u.push(cur);}
-      else{ if(!cur){idx++;cur={kind:secKind,n:idx,title:"",items:[]};u.push(cur);} cur.items.push(x.t);} });
+    ls.forEach(x=>{ if(x.sec){idx++;cur={kind:secKind,n:idx,title:x.t,items:[],min:0,thryMin:0,pracMin:0};u.push(cur);}
+      else{ if(!cur){idx++;cur={kind:secKind,n:idx,title:"",items:[],min:0,thryMin:0,pracMin:0};u.push(cur);}
+        const meta=parseLessonMeta(x.t); cur.items.push(meta.title); cur.min+=meta.min;
+        if(meta.kind==="prac")cur.pracMin+=meta.min; else cur.thryMin+=meta.min; } });
     return u;
   }
-  return ls.map((x,i)=>({kind:itemKind,n:i+1,title:x.t.replace(/^\d{1,3}\.\s*/,""),items:[x.t]}));
+  return ls.map((x,i)=>{const meta=parseLessonMeta(x.t);
+    return {kind:itemKind,n:i+1,title:meta.title.replace(/^\d{1,3}\.\s*/,""),items:[meta.title],
+      min:meta.min,thryMin:meta.kind==="prac"?0:meta.min,pracMin:meta.kind==="prac"?meta.min:0};});
 }
 function schedDaysSelected(){return [...document.querySelectorAll("#scDays .dc.on")].map(el=>Number(el.dataset.wd)).sort((a,b)=>a-b);}
-function buildSchedulePlan(lec){
-  const units=lecUnits(lec);
-  const perWeek=Math.max(1,Math.min(6,parseInt(G("scPerWeek").value,10)||2));
-  const weeks=[]; for(let i=0;i<units.length;i+=perWeek)weeks.push(units.slice(i,i+perWeek));
-  const out=[];
-  weeks.forEach((wk,i)=>{
-    const kind=wk[0].kind, first=wk[0].n, last=wk[wk.length-1].n;
-    const range=first===last?pad2(first):pad2(first)+"~"+pad2(last);
-    let rep=wk.map(u=>u.title).filter(Boolean).join(" · ");
-    if(rep.length>18)rep=rep.slice(0,18)+"…";
-    const title=`${i+1}주차: ${kind} ${range}${rep?" "+rep:""}`;
-    const memo=wk.map(u=>u.kind==="Sec"
+
+// 하루 학습시간(분) 안에 들어가는 만큼 유닛을 그리디하게 채워 세션(하루 분량)으로 나눔
+function packUnits(units,capMin){
+  const sessions=[]; let cur=[],curMin=0,curThry=0,curPrac=0;
+  units.forEach(u=>{
+    const um=Math.max(5,u.min||15);
+    if(cur.length&&curMin+um>capMin){ sessions.push({units:cur,min:curMin,thryMin:curThry,pracMin:curPrac}); cur=[];curMin=0;curThry=0;curPrac=0; }
+    cur.push(u); curMin+=um; curThry+=(u.thryMin||0); curPrac+=(u.pracMin||0);
+  });
+  if(cur.length) sessions.push({units:cur,min:curMin,thryMin:curThry,pracMin:curPrac});
+  return sessions;
+}
+function sessionTitle(sess){
+  const first=sess.units[0], last=sess.units[sess.units.length-1];
+  const range=first.n===last.n?pad2(first.n):pad2(first.n)+"~"+pad2(last.n);
+  let rep=sess.units.map(u=>u.title).filter(Boolean).join(" · ");
+  if(rep.length>18)rep=rep.slice(0,18)+"…";
+  return `${first.kind} ${range}${rep?" "+rep:""}`;
+}
+function sessionMemo(sess){
+  const body=sess.units.map(u=>u.kind==="Sec"
       ? `• ${u.kind} ${pad2(u.n)} ${u.title}${u.items.length?` (${u.items.length}강)`:""}`
       : `• ${pad2(u.n)}. ${u.title}`).join("\n");
-    out.push({title,memo,review:false});
-  });
-  if(G("scReview").checked)
-    out.push({title:"✨ 예비·복습 주 (밀리면 여기서 따라잡기)",memo:"밀린 세션을 이 주에 보충해요.",review:true});
-  return out;
+  const parts=[`예상 ${sess.min}분`]; if(sess.thryMin)parts.push(`이론 ${sess.thryMin}분`); if(sess.pracMin)parts.push(`실습 ${sess.pracMin}분`);
+  return body+`\n(${parts.join(" · ")})`;
 }
-function scheduleDates(plan){
-  const startVal=G("scStart").value; const base=startVal?parseYmd(startVal):new Date();
-  const anchorMon=weekMonday(base); const days=schedDaysSelected(); if(!days.length)return [];
+function addMinutesToTime(hhmm,min){
+  const[h,m]=(hhmm||"21:00").split(":").map(Number);
+  let total=((h*60+m+Math.round(min))%1440+1440)%1440;
+  return pad2(Math.floor(total/60))+":"+pad2(total%60);
+}
+function nextSelectedDay(d,dayset){ const x=new Date(d); while(!dayset.has(x.getDay()))x.setDate(x.getDate()+1); return x; }
+
+// 학습 요일에 하루 한 세션씩 순서대로 배정 + N일마다 여유일 자동 삽입(밀려도 따라잡을 수 있게)
+const SCHED_BUFFER_EVERY=4;
+function buildScheduleEvents(lec){
+  const days=schedDaysSelected(); if(!days.length)return [];
+  const dayset=new Set(days);
+  const capMin=Math.max(20,parseInt(G("scDailyMin").value,10)||70);
+  const bufferPct=Math.max(0,Math.min(90,parseInt(G("scBuffer").value,10)||0));
+  const effCap=Math.max(15,Math.round(capMin*(1-bufferPct/100)));
+  const startVal=G("scStart").value; const startTime=G("scStartTime").value||"21:00";
+  const insertBuffer=G("scReview").checked;
+
+  const sessions=packUnits(lecUnits(lec),effCap);
+  if(!sessions.length)return [];
+
+  let d=nextSelectedDay(startVal?parseYmd(startVal):new Date(),dayset);
   const evs=[];
-  plan.forEach((p,wi)=>{ days.forEach(wd=>{
-    const dt=new Date(anchorMon); dt.setDate(anchorMon.getDate()+wi*7+((wd+6)%7));
-    if(wi===0&&startVal&&ymd(dt)<startVal)return; // 첫 주엔 시작일 이전 제외
-    evs.push({date:ymd(dt),title:p.title,memo:p.memo,review:p.review});
-  }); });
-  return evs.sort((a,b)=>a.date.localeCompare(b.date));
+  sessions.forEach((s,i)=>{
+    evs.push({date:ymd(d),time:startTime,endTime:addMinutesToTime(startTime,s.min),title:sessionTitle(s),memo:sessionMemo(s),review:false});
+    d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
+    if(insertBuffer&&(i+1)%SCHED_BUFFER_EVERY===0){
+      evs.push({date:ymd(d),time:startTime,endTime:addMinutesToTime(startTime,capMin),
+        title:"✨ 여유·복습일 (밀린 학습 따라잡기)",memo:"밀린 세션을 여기서 보충해요.",review:true});
+      d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
+    }
+  });
+  if(insertBuffer)
+    evs.push({date:ymd(d),time:startTime,endTime:addMinutesToTime(startTime,capMin),
+      title:"✨ 예비·복습 주 (밀리면 여기서 따라잡기)",memo:"전체 진도 중 밀린 부분을 이 날 보충해요.",review:true});
+  return evs;
 }
 function renderSchedPreview(){
   const lec=data.planner.study.find(x=>x.id===schedLecId); if(!lec)return;
-  const plan=buildSchedulePlan(lec); const days=schedDaysSelected();
+  const days=schedDaysSelected();
   const dnames=days.map(d=>WD_LABEL[d]).join("·")||"(요일 선택)";
-  const evs=scheduleDates(plan);
-  G("schedPreview").innerHTML=plan.map(p=>`<div>${esc(p.title)}</div>`).join("")
-    +`<div style="margin-top:6px;color:var(--muted);">→ ${dnames} · ${G("scStartTime").value}~${G("scEndTime").value} · 총 ${evs.length}개 일정</div>`;
+  const evs=buildScheduleEvents(lec);
+  const contentCount=evs.filter(e=>!e.review).length, bufferCount=evs.length-contentCount;
+  G("schedPreview").innerHTML=evs.map(e=>`<div>${e.date} ${e.time}~${e.endTime} · ${esc(e.title)}</div>`).join("")
+    +`<div style="margin-top:6px;color:var(--muted);">→ ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`;
 }
 function openSchedModal(lecId){
   schedLecId=lecId; const lec=data.planner.study.find(x=>x.id===lecId); if(!lec)return;
   if(!(lec.lessons||[]).length)return toast("먼저 커리큘럼을 불러와요");
   G("schedLecName").textContent=lec.name+(lec.platform?" · "+lec.platform:"");
-  G("scStart").value=ymd(weekMonday(new Date()));
-  G("scPerWeek").value="2"; G("scStartTime").value="21:00"; G("scEndTime").value="22:30"; G("scReview").checked=true;
+  G("scStart").value=ymd(new Date());
+  G("scDailyMin").value="70"; G("scStartTime").value="21:00"; G("scBuffer").value="25"; G("scReview").checked=true;
   const def=[1,2];
   G("scDays").innerHTML=WD_LABEL.map((w,i)=>`<div class="dc${def.includes(i)?" on":""}" data-wd="${i}">${w}</div>`).join("");
   document.querySelectorAll("#scDays .dc").forEach(el=>el.onclick=()=>{el.classList.toggle("on");renderSchedPreview();});
-  ["scStart","scPerWeek","scStartTime","scEndTime","scReview"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
+  ["scStart","scDailyMin","scStartTime","scBuffer","scReview"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
   renderSchedPreview(); schedOverlay.classList.add("show");
 }
 function closeSched(){schedOverlay.classList.remove("show");}
@@ -3071,18 +3127,18 @@ schedOverlay.onclick=e=>{if(e.target===schedOverlay)closeSched();};
 G("schedMake").onclick=()=>{
   const lec=data.planner.study.find(x=>x.id===schedLecId); if(!lec)return;
   if(!schedDaysSelected().length)return toast("학습 요일을 하나 이상 골라요");
-  const evs=scheduleDates(buildSchedulePlan(lec));
+  const evs=buildScheduleEvents(lec);
   if(!evs.length)return toast("만들 일정이 없어요");
   const before=data.events.length;
   data.events=data.events.filter(e=>e.studyOf!==lec.id);
   const removed=before-data.events.length;
-  const st=G("scStartTime").value||"21:00", et=G("scEndTime").value||"22:30";
-  evs.forEach(e=>data.events.push({id:uid(),title:e.title,date:e.date,time:st,endTime:et,endDate:"",
+  evs.forEach(e=>data.events.push({id:uid(),title:e.title,date:e.date,time:e.time,endTime:e.endTime,endDate:"",
     color:e.review?"plum":"rose",repeat:"none",memo:e.memo,studyOf:lec.id,remindAt:false,remindBefore:null}));
   persist(); closeSched(); render();
   toast(`학습 일정 ${evs.length}개를 만들었어요 📅${removed?` (기존 ${removed}개 정리)`:""}`);
 };
 G("lecPasteBtn").onclick=()=>{
+
   const parsed=parseCurriculum(G("lecPaste").value);
   if(!parsed.length){G("lecStatus").textContent="변환할 목차를 찾지 못했어요. 목차만 붙여넣어 보세요.";return;}
   showPreview(parsed); G("lecStatus").textContent=parsed.length+"강을 찾았어요. 아래에서 다듬으세요.";
@@ -3565,6 +3621,10 @@ function optionsBodyHTML(){
       <div id="notifDiag" style="font-size:12px;color:var(--ink-soft);line-height:1.7;">확인 중…</div>
       <button class="btn" id="notifTest" style="margin-top:8px;">테스트 알림 보내기</button>
     </div>
+    <div class="optblk"><div class="optlbl">📚 학습 일정 알림</div>
+      <label class="opttoggle"><input type="checkbox" id="optStudyNotify" ${data.studyNotifyOn!==false?"checked":""}> 학습 일정 시작·종료 시각에 알림 받기</label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">플래너 · 공부에서 만든 학습 일정의 시작/종료 시간에 울려요. 앱이 꺼져 있어도 와요.</div>
+    </div>
     <div class="optver">Ver ${APP_VERSION} · ${APP_BUILD}</div>
   </div>`;
 }
@@ -3625,6 +3685,8 @@ function bindOptions(){
     notify("테스트 알림 · 잘 보이면 성공! 🎉");
     setTimeout(renderNotifDiag,300);
   };
+  const sn=document.getElementById("optStudyNotify");
+  if(sn)sn.onchange=()=>{ data.studyNotifyOn=sn.checked; persist(); toast(sn.checked?"학습 일정 알림을 켰어요 🔔":"학습 일정 알림을 껐어요"); };
 }
 async function renderNotifDiag(){
   const el=document.getElementById("notifDiag"); if(!el)return;
@@ -4281,7 +4343,7 @@ async function pull(verbose){
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
     if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!Array.isArray(data.userHols))data.userHols=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
-    if(!Array.isArray(data.studyFields))data.studyFields=[];if(!Array.isArray(data.studyNotes))data.studyNotes=[];if(!Array.isArray(data.trips))data.trips=[];if(!Array.isArray(data.pushSubs))data.pushSubs=[];(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture";if(s.field==null)s.field="";});
+    if(!Array.isArray(data.studyFields))data.studyFields=[];if(!Array.isArray(data.studyNotes))data.studyNotes=[];if(!Array.isArray(data.trips))data.trips=[];if(!Array.isArray(data.pushSubs))data.pushSubs=[];if(data.studyNotifyOn==null)data.studyNotifyOn=true;if(!Array.isArray(data.studyNotified))data.studyNotified=[];(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture";if(s.field==null)s.field="";});
     jsave(LS_DATA,data); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
