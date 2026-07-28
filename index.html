@@ -1285,7 +1285,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="124", APP_BUILD="2026.07.28";
+const APP_VERSION="125", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3111,34 +3111,48 @@ function schedCapInfo(){
   return {capMinWD,capMinWE,bufferPct,effCapWD,effCapWE};
 }
 // 평일/주말 가용시간 모델
-// - 평일(월~금): 07~21시는 실습 불가(직장/이동 시간으로 상정) → 실습은 21시~약 01시(취침 0~1시 상정, 240분 창)에만.
-//   이론은 짬짬이 시간에 들을 수 있다고 보고 실습 창의 제약을 받지 않음(대신 하루 총량 effCapWD는 그대로 지킴).
-// - 주말: 수면 8~10시간만 지키면 시간 제약 없음 → 주말용 하루 학습시간(effCapWE)을 그대로 하루 예산으로 사용.
-const WD_EVE_WINDOW_MIN=240; // 21:00~약 01:00
+// - 평일(월~금): 07~21시는 실습 불가(직장/이동 시간으로 상정) → 실습은 21시~약 01시(취침 0~1시 상정)에만.
+// - 주말: 수면 8~10시간만 지키면 시간 제약 없음 → 하루 전체가 대상.
+// 이전 버전은 "얼마나 바쁜지"만 보고 시간 총량만 깎았는데, 그러면 시작 시각 자체가 기존 일정과 겹칠 수 있었음(실제 버그로 확인됨).
+// 지금은 그 날의 실제 빈 시간대를 찾아서, 필요하면 시작 시각 자체를 기존 일정 뒤로 밀어줌.
 function isWeekendDate(d){ const wd=d.getDay(); return wd===0||wd===6; }
-// 그 날 이미 잡혀 있는 다른 일정(월간 뷰에 보이는 data.events, 이 강의 자체가 만든 것은 제외)을 반영.
-// 주말=하루 전체 기준, 평일=21시~01시 저녁 창 기준으로만 겹침을 계산(낮 시간 일정은 어차피 실습 불가 시간대라 무관).
-function dayAvailInfo(ds,excludeStudyOf,effCap,skipBusy,weekend){
-  if(!skipBusy){
-    return weekend?{cap:effCap,allDay:false}:{cap:Math.min(effCap,WD_EVE_WINDOW_MIN),allDay:false};
-  }
-  let allDay=false, busyMin=0, eveBusy=0;
+function timeStrToMin(t){ const[h,m]=(t||"00:00").split(":").map(Number); return (h||0)*60+(m||0); }
+function dayFreeSlot(ds,excludeStudyOf,weekend,desiredStartMin){
+  const winStart=weekend?0:21*60, winEnd=24*60;
+  const intervals=[]; let allDayBlock=false;
   eventsOn(parseYmd(ds)).forEach(ev=>{
-    if(ev.studyOf===excludeStudyOf)return;
+    if(ev.studyOf===excludeStudyOf)return; // 이 강의 자체의 기존 일정은 재생성 대상이라 참고 안 함
     let s=null,e=null;
     if(ev.time&&ev.endTime){
       const[sh,sm]=ev.time.split(":").map(Number), [eh,em]=ev.endTime.split(":").map(Number);
-      s=sh*60+sm; e=eh*60+em; if(Number.isNaN(s)||Number.isNaN(e)||e<=s){s=null;e=null;allDay=true;}
+      s=sh*60+sm; e=eh*60+em;
+      if(Number.isNaN(s)||Number.isNaN(e)||e<=s){allDayBlock=true;return;} // 자정 넘기는 등 못 다루는 형태는 안전하게 종일 취급
     }else if(ev.time&&!ev.endTime){
-      const[sh,sm]=ev.time.split(":").map(Number); if(!Number.isNaN(sh)){s=sh*60+sm; e=s+30;} else allDay=true;
-    }else{ allDay=true; }
-    if(s==null)return;
-    busyMin+=(e-s);
-    eveBusy+=Math.max(0,Math.min(e,24*60)-Math.max(s,21*60)); // 21:00~24:00과 겹치는 부분만(자정 이후분은 다음날 확인 없이 그대로 더해줘서 단순화)
+      const[sh,sm]=ev.time.split(":").map(Number);
+      if(Number.isNaN(sh)){allDayBlock=true;return;}
+      s=sh*60+sm; e=s+30; // 종료시간 없는 일정은 최소 30분 정도로 어림
+    }else{ allDayBlock=true; return; } // 시간 미지정(종일) 일정
+    const cs=Math.max(s,winStart), ce=Math.min(e,winEnd);
+    if(ce>cs)intervals.push([cs,ce]);
   });
-  if(allDay)return{cap:0,allDay:true};
-  if(weekend)return{cap:Math.max(0,effCap-busyMin),allDay:false};
-  return{cap:Math.max(0,Math.min(effCap,WD_EVE_WINDOW_MIN)-eveBusy),allDay:false};
+  if(allDayBlock)return{allDay:true};
+  intervals.sort((a,b)=>a[0]-b[0]);
+  const merged=[];
+  intervals.forEach(iv=>{
+    if(merged.length&&iv[0]<=merged[merged.length-1][1])merged[merged.length-1][1]=Math.max(merged[merged.length-1][1],iv[1]);
+    else merged.push(iv.slice());
+  });
+  let start=Math.max(desiredStartMin,winStart);
+  for(const[bs,be]of merged){
+    if(start<bs)break;       // 이 구간이 시작되기 전에 이미 여유 있음 → 멈춤
+    if(start<be)start=be;    // start가 이 구간 안에 있으면 구간 끝으로 밀어냄
+  }
+  if(start>=winEnd)return{allDay:false,startMin:start,availMin:0};
+  let boundEnd=winEnd;
+  for(const[bs]of merged){ if(bs>start){ boundEnd=Math.min(boundEnd,bs); break; } }
+  let availMin=boundEnd-start;
+  if(!weekend&&boundEnd>=winEnd)availMin+=60; // 평일이고 자정까지 안 막혔으면 취침 전(0~1시)도 여유로 더해줌
+  return{allDay:false,startMin:start,availMin};
 }
 function buildScheduleEvents(lec){
   const days=schedDaysSelected(); if(!days.length)return [];
@@ -3152,18 +3166,26 @@ function buildScheduleEvents(lec){
   const effCapFor=d=>isWeekendDate(d)?effCapWE:effCapWD;
   const insertBuffer=G("scReview").checked;
   const skipBusyEl=G("scSkipBusy"); const skipBusy=skipBusyEl?skipBusyEl.checked:true;
+
+  // 그 날의 실제 배정 가능한 시작시각·여유시간을 계산(스킵 기능 꺼져 있으면 늘 원래 시작시각 그대로)
+  const slotFor=(dd)=>{
+    const weekend=isWeekendDate(dd), desired=timeStrToMin(timeFor(dd)), effCap=effCapFor(dd);
+    if(!skipBusy)return {allDay:false,startMin:desired,availMin:effCap};
+    const fs=dayFreeSlot(ymd(dd),lec.id,weekend,desired);
+    if(fs.allDay)return {allDay:true};
+    return {allDay:false,startMin:fs.startMin,availMin:Math.min(effCap,fs.availMin)};
+  };
   // 여유/복습일도 콘텐츠 세션처럼 "이미 바쁜 날"은 피해서 배정(안 그러면 기존 일정과 겹쳐버림)
   const findAvailableDay=(dd)=>{
     let guard=0, skipped=0;
     while(guard<400){
       guard++;
-      const ds=ymd(dd), weekend=isWeekendDate(dd), effCap=effCapFor(dd);
-      const avail=dayAvailInfo(ds,lec.id,effCap,skipBusy,weekend);
-      if(!(avail.allDay||avail.cap<10))return {date:dd,skipped};
+      const slot=slotFor(dd);
+      if(!(slot.allDay||slot.availMin<10))return {date:dd,slot,skipped};
       skipped++;
       dd=nextSelectedDay(new Date(dd.getFullYear(),dd.getMonth(),dd.getDate()+1),dayset);
     }
-    return {date:dd,skipped};
+    return {date:dd,slot:slotFor(dd),skipped};
   };
 
   const units=lecUnits(lec);
@@ -3175,9 +3197,9 @@ function buildScheduleEvents(lec){
 
   while(qi<units.length&&guard<3650){
     guard++;
-    const ds=ymd(d), weekend=isWeekendDate(d), startTime=timeFor(d), effCap=effCapFor(d);
-    const avail=dayAvailInfo(ds,lec.id,effCap,skipBusy,weekend);
-    const bad=avail.allDay||avail.cap<10;
+    const ds=ymd(d), slot=slotFor(d);
+    const nextUnitMin=Math.max(5,units[qi].min||15);
+    const bad=slot.allDay||slot.availMin<nextUnitMin;
     if(bad){ if(qi===stuckAt)stuckStreak++; else {stuckAt=qi;stuckStreak=1;} }
     if(bad&&stuckStreak<40){
       // 같은 강의가 40번 넘게 계속 막히기 전까진 이 날은 건너뛰고 다음 선택 요일로
@@ -3185,28 +3207,25 @@ function buildScheduleEvents(lec){
       d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
       continue;
     }
-    // 여기 온 경우: 정상 배정 가능하거나(bad=false), 40일 넘게 막혀서 이 날짜에 강제로라도 배정(bad=true)
-    // 평일은 "실습 시간만" avail.cap을 소모, 이론은 하루 총 예산(effCap)만 지키면 무제한 추가.
-    // 주말은 이론/실습 구분 없이 avail.cap(=effCap 기준) 전체를 소모.
-    let cur=[],curMin=0,curThry=0,curPrac=0,curPracUsed=0;
+    // 여기 온 경우: 정상 배정 가능하거나(bad=false), 40일 넘게 막혀서 이 날짜에 강제로라도 배정(bad=true, availMin 매우 작을 수 있음)
+    const cap=Math.max(15,slot.availMin||15);
+    let cur=[],curMin=0,curThry=0,curPrac=0;
     while(qi<units.length){
-      const u=units[qi], uTotal=Math.max(5,u.min||15), uPrac=u.pracMin||0;
-      if(cur.length){
-        if(curMin+uTotal>effCap)break;
-        if(!weekend&&curPracUsed+uPrac>avail.cap)break;
-        if(weekend&&curMin+uTotal>avail.cap)break;
-      }
-      cur.push(u); curMin+=uTotal; curThry+=(u.thryMin||0); curPrac+=uPrac; if(!weekend)curPracUsed+=uPrac;
+      const u=units[qi], uTotal=Math.max(5,u.min||15);
+      if(cur.length&&curMin+uTotal>cap)break;
+      cur.push(u); curMin+=uTotal; curThry+=(u.thryMin||0); curPrac+=(u.pracMin||0);
       qi++;
     }
     if(!cur.length){ const u=units[qi]; cur=[u]; curMin=u.min||15; curThry=u.thryMin||0; curPrac=u.pracMin||0; qi++; }
     const s={units:cur,min:curMin,thryMin:curThry,pracMin:curPrac};
+    const startTime=addMinutesToTime("00:00",slot.allDay?timeStrToMin(timeFor(d)):slot.startMin);
     evs.push({date:ds,time:startTime,endTime:addMinutesToTime(startTime,s.min),title:sessionTitle(s),memo:sessionMemo(s),review:false});
     sessionCount++; stuckAt=-1; stuckStreak=0;
     d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
     if(insertBuffer&&sessionCount%SCHED_BUFFER_EVERY===0){
       const found=findAvailableDay(d); d=found.date; skippedBusy+=found.skipped;
-      const bt=timeFor(d), bcap=capMinFor(d);
+      const bcap=capMinFor(d);
+      const bt=addMinutesToTime("00:00",found.slot.allDay?timeStrToMin(timeFor(d)):found.slot.startMin);
       evs.push({date:ymd(d),time:bt,endTime:addMinutesToTime(bt,bcap),
         title:"✨ 여유·복습일 (밀린 학습 따라잡기)",memo:"밀린 세션을 여기서 보충해요.",review:true});
       d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
@@ -3214,7 +3233,8 @@ function buildScheduleEvents(lec){
   }
   if(insertBuffer){
     const found=findAvailableDay(d); d=found.date; skippedBusy+=found.skipped;
-    const bt=timeFor(d), bcap=capMinFor(d);
+    const bcap=capMinFor(d);
+    const bt=addMinutesToTime("00:00",found.slot.allDay?timeStrToMin(timeFor(d)):found.slot.startMin);
     evs.push({date:ymd(d),time:bt,endTime:addMinutesToTime(bt,bcap),
       title:"✨ 예비·복습 주 (밀리면 여기서 따라잡기)",memo:"전체 진도 중 밀린 부분을 이 날 보충해요.",review:true});
   }
