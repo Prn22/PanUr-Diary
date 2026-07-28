@@ -1285,7 +1285,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="125", APP_BUILD="2026.07.28";
+const APP_VERSION="126", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3123,7 +3123,22 @@ function dayFreeSlot(ds,excludeStudyOf,weekend,desiredStartMin){
   eventsOn(parseYmd(ds)).forEach(ev=>{
     if(ev.studyOf===excludeStudyOf)return; // 이 강의 자체의 기존 일정은 재생성 대상이라 참고 안 함
     let s=null,e=null;
-    if(ev.time&&ev.endTime){
+    const isMultiDay=ev.endDate&&ev.endDate>ev.date;
+    if(isMultiDay){
+      // 여러 날짜(n박n일)에 걸친 일정은 지금 보는 날짜가 시작일/중간일/종료일 중 어디인지에 따라 실제 바쁜 구간이 다름.
+      // (예: 8/3 14시 출발~8/5 20시 도착 여행이면, 8/3은 14시부터 하루 끝까지, 8/4는 종일, 8/5는 자정부터 20시까지 바쁨)
+      const isFirst=ds===ev.date, isLast=ds===ev.endDate;
+      if(!isFirst&&!isLast){ allDayBlock=true; return; } // 중간일은 통째로 바쁨
+      if(isFirst){
+        if(!ev.time){ allDayBlock=true; return; }
+        const[sh,sm]=ev.time.split(":").map(Number); if(Number.isNaN(sh)){allDayBlock=true;return;}
+        s=sh*60+sm; e=24*60; // 출발 시각부터 그 날 끝까지
+      }else{
+        if(!ev.endTime){ allDayBlock=true; return; }
+        const[eh,em]=ev.endTime.split(":").map(Number); if(Number.isNaN(eh)){allDayBlock=true;return;}
+        s=0; e=eh*60+em; // 그 날 시작부터 도착 시각까지
+      }
+    }else if(ev.time&&ev.endTime){
       const[sh,sm]=ev.time.split(":").map(Number), [eh,em]=ev.endTime.split(":").map(Number);
       s=sh*60+sm; e=eh*60+em;
       if(Number.isNaN(s)||Number.isNaN(e)||e<=s){allDayBlock=true;return;} // 자정 넘기는 등 못 다루는 형태는 안전하게 종일 취급
