@@ -1285,7 +1285,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="123", APP_BUILD="2026.07.28";
+const APP_VERSION="124", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -3152,6 +3152,19 @@ function buildScheduleEvents(lec){
   const effCapFor=d=>isWeekendDate(d)?effCapWE:effCapWD;
   const insertBuffer=G("scReview").checked;
   const skipBusyEl=G("scSkipBusy"); const skipBusy=skipBusyEl?skipBusyEl.checked:true;
+  // 여유/복습일도 콘텐츠 세션처럼 "이미 바쁜 날"은 피해서 배정(안 그러면 기존 일정과 겹쳐버림)
+  const findAvailableDay=(dd)=>{
+    let guard=0, skipped=0;
+    while(guard<400){
+      guard++;
+      const ds=ymd(dd), weekend=isWeekendDate(dd), effCap=effCapFor(dd);
+      const avail=dayAvailInfo(ds,lec.id,effCap,skipBusy,weekend);
+      if(!(avail.allDay||avail.cap<10))return {date:dd,skipped};
+      skipped++;
+      dd=nextSelectedDay(new Date(dd.getFullYear(),dd.getMonth(),dd.getDate()+1),dayset);
+    }
+    return {date:dd,skipped};
+  };
 
   const units=lecUnits(lec);
   if(!units.length)return [];
@@ -3192,6 +3205,7 @@ function buildScheduleEvents(lec){
     sessionCount++; stuckAt=-1; stuckStreak=0;
     d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
     if(insertBuffer&&sessionCount%SCHED_BUFFER_EVERY===0){
+      const found=findAvailableDay(d); d=found.date; skippedBusy+=found.skipped;
       const bt=timeFor(d), bcap=capMinFor(d);
       evs.push({date:ymd(d),time:bt,endTime:addMinutesToTime(bt,bcap),
         title:"✨ 여유·복습일 (밀린 학습 따라잡기)",memo:"밀린 세션을 여기서 보충해요.",review:true});
@@ -3199,6 +3213,7 @@ function buildScheduleEvents(lec){
     }
   }
   if(insertBuffer){
+    const found=findAvailableDay(d); d=found.date; skippedBusy+=found.skipped;
     const bt=timeFor(d), bcap=capMinFor(d);
     evs.push({date:ymd(d),time:bt,endTime:addMinutesToTime(bt,bcap),
       title:"✨ 예비·복습 주 (밀리면 여기서 따라잡기)",memo:"전체 진도 중 밀린 부분을 이 날 보충해요.",review:true});
