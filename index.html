@@ -552,7 +552,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .noterow .ndate{flex:none;font-size:11px;color:var(--muted);}
 .noterow .nedit{flex:none;border:none;background:none;color:var(--faint);cursor:pointer;font-size:14px;}
 .notebody{padding:0 12px 12px 31px;}
-.notebody .nbody{font-size:12.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.55;}
+.notebody .nbody{font-size:12.5px;color:var(--ink-soft);line-height:1.55;}
+.notebody .nbody .nline{min-height:1.55em;}
+.notebody .nbody b{color:var(--ink);font-weight:700;}
+.notebody .nbody ul.nbullets{margin:2px 0;padding-left:1.1em;}
+.notebody .nbody ul.nbullets li{margin:2px 0;}
 .notebody .cardimgs{flex-wrap:wrap;}
 .notebody .cardimgs img{width:72px;height:72px;}
 img.zoomable{cursor:zoom-in;}
@@ -1058,7 +1062,7 @@ body{
       <div class="field"><label>날짜</label><input type="date" id="nDate"></div>
     </div>
     <div class="field"><label>제목</label><input id="nTitle" placeholder="예: 노드 머테리얼 핵심 정리"></div>
-    <div class="field"><label>내용</label><textarea id="nBody" rows="6" placeholder="기억하고 싶은 내용을 자유롭게 적어요"></textarea></div>
+    <div class="field"><label>내용</label><textarea id="nBody" rows="6" placeholder="기억하고 싶은 내용을 자유롭게 적어요&#10;**단어**로 감싸면 굵게, 줄 맨 앞에 - 를 붙이면 목록이 돼요"></textarea></div>
     <div class="field">
       <label>사진 (발췌·캡처 첨부)</label>
       <button class="btn ghost" id="nImgAdd" style="margin-bottom:8px;">🖼 사진 추가</button>
@@ -1297,7 +1301,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="135", APP_BUILD="2026.07.28";
+const APP_VERSION="136", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -2640,6 +2644,25 @@ function sortNotes(list,mode){
   }
   return a;
 }
+// 노트·학습기록 본문의 아주 가벼운 서식 지원: **굵게**, 줄 맨 앞 "- "는 불릿으로.
+// (그 외 텍스트는 그대로 이스케이프 + 줄바꿈 유지)
+function renderNoteBody(text){
+  const inline=s=>esc(s).replace(/\*\*([^*\n]+?)\*\*/g,"<b>$1</b>");
+  const lines=String(text||"").split("\n");
+  let html="", inList=false;
+  lines.forEach(line=>{
+    const bm=line.match(/^\s*[-•]\s+(.*)$/);
+    if(bm){
+      if(!inList){ html+='<ul class="nbullets">'; inList=true; }
+      html+=`<li>${inline(bm[1])}</li>`;
+    }else{
+      if(inList){ html+="</ul>"; inList=false; }
+      html+=`<div class="nline">${line.trim()===""?"&nbsp;":inline(line)}</div>`;
+    }
+  });
+  if(inList)html+="</ul>";
+  return html;
+}
 function noteCard(n){
   let ds="";
   if(n.date){const d=parseYmd(n.date);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())} (${WEEK[d.getDay()]})`;}
@@ -2654,7 +2677,7 @@ function noteCard(n){
       <button class="nedit" data-noteedit="${n.id}">✎</button>
     </div>
     <div class="notebody" style="display:none;">
-      ${n.body?`<div class="nbody">${esc(n.body)}</div>`:""}
+      ${n.body?`<div class="nbody">${renderNoteBody(n.body)}</div>`:""}
       ${(n.images&&n.images.length)?`<div class="cardimgs">${n.images.map(src=>`<img class="zoomable" src="${src}">`).join("")}</div>`:""}
     </div>
   </div>`;
