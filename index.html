@@ -529,14 +529,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   border-radius:8px;padding:4px 8px;font-size:11.5px;font-family:var(--body);cursor:pointer;}
 .ssechd .ssort+.saddbtn{margin-left:6px;}
 .ssechd .scount{font-size:11px;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:1px 7px;font-weight:500;}
-.ssechd .saddbtn{margin-left:auto;border:none;background:var(--rose);color:#fff;border-radius:9px;
+.saddbtn{border:none;background:var(--rose);color:#fff;border-radius:9px;
   padding:6px 12px;font-family:var(--disp);font-size:12px;font-weight:600;cursor:pointer;}
+.ssechd .saddbtn{margin-left:auto;}
 /* 학습 기록: 강의명 목록 ↔ 상세 */
 .loglist{display:flex;flex-direction:column;gap:6px;}
 .logleclink{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line);
   border-radius:11px;padding:11px 13px;cursor:pointer;transition:background .12s;}
 .logleclink:active{background:var(--line);}
-.logleclink .loglecname{flex:1;font-weight:600;color:var(--ink);}
+.logleclink .loglecname{flex:1;font-weight:600;font-size:14px;color:var(--ink);}
 .logleclink .scount{font-size:11px;color:var(--muted);background:var(--panel);border-radius:8px;padding:1px 7px;font-weight:500;}
 .logdetailhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 9px;}
 .logdetailhd .loglecname{font-family:var(--disp);font-weight:700;font-size:14px;color:var(--lav);margin-right:auto;}
@@ -1296,7 +1297,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="134", APP_BUILD="2026.07.28";
+const APP_VERSION="135", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
