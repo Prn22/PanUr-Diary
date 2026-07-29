@@ -1296,7 +1296,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="140", APP_BUILD="2026.07.28";
+const APP_VERSION="142", APP_BUILD="2026.07.28";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1314,7 +1314,12 @@ _money.forEach(a=>{if(!data.affirmations.includes(a))data.affirmations.push(a);}
 
 let sync=jload(LS_SYNC,{owner:"",repo:"",branch:"main",path:"data.json",token:"",auto:false,sha:null});
 
-function persist(){ jsave(LS_DATA,data); maybeBackup(); if(sync.auto&&sync.token) scheduleAuto(); }
+let _pullInFlight=false, _dirtyDuringPull=false;
+function persist(){
+  jsave(LS_DATA,data); maybeBackup(); jsave("panur_dirty",true);
+  if(_pullInFlight)_dirtyDuringPull=true; // 지금 막 도는 자동 불러오기가 끝나기 전에 로컬에서 뭔가 바뀜
+  if(sync.auto&&sync.token) scheduleAuto();
+}
 
 /* ============ 자동 백업 (최대 5개, 약 15분 간격 순환) ============ */
 const BK_KEY="panur_backups", BK_MAX=5, BK_GAP=15*60*1000;
@@ -4766,23 +4771,50 @@ G("pullBtn").onclick=async()=>{readSyncForm();await pull(true);};
 G("pushBtn").onclick=async()=>{readSyncForm();await push(true);};
 async function pull(verbose){
   if(!sync.owner||!sync.repo||!sync.token){if(verbose)syncStatus.textContent="사용자명·저장소·토큰을 먼저 입력해요";return;}
+  _pullInFlight=true; _dirtyDuringPull=false;
   try{
     syncStatus.textContent="불러오는 중…";
     const gf=await ghGetFile();
     if(gf.notfound){syncStatus.textContent="저장소에 아직 파일이 없어요. '올리기'로 처음 저장하세요.";setDot("");return;}
+    if(_dirtyDuringPull){
+      // 불러오는 사이에 로컬에서 뭔가 추가·변경됨 → 그대로 덮어쓰면 방금 입력한 게 사라지므로 이번엔 건너뜀
+      // (로컬 변경은 이미 dirty로 표시돼 있어서, 곧 자동 올리기가 서버로 반영해줌)
+      syncStatus.textContent="방금 로컬에서 변경돼서 이번 자동 불러오기는 건너뛰었어요";
+      setDot(""); return;
+    }
     sync.sha=gf.sha; jsave(LS_SYNC,sync);
     const remote=JSON.parse(gf.text);
     data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)),remote);
     data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
     if(!data.diary)data.diary={};if(!data.events)data.events=[];if(!data.yearNotes)data.yearNotes={};if(!data.moods)data.moods=[];if(!data.memos)data.memos=[];if(!data.materials)data.materials=[];if(!Array.isArray(data.affirmations))data.affirmations=[];if(!Array.isArray(data.videos))data.videos=[];if(!Array.isArray(data.wxPresets))data.wxPresets=[];if(!data.wxPresets.length)data.wxPresets=[{label:"용인",q:"Yongin"},{label:"서울",q:"Seoul"},{label:"도쿄",q:"Tokyo"},{label:"오사카",q:"Osaka"},{label:"후쿠오카",q:"Fukuoka"}];if(!data.deco||typeof data.deco!=="object")data.deco={};if(!Array.isArray(data.annivs))data.annivs=[];if(!Array.isArray(data.userHols))data.userHols=[];if(!data.mmEmoji||typeof data.mmEmoji!=="object")data.mmEmoji={};for(const k in MM_EMO_DEF)if(!data.mmEmoji[k])data.mmEmoji[k]=MM_EMO_DEF[k];if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
     if(!Array.isArray(data.studyFields))data.studyFields=[];if(!Array.isArray(data.studyNotes))data.studyNotes=[];if(!Array.isArray(data.trips))data.trips=[];if(!Array.isArray(data.pushSubs))data.pushSubs=[];if(data.studyNotifyOn==null)data.studyNotifyOn=true;if(!Array.isArray(data.studyNotified))data.studyNotified=[];if(data.geminiKey==null)data.geminiKey="";(data.planner.study||[]).forEach(s=>{if(!s.type)s.type="lecture";if(s.field==null)s.field="";});
-    jsave(LS_DATA,data); render();
+    jsave(LS_DATA,data); jsave("panur_dirty",false); render();
     syncStatus.textContent="불러왔어요 ✓"; setDot("ok"); toast("동기화: 불러왔어요");
   }catch(e){syncStatus.textContent="실패: "+e.message+" (토큰·저장소명을 확인하세요)";setDot("err");}
+  finally{_pullInFlight=false;}
+}
+// 워커(데스크톱 앱)나 알림 스크립트가 서버에 직접 추가하는 "덧붙이기 전용" 데이터(집중 기록,
+// 알림 중복방지 기록 등)는, 이쪽에서 올리기 전에 서버의 최신 항목을 병합해줘야 서로 안 덮어씀.
+function mergeExternalAdditions(local,remote){
+  if(remote&&remote.focus&&Array.isArray(remote.focus.log)){
+    local.focus=local.focus&&typeof local.focus==="object"?local.focus:{log:[],pomo:null};
+    if(!Array.isArray(local.focus.log))local.focus.log=[];
+    const seen=new Set(local.focus.log.map(x=>`${x.ts}|${x.label}|${x.sec}`));
+    remote.focus.log.forEach(r=>{ const k=`${r.ts}|${r.label}|${r.sec}`; if(!seen.has(k)){ local.focus.log.push(r); seen.add(k); } });
+  }
+  ["eventNotified","studyNotified"].forEach(key=>{
+    if(remote&&Array.isArray(remote[key])){
+      local[key]=Array.from(new Set([...(Array.isArray(local[key])?local[key]:[]), ...remote[key]]));
+    }
+  });
+  if(remote&&remote.lastDigestDate&&(!local.lastDigestDate||remote.lastDigestDate>local.lastDigestDate)){
+    local.lastDigestDate=remote.lastDigestDate;
+  }
 }
 async function push(verbose){
   if(!sync.owner||!sync.repo||!sync.token){if(verbose)syncStatus.textContent="사용자명·저장소·토큰을 먼저 입력해요";return;}
   try{
+    try{ const gf=await ghGetFile(); if(gf&&gf.text)mergeExternalAdditions(data,JSON.parse(gf.text)); }catch(_){ /* 병합 실패해도 기존 방식대로 진행 */ }
     const jsonStr=JSON.stringify(data), kb=Math.round(jsonStr.length/1024);
     if(verbose)syncStatus.textContent=`올리는 중… (${kb}KB)`;
     try{ await ghPutBlob(jsonStr); }
@@ -4794,6 +4826,7 @@ async function push(verbose){
       } else throw e;
     }
     try{ const gf=await ghGetFile(); if(gf&&gf.sha){sync.sha=gf.sha;jsave(LS_SYNC,sync);} }catch(_){}
+    jsave("panur_dirty",false); // 성공적으로 서버에 반영했으니 로컬-서버 동기화 완료 상태로 표시
     if(verbose)syncStatus.textContent=`올렸어요 ✓ (${kb}KB)`; setDot("ok"); if(verbose)toast("동기화: 올렸어요");
   }catch(e){if(verbose)syncStatus.textContent="실패: "+e.message;setDot("err");}
 }
@@ -4997,8 +5030,13 @@ function upcomingSummary(){
   const key="panur_digest_"+t0;
   if(!jload(key,false)){ jsave(key,true); setTimeout(()=>toast("📌 "+body),700); }
 }
-// 시작 시 동기화 설정돼 있으면 조용히 불러오기
-if(sync.owner&&sync.repo&&sync.token){pull(false);}
+// 시작 시 동기화 설정돼 있으면 조용히 불러오기.
+// 단, 아직 서버로 못 올린 로컬 변경이 남아있으면(예: 지난 세션이 올리기 전에 끊김) 그걸 덮어쓰지 않도록
+// 불러오기 대신 올리기부터 예약함(그래야 방금 추가한 게 사라지는 사고를 막을 수 있음).
+if(sync.owner&&sync.repo&&sync.token){
+  if(jload("panur_dirty",false)) scheduleAuto();
+  else pull(false);
+}
 /* ---- 비 예보 알림 ---- */
 const RAIN_CODES=new Set([51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99]);
 async function rainCheckAt(lat,lon,label){
