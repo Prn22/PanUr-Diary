@@ -1295,7 +1295,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="143", APP_BUILD="2026.07.29";
+const APP_VERSION="144", APP_BUILD="2026.07.30";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1623,7 +1623,7 @@ function focusListHTML(){
       ${gkeys.length? gkeys.map(dk=>`
         <div class="flog-date">${dk.slice(5).replace("-","/")} <span>${fmtDurKo(groups[dk].reduce((a,x)=>a+(x.sec||0),0))}</span></div>
         ${groups[dk].map(x=>`<div class="frow"><span class="flbl">${icon(x.kind)} ${esc(x.label||"작업")}</span>
-          <span class="fdur">${x.sec<60?Math.round(x.sec)+"초":fmtDurKo(x.sec)}${x.n>1?`<em>${x.n}회</em>`:""} <b class="flogdel" data-flogdel="${x.tss.join(",")}" title="${x.n>1?x.n+"건 모두 삭제":"삭제"}">✕</b></span></div>`).join("")}
+          <span class="fdur">${x.sec<60?Math.round(x.sec)+"초":fmtDurKo(x.sec)} <b class="flogdel" data-flogdel="${x.tss.join(",")}" title="${x.n>1?x.n+"건 모두 삭제":"삭제"}">✕</b></span></div>`).join("")}
       `).join("") : '<div class="empty">아직 기록이 없어요<small>뽀모도로나 데스크톱 워커로 기록이 쌓여요</small></div>'}
     </div>
     ${gkeys.length?`<button class="fbtn fclear" id="focusClear">기록 전체 삭제</button>`:""}`;
