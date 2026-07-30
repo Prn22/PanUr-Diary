@@ -24,6 +24,7 @@
   --line:rgba(120,95,120,.15); --line-2:rgba(120,95,120,.08);
   --shadow:0 12px 38px rgba(130,100,130,.14); --shadow-sm:0 4px 15px rgba(130,100,130,.10);
   --r:20px; --r-sm:13px;
+  --ycw:56px; --ych:44px; --ylw:30px; --ykf:8.5px;   /* 연간 칸 폭·높이·날짜열 폭·글자 (PC에서 커짐) */
   --cat-rose:#E4A0B6; --cat-ice:#8DBEDC; --cat-lav:#B79AE0; --cat-mint:#83C9B2; --cat-gold:#E6C282; --cat-plum:#C58CC0;
   --disp:'Outfit','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --body:'Inter','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
@@ -128,21 +129,21 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .ycell.today{border-color:var(--ice);box-shadow:0 0 8px rgba(197,138,134,.4);}
 .ycell .yn{font-size:8px;color:var(--faint);font-family:var(--disp);line-height:1;}
 .ycell.sun .yn{color:var(--rose);} .ycell.sat .yn{color:var(--ice);}
-.ycell .yk{font-size:8.5px;line-height:1.15;color:var(--ink);word-break:break-word;overflow:hidden;
+.ycell .yk{font-size:var(--ykf);line-height:1.15;color:var(--ink);word-break:break-word;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .ycell .ydot{display:flex;gap:2px;flex-wrap:wrap;}
 .ycell .ydot i{width:5px;height:5px;border-radius:50%;display:inline-block;}
 /* 연간 틀고정: 좌측 날짜열 sticky + 상단 월헤더는 세로스크롤 밖(가로 JS동기화) */
 .yhead{display:flex;gap:3px;overflow:hidden;margin-bottom:3px;}
-.yhead .ycorner2{width:30px;flex:none;height:24px;}
+.yhead .ycorner2{width:var(--ylw);flex:none;height:24px;}
 .ymhrow{display:flex;gap:3px;flex:none;}
-.ymhrow .ymhead{width:56px;flex:none;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--lav-d);}
+.ymhrow .ymhead{width:var(--ycw);flex:none;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--lav-d);}
 .yflex{display:flex;gap:3px;width:max-content;align-items:flex-start;}
 .ycolfix{position:sticky;left:0;z-index:6;display:flex;flex-direction:column;gap:3px;background:var(--panel);flex:none;}
-.ycolfix .yrl{height:44px;width:30px;flex:none;display:flex;align-items:center;justify-content:center;
+.ycolfix .yrl{height:var(--ych);width:var(--ylw);flex:none;display:flex;align-items:center;justify-content:center;
   font-family:var(--disp);font-weight:600;font-size:11px;color:var(--lav);background:var(--panel-2);border-radius:7px;}
 .ymgrid{display:grid;gap:3px;flex:none;}
-.ymgrid .ycell{height:44px;}
+.ymgrid .ycell{height:var(--ych);}
 
 /* ---- Month ---- */
 .dow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;}
@@ -418,6 +419,53 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .flog{margin-top:8px;text-align:left;}
 .flog-date{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-weight:700;margin:12px 0 4px;padding-bottom:3px;border-bottom:1px dashed var(--line-2);}
 .flog-date span{color:var(--lav-d);font-family:var(--disp);}
+/* 일간 기획: 할 일 / 작업 / 습관 구분 */
+.pgrp{margin-bottom:10px;}
+.pgrp-h{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;font-family:var(--disp);
+  color:var(--muted);margin:0 0 5px;padding-bottom:3px;border-bottom:1px dashed var(--line-2);}
+.pgrp-h em{font-style:normal;font-weight:600;font-size:10.5px;color:var(--faint);margin-left:auto;}
+.pgrp .pitem{border-left:3px solid var(--line);}
+.pgrp.g-todo .pgrp-h{color:var(--lav-d);} .pgrp.g-todo .pitem{border-left-color:var(--cat-lav);}
+.pgrp.g-work .pgrp-h{color:#C08A3E;}      .pgrp.g-work .pitem{border-left-color:var(--cat-gold);}
+.pgrp.g-habit .pgrp-h{color:#4C9C80;}     .pgrp.g-habit .pitem{border-left-color:var(--cat-mint);}
+/* 집중 기록: 필터 · 그래프 · 접기 */
+.fctl{display:flex;flex-direction:column;gap:7px;margin:10px 0 6px;}
+.fctl-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
+.fchips{display:flex;flex-wrap:wrap;gap:5px;}
+.fchip{border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);border-radius:999px;
+  padding:6px 12px;font-size:12px;font-family:var(--disp);font-weight:600;cursor:pointer;}
+.fchip.sm{padding:5px 10px;font-size:11.5px;}
+.fchip.on{background:var(--lav-d);border-color:var(--lav-d);color:#fff;}
+.fsel{border:1px solid var(--line);background:var(--panel-2);color:var(--ink);border-radius:10px;
+  padding:6px 10px;font-size:12px;font-family:var(--body);max-width:190px;}
+.fchart{width:100%;max-width:520px;height:auto;display:block;margin:2px auto 8px;}
+.fmon,.fdate{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.fmon{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--lav-d);
+  margin:14px 0 4px;padding:7px 10px;background:var(--panel-2);border-radius:11px;}
+.fmon em{font-style:normal;font-size:11px;color:var(--muted);font-weight:500;}
+.fmon>span,.fdate>span{margin-left:auto;font-family:var(--disp);}
+.fmon>span{color:var(--rose);}
+.fdate{font-size:11.5px;color:var(--muted);font-weight:700;margin:10px 0 4px;
+  padding-bottom:3px;border-bottom:1px dashed var(--line-2);}
+.fdate>span{color:var(--lav-d);}
+.fcar{font-size:9px;color:var(--faint);}
+.fmon.folded,.fdate.folded{opacity:.72;}
+/* 집중 통계 (기타 · 요약) */
+.fstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;}
+.fstat{background:var(--panel-2);border:1px solid var(--line-2);border-radius:13px;padding:11px 13px;}
+.fstat-l{font-size:11px;color:var(--muted);font-family:var(--disp);font-weight:600;}
+.fstat-v{font-size:18px;font-weight:700;color:var(--lav-d);font-family:var(--disp);margin-top:2px;}
+.fstat-s{font-size:10.5px;color:var(--faint);margin-top:2px;}
+.ftop{display:flex;flex-direction:column;gap:7px;}
+.ftop-row{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-soft);}
+.ftop-l{flex:0 0 96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ftop-bar{flex:1;height:8px;background:var(--panel-2);border-radius:999px;overflow:hidden;}
+.ftop-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--lav),var(--rose));}
+.ftop-v{flex:0 0 auto;font-family:var(--disp);font-weight:600;color:var(--lav-d);font-size:11.5px;}
+.fxsrcrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 2px;}
+.fxsrcrow select{flex:1;min-width:180px;border:1px solid var(--line);border-radius:11px;padding:9px 11px;
+  background:var(--panel-2);color:var(--ink);font-size:12.5px;font-family:var(--body);}
+.fxsrcrow .btn{flex:0 0 auto;}
 .flbl{color:var(--ink-soft);}
 .flogdel{color:var(--faint);cursor:pointer;margin-left:6px;font-size:11px;font-weight:400;}
 .flogdel:hover{color:#d06a6a;}
@@ -834,6 +882,9 @@ body{
   .main{padding:6px 26px 30px;}
   .modal{width:min(520px,100%);}
   .noteview{width:min(700px,100%);}
+  /* ✨ 새로고침은 오른쪽 조작부 끝으로 (가운데 떠 있어 어색했음) */
+  .top .nav{order:4;}
+  .top .iconbtn.sparkle{order:5;margin-left:10px;}
   .diarybox textarea{min-height:200px;}
   .yearscroll{max-height:calc(100dvh - 215px);}
   /* 추가 버튼이 화면 폭만큼 늘어나지 않게 */
@@ -842,27 +893,44 @@ body{
   .notesadd .btn{flex:0 0 auto;min-width:170px;}
 }
 @media (min-width:1250px){
-  /* 기획 탭 — 폼·필터·목록틀은 전체 폭, 개별 항목만 2단 */
-  #pbody{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;align-items:start;}
-  #pbody>*{grid-column:1/-1;}
-  #pbody>.pitem,#pbody>.work,#pbody>.ssec,#pbody>.habitcell{grid-column:auto;}
+  /* 기획 탭 — 항목 목록은 컬럼(벽돌쌓기)으로 채워 높이가 들쭉날쭉해도 빈틈이 안 생기게 */
+  .plist{column-count:2;column-gap:16px;}
+  .plist>*{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;margin-bottom:10px;}
   .notelist{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;}
   /* 일간 — 섹션이 여러 개인 '일정'·'기념일' 모드만 2단. 일기·미라클은 한 덩어리라 전체 폭 유지 */
   .daycard.day-plan,.daycard.day-anniv{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-items:start;}
   .daycard.day-plan>*,.daycard.day-anniv>*{grid-column:1/-1;}
   .daycard.day-plan>.section,.daycard.day-anniv>.section{grid-column:auto;}
-  /* 월간 — 칸을 크게 */
+  /* 월간 — 칸과 글자를 크게 (모바일 기준 폰트가 PC에선 너무 작음) */
   .cell{min-height:150px;}
-  /* 기타 옵션 — 설정 블록 2단 */
-  #etcbody .etcsec{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start;}
-  #etcbody .etcsec>*{grid-column:1/-1;}
-  #etcbody .etcsec>.optblk{grid-column:auto;}
-  /* 집중 — 과하게 늘어나지 않게 */
-  .focuscard{max-width:880px;margin-left:auto;margin-right:auto;}
+  .cell .num{font-size:15px;}
+  .chip{font-size:12.5px;padding:3px 8px;}
+  .spanbar{font-size:12px;}
+  .more{font-size:11.5px;}
+  .dow div{font-size:13.5px;}
+  /* 연간 — 칸을 키워 실제로 읽히게 */
+  :root{--ycw:84px; --ych:62px; --ylw:38px; --ykf:11px;}
+  .ycell .yn{font-size:10px;}
+  .ymhrow .ymhead{font-size:13px;height:26px;}
+  .ycolfix .yrl{font-size:12.5px;}
+  /* 환율 — 왼쪽 시세·기록 / 오른쪽 계산기 */
+  #etcbody .etcsec.fxsec{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-items:start;}
+  #etcbody .etcsec.fxsec>h3{grid-column:1/-1;}
+  #etcbody .etcsec.fxsec>.fxleft{grid-column:1;}
+  #etcbody .etcsec.fxsec>.fxcalc{grid-column:2;}
+  /* 집중 — 기록(왼쪽) · 뽀모도로(오른쪽) 동시 표시 */
+  .fsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:0 26px;align-items:start;}
+  .fsplit>section:last-child{border-left:1px solid var(--line-2);padding-left:24px;}
+  .fspt{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--rose);margin:0 0 8px;text-align:left;}
+  .focuscard{max-width:1180px;margin-left:auto;margin-right:auto;}
+  /* 일간 — 왼쪽 일기 / 오른쪽 일정·기획 (한 화면에서 하루 전체가 보이게) */
+  .dsplit{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:0 26px;align-items:start;}
+  .dsplit>section:last-child{border-left:1px solid var(--line-2);padding-left:24px;}
 }
 @media (min-width:1700px){
   .main{max-width:1660px;margin-left:auto;margin-right:auto;width:100%;}
   .cell{min-height:180px;}
+  :root{--ycw:98px; --ych:70px; --ykf:11.5px;}
 }
 </style>
 </head>
@@ -1379,7 +1447,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="146", APP_BUILD="2026.07.30";
+const APP_VERSION="147", APP_BUILD="2026.07.30";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1681,40 +1749,145 @@ setInterval(()=>{
   const tt=document.getElementById("focusToday"); if(tt)tt.textContent=fmtDurKo(focusTodaySec());
 },250);
 
+/* ---- 집중 기록: 필터 · 그래프 · 접기 상태 ---- */
+let focusKind=jload("panur_fkind","all");     // all | app | pomo | timer
+let focusLabel=jload("panur_flabel","all");   // all | 라벨
+let focusChart=jload("panur_fchart","bar");   // bar | line
+let focusRange=jload("panur_frange","7");     // 7 | 30 | 12m
+let focusFold=jload("panur_ffold",{});        // {키:1} = 접힘. 키는 "YYYY-MM" 또는 "YYYY-MM-DD"
+function fKind(x){return x.kind||"timer";}
+function focusLogAll(){return ensureFocus().log||[];}
+// 시간 많은 순 라벨 목록 (필터 select 용)
+function focusLabelList(){
+  const m={}; focusLogAll().forEach(x=>{const l=x.label||"작업"; m[l]=(m[l]||0)+(x.sec||0);});
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+}
+function focusFiltered(){
+  return focusLogAll().filter(x=>
+    (focusKind==="all"||fKind(x)===focusKind) &&
+    (focusLabel==="all"||(x.label||"작업")===focusLabel));
+}
+// 접힘 여부. 기본값(defOpen=펼침) 은 저장된 값이 없을 때만 씀
+function fFolded(key,defOpen){ const v=focusFold[key]; return v===undefined?!defOpen:!!v; }
+function fToggleFold(key,defOpen){ focusFold[key]=!fFolded(key,defOpen)?1:0; jsave("panur_ffold",focusFold); }
+// 그래프 버킷: 최근 n일 또는 최근 12개월
+function focusSeries(){
+  const lg=focusFiltered(), out=[], now=new Date();
+  if(focusRange==="12m"){
+    for(let i=11;i>=0;i--){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      const key=`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+      out.push({key,label:(d.getMonth()+1)+"월",isNow:i===0,
+        sec:lg.filter(x=>String(x.date||"").slice(0,7)===key).reduce((a,x)=>a+(x.sec||0),0)});
+    }
+  }else{
+    const n=Number(focusRange)||7;
+    for(let i=n-1;i>=0;i--){
+      const d=new Date(now); d.setDate(now.getDate()-i); const ds=ymd(d);
+      out.push({key:ds,label:n>10?String(d.getDate()):WEEK[d.getDay()],isNow:i===0,
+        sec:lg.filter(x=>x.date===ds).reduce((a,x)=>a+(x.sec||0),0)});
+    }
+  }
+  return out;
+}
+// 막대·선 그래프를 같은 데이터로 그림 (SVG, 외부 라이브러리 없음)
+function focusChartSVG(series){
+  const W=320,H=92,PL=4,PR=4,PT=8,PB=14, IN=H-PT-PB;
+  const mx=Math.max(1,...series.map(d=>d.sec));
+  const n=Math.max(1,series.length), iw=(W-PL-PR)/n;
+  const cx=i=>PL+iw*(i+.5), cy=s=>PT+IN*(1-s/mx);
+  const tip=d=>`${d.label} · ${fmtDurKo(d.sec)}`;
+  let body="";
+  if(focusChart==="line"){
+    const pts=series.map((d,i)=>[cx(i),cy(d.sec)]);
+    const line=pts.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    body=`<polygon points="${cx(0).toFixed(1)},${H-PB} ${line} ${cx(n-1).toFixed(1)},${H-PB}" style="fill:url(#fgA);opacity:.28"></polygon>
+      <polyline points="${line}" style="fill:none;stroke:var(--lav-d);stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round"></polyline>
+      ${pts.map((p,i)=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${series[i].isNow?2.8:1.9}"
+        style="fill:${series[i].isNow?"var(--rose)":"var(--lav-d)"}"><title>${esc(tip(series[i]))}</title></circle>`).join("")}`;
+  }else{
+    const bw=Math.max(3,Math.min(15,iw*.56));
+    body=series.map((d,i)=>{const h=Math.max(1.5,IN*(d.sec/mx));
+      return `<rect x="${(cx(i)-bw/2).toFixed(1)}" y="${(H-PB-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}"
+        rx="2.4" style="fill:url(#${d.isNow?"fgB":"fgA"})"><title>${esc(tip(d))}</title></rect>`;}).join("");
+  }
+  const step=n>16?Math.ceil(n/8):1;
+  const labs=series.map((d,i)=>(i%step&&i!==n-1)?"":
+    `<text x="${cx(i).toFixed(1)}" y="${H-3}" text-anchor="middle" style="font-size:6.6px;fill:var(--muted)">${esc(d.label)}</text>`).join("");
+  return `<svg class="fchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="집중 시간 그래프">
+    <defs>
+      <linearGradient id="fgA" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:var(--rose)"></stop><stop offset="1" style="stop-color:var(--lav)"></stop></linearGradient>
+      <linearGradient id="fgB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" style="stop-color:var(--gold)"></stop><stop offset="1" style="stop-color:var(--rose)"></stop></linearGradient>
+    </defs>${body}${labs}</svg>`;
+}
+function focusCtlHTML(){
+  const kinds=[["all","전체"],["app","🖥 앱"],["pomo","🍅 뽀모도로"],["timer","⏱ 타이머"]];
+  const ranges=[["7","7일"],["30","30일"],["12m","12개월"]];
+  const charts=[["bar","▮ 막대"],["line","📈 선"]];
+  const labels=focusLabelList();
+  return `<div class="fctl">
+    <div class="fchips">${kinds.map(([k,n])=>`<button class="fchip${focusKind===k?" on":""}" data-fkind="${k}">${n}</button>`).join("")}</div>
+    <div class="fctl-row">
+      <select class="fsel" id="fLabelSel"><option value="all">활동 전체</option>
+        ${labels.map(l=>`<option value="${esc(l)}"${focusLabel===l?" selected":""}>${esc(l)}</option>`).join("")}</select>
+      <div class="fchips">${ranges.map(([k,n])=>`<button class="fchip sm${focusRange===k?" on":""}" data-frange="${k}">${n}</button>`).join("")}</div>
+      <div class="fchips">${charts.map(([k,n])=>`<button class="fchip sm${focusChart===k?" on":""}" data-fchart="${k}">${n}</button>`).join("")}</div>
+    </div>
+  </div>`;
+}
 function focusListHTML(){
-  const days=focusByDay(7); const mx=Math.max(1,...days.map(d=>d.sec));
   // 같은 날짜·같은 활동(kind+label)은 한 줄로 합침. 워커가 flush_min마다 항목을 새로 쌓아서
   // 5분짜리 행이 여러 개로 쪼개져 보이던 문제 해결. 합친 행의 ✕는 속한 항목 전부를 지움.
   const merged={};
-  ensureFocus().log.forEach(x=>{
-    const k=JSON.stringify([x.date,x.kind||"timer",x.label||""]);
-    const m=merged[k]||(merged[k]={date:x.date,kind:x.kind,label:x.label,sec:0,tss:[],n:0});
+  focusFiltered().forEach(x=>{
+    const k=JSON.stringify([x.date,fKind(x),x.label||""]);
+    const m=merged[k]||(merged[k]={date:x.date,kind:fKind(x),label:x.label,sec:0,tss:[],n:0});
     m.sec+=(x.sec||0); m.n++; m.tss.push(x.ts);
   });
-  // 날짜 최신순 → 같은 날짜 안에서는 시간 많은 순
-  const rows=Object.values(merged).sort((a,b)=>a.date===b.date?(b.sec-a.sec):(a.date<b.date?1:-1)).slice(0,50);
-  const groups={}; rows.forEach(x=>{(groups[x.date]=groups[x.date]||[]).push(x);});
-  const gkeys=Object.keys(groups).sort().reverse();
+  // 연·월 → 날짜 2단으로 묶어 접었다 펼 수 있게 (오래된 달은 접힌 채로 보관)
+  const months={};
+  Object.values(merged).forEach(r=>{
+    const mk=String(r.date||"").slice(0,7);
+    const mo=months[mk]||(months[mk]={sec:0,days:{}});
+    mo.sec+=r.sec; (mo.days[r.date]=mo.days[r.date]||[]).push(r);
+  });
+  const mkeys=Object.keys(months).sort().reverse();
   const icon=k=>k==="pomo"?"🍅":k==="app"?"🖥":"⏱";
+  const today=ymd(new Date()), curMon=today.slice(0,7);
+  const car=f=>`<span class="fcar">${f?"▸":"▾"}</span>`;
+  const body=mkeys.map(mk=>{
+    const mo=months[mk], mFold=fFolded(mk, mk===curMon);
+    const [yy,mm]=mk.split("-");
+    const dkeys=Object.keys(mo.days).sort().reverse();
+    const daysHTML=mFold?"":dkeys.map(dk=>{
+      const list=mo.days[dk].sort((a,b)=>b.sec-a.sec);
+      const dSec=list.reduce((a,x)=>a+(x.sec||0),0);
+      const dFold=fFolded(dk, dk===today);
+      const d=parseYmd(dk);
+      return `<div class="fdate${dFold?" folded":""}" data-ffold="${dk}" data-fdef="${dk===today?1:0}">
+          ${car(dFold)}${dk.slice(5).replace("-","/")} (${WEEK[d.getDay()]})
+          <span>${fmtDurKo(dSec)}</span></div>
+        ${dFold?"":list.map(x=>`<div class="frow"><span class="flbl">${icon(x.kind)} ${esc(x.label||"작업")}</span>
+          <span class="fdur">${x.sec<60?Math.round(x.sec)+"초":fmtDurKo(x.sec)} <b class="flogdel" data-flogdel="${x.tss.join(",")}" title="${x.n>1?x.n+"건 모두 삭제":"삭제"}">✕</b></span></div>`).join("")}`;
+    }).join("");
+    return `<div class="fmon${mFold?" folded":""}" data-ffold="${mk}" data-fdef="${mk===curMon?1:0}">
+        ${car(mFold)}${yy}년 ${Number(mm)}월 <em>기록 ${dkeys.length}일</em>
+        <span>${fmtDurKo(mo.sec)}</span></div>${daysHTML}`;
+  }).join("");
   return `
     <div class="focustoday">오늘 집중 <b id="focusToday">${fmtDurKo(focusTodaySec())}</b></div>
-    <div class="fdays">
-      ${days.map((d,i)=>`<div class="fday ${i===days.length-1?"is-today":""}">
-        <div class="fbar-wrap"><div class="fbar" style="height:${Math.round(4+(d.sec/mx)*52)}px" title="${fmtDurKo(d.sec)}"></div></div>
-        <div class="fday-l">${d.wd}</div></div>`).join("")}
-    </div>
+    ${focusCtlHTML()}
+    ${focusChartSVG(focusSeries())}
     <div class="flog">
-      ${gkeys.length? gkeys.map(dk=>`
-        <div class="flog-date">${dk.slice(5).replace("-","/")} <span>${fmtDurKo(groups[dk].reduce((a,x)=>a+(x.sec||0),0))}</span></div>
-        ${groups[dk].map(x=>`<div class="frow"><span class="flbl">${icon(x.kind)} ${esc(x.label||"작업")}</span>
-          <span class="fdur">${x.sec<60?Math.round(x.sec)+"초":fmtDurKo(x.sec)} <b class="flogdel" data-flogdel="${x.tss.join(",")}" title="${x.n>1?x.n+"건 모두 삭제":"삭제"}">✕</b></span></div>`).join("")}
-      `).join("") : '<div class="empty">아직 기록이 없어요<small>뽀모도로나 데스크톱 워커로 기록이 쌓여요</small></div>'}
+      ${mkeys.length?body:'<div class="empty">기록이 없어요<small>뽀모도로나 데스크톱 워커로 기록이 쌓여요 (필터를 바꿔보세요)</small></div>'}
     </div>
-    ${gkeys.length?`<button class="fbtn fclear" id="focusClear">기록 전체 삭제</button>`:""}`;
+    ${focusLogAll().length?`<button class="fbtn fclear" id="focusClear">기록 전체 삭제</button>`:""}`;
 }
-function focusPomoHTML(c){
+function focusPomoHTML(c,skipToday){
   return `
-    <div class="focustoday">오늘 집중 <b id="focusToday">${fmtDurKo(focusTodaySec())}</b></div>
+    ${skipToday?"":`<div class="focustoday">오늘 집중 <b id="focusToday">${fmtDurKo(focusTodaySec())}</b></div>`}
     <div class="pophase p-${poPhase}">${poPhase==="focus"?"집중":poPhase==="long"?"긴 휴식":"휴식"} · ${poRound}/${c.rounds}회</div>
     <div class="ftime" id="poTime">${fmtDur(poRemain||poPhaseSec("focus"))}</div>
     <div class="fbtns">
@@ -1732,21 +1905,41 @@ function renderFocus(){
   ensureFocus();
   periodEl.textContent="집중";
   const c=poCfg();
-  main.innerHTML=`<div class="card focuscard">
-    <div class="focusseg">
-      <button class="fseg ${focusSub==="list"?"on":""}" data-fsub="list">집중 기록</button>
-      <button class="fseg ${focusSub==="pomo"?"on":""}" data-fsub="pomo">뽀모도로</button>
-    </div>
-    ${focusSub==="list"?focusListHTML():focusPomoHTML(c)}
-  </div>`;
+  // 가로가 넓으면 기록(왼쪽) · 뽀모도로(오른쪽)를 한 화면에. 좁으면 기존처럼 탭으로 전환
+  if(isWide()){
+    main.innerHTML=`<div class="card focuscard">
+      <div class="fsplit">
+        <section><div class="fspt">⏱ 집중 기록</div>${focusListHTML()}</section>
+        <section><div class="fspt">🍅 뽀모도로</div>${focusPomoHTML(c,true)}</section>
+      </div>
+    </div>`;
+  }else{
+    main.innerHTML=`<div class="card focuscard">
+      <div class="focusseg">
+        <button class="fseg ${focusSub==="list"?"on":""}" data-fsub="list">집중 기록</button>
+        <button class="fseg ${focusSub==="pomo"?"on":""}" data-fsub="pomo">뽀모도로</button>
+      </div>
+      ${focusSub==="list"?focusListHTML():focusPomoHTML(c)}
+    </div>`;
+  }
   bindFocus();
 }
 function bindFocus(){
   document.querySelectorAll("[data-fsub]").forEach(b=>b.onclick=()=>{focusSub=b.dataset.fsub;jsave("panur_focussub",focusSub);renderFocus();});
-  if(focusSub==="list"){
+  const wide=isWide();
+  if(wide||focusSub==="list"){
     main.querySelectorAll("[data-flogdel]").forEach(b=>b.onclick=()=>{deleteFocusLog(b.dataset.flogdel);renderFocus();});
     const cl=G("focusClear"); if(cl)cl.onclick=()=>{ if(window.confirm("집중 기록을 모두 지울까요?")){data.focus.log=[];persist();renderFocus();toast("기록을 비웠어요");} };
-  } else {
+    // 필터·기간·그래프 종류
+    main.querySelectorAll("[data-fkind]").forEach(b=>b.onclick=()=>{focusKind=b.dataset.fkind;jsave("panur_fkind",focusKind);renderFocus();});
+    main.querySelectorAll("[data-frange]").forEach(b=>b.onclick=()=>{focusRange=b.dataset.frange;jsave("panur_frange",focusRange);renderFocus();});
+    main.querySelectorAll("[data-fchart]").forEach(b=>b.onclick=()=>{focusChart=b.dataset.fchart;jsave("panur_fchart",focusChart);renderFocus();});
+    const ls=G("fLabelSel"); if(ls)ls.onchange=()=>{focusLabel=ls.value;jsave("panur_flabel",focusLabel);renderFocus();};
+    // 월·날짜 접기
+    main.querySelectorAll("[data-ffold]").forEach(el=>el.onclick=()=>{
+      fToggleFold(el.dataset.ffold, el.dataset.fdef==="1"); renderFocus(); });
+  }
+  if(wide||focusSub!=="list"){
     const tg=G("poToggle"); if(tg)tg.onclick=()=>{ poStartPause(); renderFocus(); };
     const rs=G("poReset"); if(rs)rs.onclick=()=>{ poReset(); renderFocus(); };
     const save=()=>{ const c=poCfg();
@@ -1761,7 +1954,15 @@ function bindFocus(){
 }
 
 function refreshCurrent(){ if(view==="planner")renderPlannerBody(); else if(view==="etc")renderEtc(); }
+/* 가로가 넓은 화면(PC)인지 — CSS 2단 배치 기준(1250px)과 같은 값을 씀.
+   레이아웃이 아니라 "무엇을 그릴지"가 달라지는 곳(집중·일간)에서만 사용한다. */
+const WIDE_Q=window.matchMedia("(min-width:1250px)");
+function isWide(){return WIDE_Q.matches;}
+(WIDE_Q.addEventListener?WIDE_Q.addEventListener.bind(WIDE_Q,"change"):WIDE_Q.addListener.bind(WIDE_Q))(()=>render());
+let _lastView=null;
 function render(){
+  // 탭이 바뀌면 스크롤을 위로. (월간에서 내려둔 스크롤이 남아 연간 월 헤더가 잘려 보이던 문제)
+  if(_lastView!==view){ _lastView=view; if(main)main.scrollTop=0; }
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===view));
   monthSeg.classList.toggle("hide",view!=="month");
   daySeg.classList.toggle("hide",view!=="day");
@@ -1820,7 +2021,7 @@ function buildYearBlock(y,mStart,mEnd){
       grid+=`<div class="${cls.join(" ")}${note?" noted":""}" data-date="${ds}"><span class="yn">${WEEK[dt.getDay()]}</span>${kw?`<span class="yk">${kw}</span>`:""}${dots}</div>`;
     }
   }
-  const gs=`grid-template-columns:repeat(${cols},56px);grid-auto-rows:44px;`;
+  const gs=`grid-template-columns:repeat(${cols},var(--ycw));grid-auto-rows:var(--ych);`;
   return `<div class="yblock">`
     +`<div class="yhead"><div class="ycorner2"></div><div class="ymhrow">${mh}</div></div>`
     +`<div class="yearscroll"><div class="yflex">`
@@ -2153,14 +2354,14 @@ function renderDay(){
   const habits=data.planner.habits;
   const dia=data.diary[ds]||{mood:"",title:"",body:"",photos:[],cond:0};
 
-  let h=`<div class="card daycard day-${daySub}">
+  // 가로가 넓으면 일기와 일정·기획을 한 화면에 나란히 (탭 전환 없이 하루 전체가 보이게)
+  const wide=isWide() && (daySub==="plan"||daySub==="diary");
+  let h=`<div class="card daycard day-${wide?"split":daySub}">
     <div class="dayhead"><span class="big">${cursor.getDate()}</span>
       <span class="sub">${cursor.getFullYear()}. ${pad(cursor.getMonth()+1)} · ${WEEK[cursor.getDay()]}요일</span>
       ${holidayName(ds)?`<span class="dayhol">🎌 ${holidayName(ds)}</span>`:""}</div>`;
 
-  if(daySub==="morning"){
-    h+=mmSectionHTML(ds);
-  }else if(daySub==="plan"){
+  const buildPlan=()=>{ let h="";
     // 일정
     h+=`<div class="section"><h3>일정 <button class="add" id="addEv">+</button></h3>`;
     h+= evs.length? evs.map(ev=>{const c=CATMAP[ev.color]||CATMAP.plum;
@@ -2181,15 +2382,21 @@ function renderDay(){
     const pAll=[...appts,...study,...todos,...work];
     h+=`<div class="section"><h3>기획</h3>`;
     if(pAll.length||habits.length){
-      appts.forEach(a=>{h+=pRow("appts",a,`${a.time?a.time+" · ":""}${a.who?a.who+" · ":""}${a.place||""}`);});
-      study.forEach(a=>{h+=pRow("study",a,`${a.subject||""}${a.amount?" · "+a.amount:""}${a.progress?" · "+a.progress:""}`);});
-      todos.forEach(a=>{h+=pRow("todos",a,"");});
+      // 종류별로 묶어서 보여줌 (섞여 있으면 무엇이 할 일이고 무엇이 작업인지 구분이 안 됨)
+      let gTodo="", gWork="", gHabit="";
+      appts.forEach(a=>{gTodo+=pRow("appts",a,`${a.time?a.time+" · ":""}${a.who?a.who+" · ":""}${a.place||""}`);});
+      study.forEach(a=>{gTodo+=pRow("study",a,`${a.subject||""}${a.amount?" · "+a.amount:""}${a.progress?" · "+a.progress:""}`);});
+      todos.forEach(a=>{gTodo+=pRow("todos",a,"");});
       work.forEach(w=>{const on=w.status==="완료";
-        h+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-wcheck="${w.id}" ${on?"checked":""}>
-          <span class="txt">${esc(w.nick||w.content||"작업")}</span><span class="meta">🎨 ${w.due?dday(w.due):"작업"}</span></div>`;});
+        gWork+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-wcheck="${w.id}" ${on?"checked":""}>
+          <span class="txt">${esc(w.nick||w.content||"작업")}</span><span class="meta">${w.due?dday(w.due):""}</span></div>`;});
       habits.forEach(hb=>{const on=hb.done&&hb.done[ds];
-        h+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-habit="${hb.id}" ${on?"checked":""}>
-          <span class="txt">${esc(hb.name)}</span><span class="meta">습관</span></div>`;});
+        gHabit+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-habit="${hb.id}" ${on?"checked":""}>
+          <span class="txt">${esc(hb.name)}</span></div>`;});
+      const grp=(cls,icon,title,inner,n)=> inner?`<div class="pgrp ${cls}"><div class="pgrp-h">${icon} ${title}<em>${n}</em></div>${inner}</div>`:"";
+      h+=grp("g-todo","✓","할 일 · 일정",gTodo,appts.length+study.length+todos.length)
+       + grp("g-work","🎨","작업",gWork,work.length)
+       + grp("g-habit","🔁","습관",gHabit,habits.length);
     }else h+=`<div class="empty">이 날 계획이 없어요<small>기획 탭에서 추가할 수 있어요</small></div>`;
     h+=`</div>`;
     // 이 날짜 메모
@@ -2201,7 +2408,8 @@ function renderDay(){
         ${mm.links&&mm.links.length?`<div class="mm">🔗 ${mm.links.length}개 링크</div>`:""}</div>`;});
       h+=`</div>`;
     }
-  }else if(daySub==="anniv"){
+    return h; };
+  const buildAnniv=()=>{ let h="";
     // 그날 기념일
     const dayAnnivs=annivsOn(ds);
     h+=`<div class="section"><h3>🎀 이 날의 기념일 <button class="add" id="annivAdd">+</button></h3>`;
@@ -2234,7 +2442,8 @@ function renderDay(){
           <div class="mm">${base}${a.milestone?" · 💗누적":""}</div></div>`;}).join("")
       : `<div class="empty">등록된 기념일이 없어요</div>`;
     h+=`</div>`;
-  }else{
+    return h; };
+  const buildDiary=()=>{ let h="";
     // 일기
     h+=`<div class="cond"><span class="clabel">하루 마무리 컨디션</span>
       <div class="dots" id="condDots">${[1,2,3,4,5].map(n=>`<i data-cond="${n}" class="${(dia.cond||0)>=n?"on":""}">${n}</i>`).join("")}</div></div>`;
@@ -2255,7 +2464,12 @@ function renderDay(){
         </div>
         <div class="savehint" id="saveHint"></div>
       </div></div>`;
-  }
+    return h; };
+  if(daySub==="morning")h+=mmSectionHTML(ds);
+  else if(daySub==="anniv")h+=buildAnniv();
+  else if(wide)h+=`<div class="dsplit"><section>${buildDiary()}</section><section>${buildPlan()}</section></div>`;
+  else if(daySub==="plan")h+=buildPlan();
+  else h+=buildDiary();
   h+=`</div>`;
   main.innerHTML=h;
   const _addEv=document.getElementById("addEv"); if(_addEv)_addEv.onclick=()=>openModal(null);
@@ -2279,7 +2493,8 @@ function renderDay(){
     if(cb.checked){w.status="완료";w.doneDate=ymd(new Date());} else {w.status="작업중";delete w.doneDate;}
     persist(); renderDay();
   });
-  if(daySub==="plan")bindDayPlanner(ds);
+  if(wide){ bindDayPlanner(ds); bindDiary(ds); }   // 2단일 땐 양쪽 다 묶어야 함
+  else if(daySub==="plan")bindDayPlanner(ds);
   else if(daySub==="morning")bindMM(ds);
   else if(daySub==="diary")bindDiary(ds);
   else if(daySub==="anniv"){
@@ -2542,7 +2757,7 @@ function renderPlannerBody(){
       return (a.due||"9999").localeCompare(b.due||"9999");
     });
     if(!list.length)h+=emptyP("의뢰받은 작업을 추가해보세요");
-    else list.forEach(w=>{
+    else { h+=`<div class="plist">`; list.forEach(w=>{
       const st=w.status||"대기";
       const stc={대기:"var(--muted)",작업중:"var(--cat-gold)",완료:"var(--cat-mint)"}[st];
       h+=`<div class="work ${st==="완료"?"wdone":""}" data-work="${w.id}">
@@ -2560,7 +2775,7 @@ function renderPlannerBody(){
         ${w.content?`<div class="wbody">${esc(w.content)}</div>`:""}
         ${w.note?`<div class="wnote">📝 ${esc(w.note)}</div>`:""}
       </div>`;
-    });
+    }); h+=`</div>`; }
   }else if(t==="study"){
     const fields=data.studyFields||[], sources=data.planner.study||[], notes=data.studyNotes||[];
     const hasUnfiled=sources.some(x=>!x.field)||notes.some(x=>!x.field);
@@ -2613,10 +2828,10 @@ function renderPlannerBody(){
       ...data.planner.appts.filter(a=>!pStale(a)).map(a=>({_t:"appts",a})),
       ...data.planner.todos.filter(a=>!pStale(a)).map(a=>({_t:"todos",a}))
     ].sort((x,y)=>(((x.a.date||"9999")+(x.a.time||"")).localeCompare((y.a.date||"9999")+(y.a.time||""))));
-    h+= items.length? items.map(it=> it._t==="appts"
+    h+= items.length? `<div class="plist">`+items.map(it=> it._t==="appts"
         ? plCard("appts",it.a,`${it.a.date||""} ${it.a.time||""}${it.a.who?" · "+it.a.who:""}${it.a.place?" @"+it.a.place:""}`)
         : plCard("todos",it.a,`${it.a.date||"미정"}${it.a.time?" "+it.a.time:""}${it.a.place?" @"+it.a.place:""}`)
-      ).join("") : emptyP("할 일이나 약속을 추가해보세요");
+      ).join("")+`</div>` : emptyP("할 일이나 약속을 추가해보세요");
   }else{
     h+=`<div class="pform"><div class="row"><input id="hName" placeholder="습관 이름 (예: 물 2L 마시기)"></div>
       <button class="btn primary" id="hAdd">습관 추가</button></div>`;
@@ -4098,7 +4313,12 @@ function renderEtc(){
   else if(etcSub==="summary"){ box.innerHTML=summaryBodyHTML(); bindSummaryBody(); }
   else if(etcSub==="weather"){ box.innerHTML=weatherBodyHTML(); bindWeather(); }
   else if(etcSub==="options"){ box.innerHTML=optionsBodyHTML(); bindOptions(); }
-  else { box.innerHTML=fxBodyHTML(); document.getElementById("fxRefresh").onclick=fetchFx; bindFxCalc(); }
+  else { box.innerHTML=fxBodyHTML(); document.getElementById("fxRefresh").onclick=fetchFx; bindFxCalc();
+    const ss=document.getElementById("fxSrc"); if(ss)ss.onchange=()=>jsave("panur_fxsrc",ss.value);
+    const tb=document.getElementById("fxTidyBtn"); if(tb)tb.onclick=()=>{
+      const r=fxTidy(); persist(); renderEtc();
+      toast(r.removed?`중복·초과 기록 ${r.removed}개를 정리했어요`:"정리할 기록이 없어요"); };
+  }
 }
 /* ---- 날씨 ---- */
 const WX_CODE={0:["맑음","☀️"],1:["대체로 맑음","🌤️"],2:["구름 조금","⛅"],3:["흐림","☁️"],45:["안개","🌫️"],48:["짙은 안개","🌫️"],51:["약한 이슬비","🌦️"],53:["이슬비","🌦️"],55:["강한 이슬비","🌧️"],61:["약한 비","🌦️"],63:["비","🌧️"],65:["강한 비","🌧️"],66:["언 비","🌧️"],67:["강한 언 비","🌧️"],71:["약한 눈","🌨️"],73:["눈","🌨️"],75:["강한 눈","❄️"],77:["싸락눈","🌨️"],80:["소나기","🌦️"],81:["소나기","🌧️"],82:["강한 소나기","⛈️"],85:["눈 소나기","🌨️"],86:["강한 눈 소나기","❄️"],95:["뇌우","⛈️"],96:["우박 뇌우","⛈️"],99:["강한 우박 뇌우","⛈️"]};
@@ -4409,15 +4629,28 @@ function bindWeather(){
 }
 function fxBodyHTML(){
   const hist=(data.fx&&data.fx.history)||[]; const last=hist[hist.length-1];
-  return `<div class="etcsec"><h3>💱 환율 <span style="font-size:11px;color:var(--muted);font-weight:400;">참고용 시세</span></h3>
+  const fxSrcSel=jload("panur_fxsrc","erapi");
+  return `<div class="etcsec fxsec"><h3>💱 환율 <span style="font-size:11px;color:var(--muted);font-weight:400;">참고용 시세</span></h3>
+    <div class="fxleft">
     <div class="fxbox">
       <div class="fxcard"><div class="fxk">🇯🇵 100엔</div><div class="fxv" id="fxJpy">${last?last.jpy100:"—"}</div><div class="fxu">원</div></div>
       <div class="fxcard"><div class="fxk">🇺🇸 1달러</div><div class="fxv" id="fxUsd">${last?last.usd1:"—"}</div><div class="fxu">원</div></div>
     </div>
-    <div class="fxmeta" id="fxMeta">${last?("최근 조회: "+last.ts):"아직 조회 전이에요"}</div>
-    <button class="btn primary" id="fxRefresh" style="margin-bottom:10px;">지금 환율 불러오기 ↻</button>
-    <div style="font-size:12px;color:var(--lav-d);font-weight:600;margin:6px 0 4px;font-family:var(--disp);">기록</div>
-    <div class="fxhist" id="fxHist">${hist.slice(-12).reverse().map(x=>`<div><span>${x.ts}</span><span>100엔 ${x.jpy100} · 1달러 ${x.usd1}</span></div>`).join("")||'<div style="color:var(--muted)">기록이 없어요</div>'}</div>
+    <div class="fxmeta" id="fxMeta">${
+      (data.fx&&data.fx.checked)?`최근 조회 ${data.fx.checked}`+((data.fx.src&&FX_SOURCES[data.fx.src])?` · ${FX_SOURCES[data.fx.src].name}`:"")+(data.fx.sdate?` (고시 ${data.fx.sdate})`:"")
+      :(last?("최근 조회: "+last.ts):"아직 조회 전이에요")}</div>
+    <div class="fxsrcrow">
+      <select id="fxSrc">${[["erapi"],["ecb"],["currapi"]].map(([k])=>
+        `<option value="${k}"${fxSrcSel===k?" selected":""}>${FX_SOURCES[k].name} — ${FX_SOURCES[k].note}</option>`).join("")}
+        <option value="auto"${fxSrcSel==="auto"?" selected":""}>자동 (되는 곳 먼저)</option></select>
+      <button class="btn primary" id="fxRefresh">불러오기 ↻</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin:2px 0 10px;">셋 다 <b>시장 중간환율</b>이라 은행 매매기준율·현찰 살 때 값과는 조금 달라요. 하루 1회 갱신이라 장중 시세와도 차이가 납니다.</div>
+    <div style="font-size:12px;color:var(--lav-d);font-weight:600;margin:6px 0 4px;font-family:var(--disp);display:flex;justify-content:space-between;align-items:center;">
+      <span>기록 <span style="color:var(--muted);font-weight:400;font-size:11px;">시세가 바뀔 때만 쌓여요 · 최대 ${FX_MAX}개</span></span>
+      ${hist.length?`<button class="ftbtn" id="fxTidyBtn">중복 정리</button>`:""}</div>
+    <div class="fxhist" id="fxHist">${hist.slice(-12).reverse().map(x=>`<div><span>${x.ts}${x.src&&FX_SOURCES[x.src]?` <em style="font-style:normal;color:var(--faint);">${FX_SOURCES[x.src].name}</em>`:""}</span><span>100엔 ${x.jpy100} · 1달러 ${x.usd1}</span></div>`).join("")||'<div style="color:var(--muted)">기록이 없어요</div>'}</div>
+    </div>
     <div class="fxcalc">
       <h3 style="margin-top:16px;">🧮 환율 계산기</h3>
       <div class="fxcalcrow">
@@ -4491,7 +4724,7 @@ function summaryBodyHTML(){
       <div class="sumprogtxt">${thisYear?`올해 ${pct}% 지남 · 남은 날 ${remain}일`:(today.getFullYear()>y?"지난 해":"아직 시작 전")}</div></div>
   </div>`;
   // 하위 탭
-  const subs=[["month","월별 요약"],["miracle","미라클 수행"],["mini","미니 캘린더"]];
+  const subs=[["month","월별 요약"],["focus","집중 통계"],["miracle","미라클 수행"],["mini","미니 캘린더"]];
   h+=`<div class="ptypes sumtabs">`+subs.map(([k,n])=>`<button class="ptype ${summarySub===k?"on":""}" data-sum="${k}">${n}</button>`).join("")+`</div>`;
 
   // (1) 월별 요약
@@ -4569,8 +4802,54 @@ function summaryBodyHTML(){
   }
   miniSec+=`</div></div>`;
 
-  h+= summarySub==="miracle"?mmSec : summarySub==="mini"?miniSec : monthSec;
+  h+= summarySub==="miracle"?mmSec : summarySub==="mini"?miniSec : summarySub==="focus"?focusStatsHTML() : monthSec;
   return h;
+}
+/* ---- 집중 통계 (기타 · 요약) ---- */
+function focusStatsHTML(){
+  const lg=focusLogAll();
+  if(!lg.length)return `<div class="sumsec"><div class="empty">집중 기록이 없어요<small>뽀모도로나 데스크톱 워커로 기록이 쌓여요</small></div></div>`;
+  const today=new Date(), t=ymd(today);
+  const dayAgo=n=>{const d=new Date(today); d.setDate(today.getDate()-n); return ymd(d);};
+  const sumOf=f=>lg.filter(f).reduce((a,x)=>a+(x.sec||0),0);
+  const week=sumOf(x=>x.date>=dayAgo(6)), month=sumOf(x=>String(x.date).slice(0,7)===t.slice(0,7));
+  const total=sumOf(()=>true);
+  // 날짜별 합계 (평균·최고 기록일)
+  const byDay={}; lg.forEach(x=>{byDay[x.date]=(byDay[x.date]||0)+(x.sec||0);});
+  const dayKeys=Object.keys(byDay).sort();
+  const best=dayKeys.reduce((b,k)=>byDay[k]>(byDay[b]||0)?k:b,dayKeys[0]);
+  const avg=dayKeys.length?total/dayKeys.length:0;
+  const monDays=dayKeys.filter(k=>k.slice(0,7)===t.slice(0,7)).length;
+  // 활동 Top 5
+  const byLabel={}; lg.forEach(x=>{const l=x.label||"작업"; byLabel[l]=(byLabel[l]||0)+(x.sec||0);});
+  const top=Object.entries(byLabel).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const mxL=Math.max(1,...top.map(e=>e[1]));
+  // 종류별
+  const byKind={}; lg.forEach(x=>{const k=fKind(x); byKind[k]=(byKind[k]||0)+(x.sec||0);});
+  const kindName={app:"🖥 앱",pomo:"🍅 뽀모도로",timer:"⏱ 타이머"};
+  const card=(lbl,val,sub)=>`<div class="fstat"><div class="fstat-l">${lbl}</div><div class="fstat-v">${val}</div>
+    ${sub?`<div class="fstat-s">${sub}</div>`:""}</div>`;
+  return `<div class="sumsec">
+    <div class="fstats">
+      ${card("최근 7일",fmtDurKo(week),`하루 평균 ${fmtDurKo(week/7)}`)}
+      ${card("이번 달",fmtDurKo(month),monDays?`기록 ${monDays}일 · 평균 ${fmtDurKo(month/monDays)}`:"")}
+      ${card("전체",fmtDurKo(total),`기록 ${dayKeys.length}일 · 평균 ${fmtDurKo(avg)}`)}
+      ${card("최고 기록",best?fmtDurKo(byDay[best]):"-",best?best.replace(/-/g,"."):"")}
+    </div>
+    <h3 style="margin-top:16px;">활동 Top ${top.length}</h3>
+    <div class="ftop">
+      ${top.map(([l,s])=>`<div class="ftop-row"><span class="ftop-l">${esc(l)}</span>
+        <span class="ftop-bar"><i style="width:${Math.round(s/mxL*100)}%"></i></span>
+        <span class="ftop-v">${fmtDurKo(s)}</span></div>`).join("")}
+    </div>
+    <h3 style="margin-top:16px;">종류별</h3>
+    <div class="ftop">
+      ${Object.entries(byKind).sort((a,b)=>b[1]-a[1]).map(([k,s])=>`<div class="ftop-row">
+        <span class="ftop-l">${kindName[k]||k}</span>
+        <span class="ftop-bar"><i style="width:${Math.round(s/Math.max(1,total)*100)}%"></i></span>
+        <span class="ftop-v">${Math.round(s/Math.max(1,total)*100)}% · ${fmtDurKo(s)}</span></div>`).join("")}
+    </div>
+  </div>`;
 }
 function bindSummaryBody(){
   main.querySelectorAll("[data-sum]").forEach(b=>b.onclick=()=>{summarySub=b.dataset.sum;jsave("panur_sumsub",summarySub);renderEtc();});
@@ -4607,25 +4886,67 @@ function bindMaterialBody(){
     if(arch)arch.onclick=e=>{e.stopPropagation();const mm=data.materials.find(x=>x.id===c.dataset.mat);mm.archived=!mm.archived;persist();refreshCurrent();};
   });
 }
+/* 환율 소스 — 모두 무료·키 없음. 공통적으로 '시장 중간환율'이라 은행 매매기준율과는 조금 다르다.
+   각 소스가 스스로 알려주는 고시일(sdate)을 같이 저장해서 얼마나 최신인지 보이게 한다. */
+const FX_MAX=60;   // 기록 최대 개수 (넘으면 오래된 것부터 삭제)
+const FX_SOURCES={
+  erapi:{name:"ER-API", note:"하루 1회 · 다중 소스 종합",
+    async get(){
+      const j=await (await fetch("https://open.er-api.com/v6/latest/KRW")).json();
+      if(!j.rates||!j.rates.JPY||!j.rates.USD)throw new Error("형식 오류");
+      return {jpy100:+((1/j.rates.JPY)*100).toFixed(2), usd1:+(1/j.rates.USD).toFixed(2),
+        sdate:(j.time_last_update_utc||"").slice(5,16)};
+    }},
+  ecb:{name:"ECB(유럽중앙은행)", note:"평일 1회 고시 · 공식 기준환율",
+    async get(){
+      const j=await (await fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY")).json();
+      if(!j.rates||!j.rates.KRW||!j.rates.JPY)throw new Error("형식 오류");
+      return {jpy100:+((j.rates.KRW/j.rates.JPY)*100).toFixed(2), usd1:+j.rates.KRW.toFixed(2), sdate:j.date||""};
+    }},
+  currapi:{name:"Currency-API", note:"하루 1회 · 여러 소스 평균",
+    async get(){
+      const j=await (await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/krw.json")).json();
+      if(!j.krw||!j.krw.jpy||!j.krw.usd)throw new Error("형식 오류");
+      return {jpy100:+((1/j.krw.jpy)*100).toFixed(2), usd1:+(1/j.krw.usd).toFixed(2), sdate:j.date||""};
+    }},
+};
+// 연달아 같은 값이 들어온 기록을 하나로 합침(맨 처음 시각을 남김) + 최대 개수 초과분 삭제
+function fxTidy(){
+  const f=data.fx=data.fx||{history:[]}; const h=f.history||[];
+  const out=[];
+  for(const x of h){
+    const p=out[out.length-1];
+    if(p&&p.jpy100===x.jpy100&&p.usd1===x.usd1){ p.same=(p.same||1)+1; continue; }  // 값이 그대로면 버림
+    out.push({...x});
+  }
+  const cut=out.length>FX_MAX;
+  f.history=cut?out.slice(-FX_MAX):out;
+  return {removed:h.length-f.history.length, cut};
+}
 async function fetchFx(){
   const meta=document.getElementById("fxMeta");
   if(meta)meta.textContent="불러오는 중…";
-  try{
-    const res=await fetch("https://open.er-api.com/v6/latest/KRW");
-    if(!res.ok)throw new Error("HTTP "+res.status);
-    const j=await res.json();
-    if(!j.rates||!j.rates.JPY||!j.rates.USD)throw new Error("데이터 형식 오류");
-    const jpy100=+((1/j.rates.JPY)*100).toFixed(2), usd1=+((1/j.rates.USD)).toFixed(2);
-    const d=new Date(), ts=`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    data.fx.history.push({ts,jpy100,usd1});
-    if(data.fx.history.length>60)data.fx.history=data.fx.history.slice(-60);
-    persist();
-    if(view==="etc")renderEtc();
-    toast("환율을 불러왔어요");
-  }catch(e){
-    if(meta)meta.textContent="자동 조회 실패: "+e.message+" (인터넷/차단 확인). 아래는 참고용이며 수동 확인이 필요해요.";
-    toast("환율 조회 실패");
+  const pick=jload("panur_fxsrc","erapi");
+  const order=pick==="auto"?["erapi","ecb","currapi"]:[pick,...Object.keys(FX_SOURCES).filter(k=>k!==pick)];
+  let got=null, used="", errs=[];
+  for(const k of order){
+    try{ got=await FX_SOURCES[k].get(); used=k; break; }
+    catch(e){ errs.push(FX_SOURCES[k].name+": "+e.message); }
   }
+  if(!got){
+    if(meta)meta.textContent="자동 조회 실패 ("+errs.join(" / ")+"). 인터넷·차단을 확인해주세요.";
+    return toast("환율 조회 실패");
+  }
+  const d=new Date(), ts=`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  data.fx=data.fx||{history:[]}; data.fx.history=data.fx.history||[];
+  const last=data.fx.history[data.fx.history.length-1];
+  const same=last&&last.jpy100===got.jpy100&&last.usd1===got.usd1;
+  if(!same)data.fx.history.push({ts,jpy100:got.jpy100,usd1:got.usd1,src:used,sdate:got.sdate||""});
+  data.fx.checked=ts; data.fx.src=used; data.fx.sdate=got.sdate||"";
+  fxTidy();
+  persist();
+  if(view==="etc")renderEtc();
+  toast(same?"시세가 그대로예요 (기록 안 늘림)":"환율을 불러왔어요");
 }
 /* ============ Material modal ============ */
 const matOverlay=G("matOverlay"); let matEditId=null; let xImagesArr=[];
@@ -5174,6 +5495,8 @@ applyTheme(jload("panur_theme","rose"));
 applyFont(jload("panur_font","dodum"));
 buildSwatches();
 setDot(sync.token?"ok":"");
+// 예전에 쌓인 환율 중복 기록 정리 (같은 시세가 반복 저장되던 문제)
+try{ if(fxTidy().removed>0)persist(); }catch(e){}
 render();
 checkReminders();
 makeBackup(true);   // 세션 시작 시점 백업 1개
