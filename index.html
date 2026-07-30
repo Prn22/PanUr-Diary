@@ -429,25 +429,39 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .pgrp.g-work .pgrp-h{color:#C08A3E;}      .pgrp.g-work .pitem{border-left-color:var(--cat-gold);}
 .pgrp.g-habit .pgrp-h{color:#4C9C80;}     .pgrp.g-habit .pitem{border-left-color:var(--cat-mint);}
 /* 집중 기록: 필터 · 그래프 · 접기 */
-.fctl{display:flex;flex-direction:column;gap:7px;margin:10px 0 6px;}
-.fctl-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
-.fchips{display:flex;flex-wrap:wrap;gap:5px;}
-.fchip{border:1px solid var(--line);background:var(--panel-2);color:var(--ink-soft);border-radius:999px;
-  padding:6px 12px;font-size:12px;font-family:var(--disp);font-weight:600;cursor:pointer;}
-.fchip.sm{padding:5px 10px;font-size:11.5px;}
-.fchip.on{background:var(--lav-d);border-color:var(--lav-d);color:#fff;}
-.fsel{border:1px solid var(--line);background:var(--panel-2);color:var(--ink);border-radius:10px;
-  padding:6px 10px;font-size:12px;font-family:var(--body);max-width:190px;}
+.fctl{display:flex;flex-direction:column;gap:8px;margin:10px 0 6px;}
+.fctl-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;}
+/* 종류·기간: 하나로 붙은 세그먼트 (낱개 버튼이 많아 보이던 문제) */
+.fseg2{display:inline-flex;background:var(--panel-2);border:1px solid var(--line-2);border-radius:11px;padding:3px;gap:2px;}
+.fseg2 button{border:none;background:none;color:var(--muted);font-family:var(--disp);font-weight:600;
+  font-size:12.5px;padding:6px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;}
+.fseg2 button.on{background:var(--lav-d);color:#fff;}
+.fseg2.sm button{font-size:11.5px;padding:5px 11px;}
+/* 그래프 종류: 아이콘 토글 (텍스트 버튼과 구분) */
+.ficons{display:inline-flex;gap:3px;background:var(--panel-2);border:1px solid var(--line-2);border-radius:11px;padding:3px;}
+.ficons button{border:none;background:none;cursor:pointer;font-size:12px;color:var(--muted);
+  padding:5px 10px;border-radius:8px;line-height:1.1;}
+.ficons button.on{background:var(--rose);color:#fff;}
+.fsel{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:11px;
+  padding:7px 11px;font-size:12.5px;font-family:var(--body);max-width:200px;}
 .fchart{width:100%;max-width:520px;height:auto;display:block;margin:2px auto 8px;}
-.fmon,.fdate{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
-.fmon{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--lav-d);
+.fspt{font-family:var(--disp);font-weight:700;font-size:13.5px;color:var(--rose);margin:0 0 10px;text-align:left;}
+.psec-h{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:14px;
+  color:var(--lav-d);margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line-2);}
+.psec-h .btn{margin-left:auto;flex:0 0 auto;}   /* .btn 은 flex:1 이라 놔두면 헤더를 다 차지함 */
+.btn.sm{padding:6px 12px;font-size:12px;}
+.fmon,.fdate{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;text-align:left;}
+.fmon>b,.fdate>b{font-weight:inherit;}      /* 값 길이와 무관하게 날짜는 항상 왼쪽 */
+.fmon{font-family:var(--disp);font-weight:700;font-size:13.5px;color:var(--lav-d);
   margin:14px 0 4px;padding:7px 10px;background:var(--panel-2);border-radius:11px;}
 .fmon em{font-style:normal;font-size:11px;color:var(--muted);font-weight:500;}
-.fmon>span,.fdate>span{margin-left:auto;font-family:var(--disp);}
-.fmon>span{color:var(--rose);}
-.fdate{font-size:11.5px;color:var(--muted);font-weight:700;margin:10px 0 4px;
+/* 합계만 오른쪽 끝으로. 예전엔 캐럿(.fcar)도 span 이라 auto 여백이 둘로 나뉘어
+   값이 짧을수록 날짜가 오른쪽으로 밀려 보였음 */
+.fmon>.fsum,.fdate>.fsum{margin-left:auto;font-family:var(--disp);}
+.fmon>.fsum{color:var(--rose);}
+.fdate{font-size:12px;color:var(--muted);font-weight:700;margin:10px 0 4px;
   padding-bottom:3px;border-bottom:1px dashed var(--line-2);}
-.fdate>span{color:var(--lav-d);}
+.fdate>.fsum{color:var(--lav-d);}
 .fcar{font-size:9px;color:var(--faint);}
 .fmon.folded,.fdate.folded{opacity:.72;}
 /* 집중 통계 (기타 · 요약) */
@@ -864,6 +878,30 @@ body{
   .fab{right:16px;bottom:16px;width:56px;height:56px;}
 }
 
+/* ================= 다크모드 =================
+   토큰(--bg/--ink/--panel …)은 applyDark() 가 인라인으로 덮어씁니다.
+   여기서는 토큰을 쓰지 않고 색을 직접 박아둔 곳만 보정합니다. */
+html[data-dark] .top{background:rgba(48,38,54,.72);}
+html[data-dark] .tabs,html[data-dark] .top{background:rgba(40,32,46,.9);}
+html[data-dark] .modal{background:linear-gradient(160deg,#2E2635,#262032);}
+html[data-dark] .overlay{background:rgba(0,0,0,.62);}
+html[data-dark] body::before{opacity:.10;}
+html[data-dark] .cell.today{background:rgba(143,199,214,.14);}
+html[data-dark] .ycell.noted{background:rgba(95,199,232,.20);border-color:rgba(95,199,232,.45);}
+html[data-dark] .yinput{background:var(--panel-2);color:var(--ink);}
+html[data-dark] .habitcell .week i{background:rgba(255,255,255,.06);}
+html[data-dark] .memo,html[data-dark] .work,html[data-dark] .nrow,
+html[data-dark] .fstat,html[data-dark] .diarybox{background:var(--panel-2);}
+html[data-dark] .toast{background:rgba(12,10,18,.96);}
+html[data-dark] .fxcard,html[data-dark] .fxout,html[data-dark] .sumtop{background:var(--panel-2);}
+html[data-dark] input,html[data-dark] textarea,html[data-dark] select{background:var(--panel-2);color:var(--ink);}
+html[data-dark] input::placeholder,html[data-dark] textarea::placeholder{color:var(--faint);}
+html[data-dark] .btn{background:var(--panel-2);color:var(--ink-soft);}
+html[data-dark] .btn.primary{color:#fff;}
+html[data-dark] .tab{background:var(--panel-2);color:var(--muted);}
+html[data-dark] .tab.active{color:#fff;}
+html[data-dark] img.moodimg,html[data-dark] .mbtn img{filter:brightness(.92);}
+
 /* ================= PC(가로) 최적화 =================
    모바일 우선 스타일은 그대로 두고, 창이 넓어질 때만 레이아웃을 바꿉니다. DOM 변경 없음.
    ≥900px  : 탭 바 → 왼쪽 세로 사이드바 + 여백 확대
@@ -885,6 +923,7 @@ body{
   /* ✨ 새로고침은 오른쪽 조작부 끝으로 (가운데 떠 있어 어색했음) */
   .top .nav{order:4;}
   .top .iconbtn.sparkle{order:5;margin-left:10px;}
+  .top #darkBtn{order:6;margin-left:6px;}
   .diarybox textarea{min-height:200px;}
   .yearscroll{max-height:calc(100dvh - 215px);}
   /* 추가 버튼이 화면 폭만큼 늘어나지 않게 */
@@ -897,6 +936,11 @@ body{
   .plist{column-count:2;column-gap:16px;}
   .plist>*{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;margin-bottom:10px;}
   .notelist{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;}
+  /* 할 일 | 작업 , 메모 | 소재 좌우 배치 */
+  .psplit,.nsplit{display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start;}
+  .psplit>section:last-child,.nsplit>section:last-child{border-left:1px solid var(--line-2);padding-left:24px;}
+  .psplit .plist{column-count:1;}          /* 이미 2단이라 안쪽은 1열 */
+  .notelist.one{grid-template-columns:1fr;}
   /* 일간 — 섹션이 여러 개인 '일정'·'기념일' 모드만 2단. 일기·미라클은 한 덩어리라 전체 폭 유지 */
   .daycard.day-plan,.daycard.day-anniv{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-items:start;}
   .daycard.day-plan>*,.daycard.day-anniv>*{grid-column:1/-1;}
@@ -909,20 +953,37 @@ body{
   .more{font-size:11.5px;}
   .dow div{font-size:13.5px;}
   /* 연간 — 칸을 키워 실제로 읽히게 */
-  :root{--ycw:84px; --ych:62px; --ylw:38px; --ykf:11px;}
-  .ycell .yn{font-size:10px;}
-  .ymhrow .ymhead{font-size:13px;height:26px;}
-  .ycolfix .yrl{font-size:12.5px;}
+  :root{--ycw:92px; --ych:66px; --ylw:40px; --ykf:12.5px;}
+  .ycell .yn{font-size:11px;}
+  .ymhrow .ymhead{font-size:14px;height:28px;}
+  .ycolfix .yrl{font-size:13.5px;}
+  .ycell .ydot i{width:6px;height:6px;}
+  /* 월간 일기 모드 — 기분·제목이 너무 작았음 */
+  .cell.diary .mood{font-size:28px;}
+  .cell .mood .moodimg{width:28px;height:28px;}
+  .cell .thumb{min-height:52px;}
+  /* 일간 · 기획 항목 */
+  .ev .ttl{font-size:15.5px;}
+  .ev .mm{font-size:13px;}
+  .ev .t{font-size:12.5px;}
+  .pitem .txt{font-size:15px;}
+  .pitem .pmemo{font-size:13px;}
+  .pitem .meta{font-size:12px;}
+  .pgrp-h{font-size:12.5px;}
+  .section h3{font-size:15.5px;}
+  .work .wnick{font-size:15.5px;}
+  .work .wbody,.work .wnote{font-size:13.5px;}
+  .work .wmeta{font-size:12.5px;}
+  .nrow .ntt{font-size:15px;}
+  .habitcell .hname{font-size:15px;}
   /* 환율 — 왼쪽 시세·기록 / 오른쪽 계산기 */
   #etcbody .etcsec.fxsec{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;align-items:start;}
   #etcbody .etcsec.fxsec>h3{grid-column:1/-1;}
   #etcbody .etcsec.fxsec>.fxleft{grid-column:1;}
   #etcbody .etcsec.fxsec>.fxcalc{grid-column:2;}
-  /* 집중 — 기록(왼쪽) · 뽀모도로(오른쪽) 동시 표시 */
-  .fsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:0 26px;align-items:start;}
-  .fsplit>section:last-child{border-left:1px solid var(--line-2);padding-left:24px;}
-  .fspt{font-family:var(--disp);font-weight:700;font-size:13px;color:var(--rose);margin:0 0 8px;text-align:left;}
-  .focuscard{max-width:1180px;margin-left:auto;margin-right:auto;}
+  /* 집중 — 기록(왼쪽) · 뽀모도로(오른쪽)를 각각 별개 카드로 */
+  .fsplit{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:18px;align-items:start;}
+  .focuscard{max-width:none;}
   /* 일간 — 왼쪽 일기 / 오른쪽 일정·기획 (한 화면에서 하루 전체가 보이게) */
   .dsplit{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:0 26px;align-items:start;}
   .dsplit>section:last-child{border-left:1px solid var(--line-2);padding-left:24px;}
@@ -939,6 +1000,7 @@ body{
   <div class="top">
     <div class="brand"><span class="moon"></span>파뉴땅 <small>다이어리</small></div>
     <button class="iconbtn sparkle" id="refreshBtn" title="새로고침" aria-label="새로고침"><span>✨</span></button>
+    <button class="iconbtn" id="darkBtn" title="다크모드 전환" aria-label="다크모드 전환">🌙</button>
     <div class="nav">
       <button class="iconbtn" id="syncBtn" title="동기화">☁<span class="sync-dot" id="syncDot"></span></button>
       <button class="iconbtn" id="prev">‹</button>
@@ -1447,7 +1509,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="147", APP_BUILD="2026.07.30";
+const APP_VERSION="148", APP_BUILD="2026.07.30";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -1822,18 +1884,27 @@ function focusChartSVG(series){
         <stop offset="0" style="stop-color:var(--gold)"></stop><stop offset="1" style="stop-color:var(--rose)"></stop></linearGradient>
     </defs>${body}${labs}</svg>`;
 }
+const KIND_NAME={app:"🖥 앱",pomo:"🍅 뽀모도로",timer:"⏱ 타이머"};
 function focusCtlHTML(){
-  const kinds=[["all","전체"],["app","🖥 앱"],["pomo","🍅 뽀모도로"],["timer","⏱ 타이머"]];
+  // 실제로 기록이 있는 종류만 보여준다 (타이머는 만드는 곳이 없어 평소엔 안 나옴)
+  const have=[...new Set(focusLogAll().map(fKind))];
+  const kinds=[["all","전체"],...have.map(k=>[k,KIND_NAME[k]||k])];
   const ranges=[["7","7일"],["30","30일"],["12m","12개월"]];
-  const charts=[["bar","▮ 막대"],["line","📈 선"]];
   const labels=focusLabelList();
   return `<div class="fctl">
-    <div class="fchips">${kinds.map(([k,n])=>`<button class="fchip${focusKind===k?" on":""}" data-fkind="${k}">${n}</button>`).join("")}</div>
     <div class="fctl-row">
+      ${kinds.length>2?`<div class="fseg2">${kinds.map(([k,n])=>
+        `<button class="${focusKind===k?"on":""}" data-fkind="${k}">${n}</button>`).join("")}</div>`:""}
       <select class="fsel" id="fLabelSel"><option value="all">활동 전체</option>
         ${labels.map(l=>`<option value="${esc(l)}"${focusLabel===l?" selected":""}>${esc(l)}</option>`).join("")}</select>
-      <div class="fchips">${ranges.map(([k,n])=>`<button class="fchip sm${focusRange===k?" on":""}" data-frange="${k}">${n}</button>`).join("")}</div>
-      <div class="fchips">${charts.map(([k,n])=>`<button class="fchip sm${focusChart===k?" on":""}" data-fchart="${k}">${n}</button>`).join("")}</div>
+    </div>
+    <div class="fctl-row">
+      <div class="fseg2 sm">${ranges.map(([k,n])=>
+        `<button class="${focusRange===k?"on":""}" data-frange="${k}">${n}</button>`).join("")}</div>
+      <div class="ficons">
+        <button class="${focusChart==="bar"?"on":""}" data-fchart="bar" title="막대 그래프">▮</button>
+        <button class="${focusChart==="line"?"on":""}" data-fchart="line" title="선 그래프">📈</button>
+      </div>
     </div>
   </div>`;
 }
@@ -1866,15 +1937,11 @@ function focusListHTML(){
       const dSec=list.reduce((a,x)=>a+(x.sec||0),0);
       const dFold=fFolded(dk, dk===today);
       const d=parseYmd(dk);
-      return `<div class="fdate${dFold?" folded":""}" data-ffold="${dk}" data-fdef="${dk===today?1:0}">
-          ${car(dFold)}${dk.slice(5).replace("-","/")} (${WEEK[d.getDay()]})
-          <span>${fmtDurKo(dSec)}</span></div>
+      return `<div class="fdate${dFold?" folded":""}" data-ffold="${dk}" data-fdef="${dk===today?1:0}">${car(dFold)}<b>${dk.slice(5).replace("-","/")} (${WEEK[d.getDay()]})</b><span class="fsum">${fmtDurKo(dSec)}</span></div>
         ${dFold?"":list.map(x=>`<div class="frow"><span class="flbl">${icon(x.kind)} ${esc(x.label||"작업")}</span>
           <span class="fdur">${x.sec<60?Math.round(x.sec)+"초":fmtDurKo(x.sec)} <b class="flogdel" data-flogdel="${x.tss.join(",")}" title="${x.n>1?x.n+"건 모두 삭제":"삭제"}">✕</b></span></div>`).join("")}`;
     }).join("");
-    return `<div class="fmon${mFold?" folded":""}" data-ffold="${mk}" data-fdef="${mk===curMon?1:0}">
-        ${car(mFold)}${yy}년 ${Number(mm)}월 <em>기록 ${dkeys.length}일</em>
-        <span>${fmtDurKo(mo.sec)}</span></div>${daysHTML}`;
+    return `<div class="fmon${mFold?" folded":""}" data-ffold="${mk}" data-fdef="${mk===curMon?1:0}">${car(mFold)}<b>${yy}년 ${Number(mm)}월</b><em>기록 ${dkeys.length}일</em><span class="fsum">${fmtDurKo(mo.sec)}</span></div>${daysHTML}`;
   }).join("");
   return `
     <div class="focustoday">오늘 집중 <b id="focusToday">${fmtDurKo(focusTodaySec())}</b></div>
@@ -1907,11 +1974,10 @@ function renderFocus(){
   const c=poCfg();
   // 가로가 넓으면 기록(왼쪽) · 뽀모도로(오른쪽)를 한 화면에. 좁으면 기존처럼 탭으로 전환
   if(isWide()){
-    main.innerHTML=`<div class="card focuscard">
-      <div class="fsplit">
-        <section><div class="fspt">⏱ 집중 기록</div>${focusListHTML()}</section>
-        <section><div class="fspt">🍅 뽀모도로</div>${focusPomoHTML(c,true)}</section>
-      </div>
+    // 카드를 따로 둬야 두 기능이 별개로 읽힘 (한 카드에 붙어 있으면 어색)
+    main.innerHTML=`<div class="fsplit">
+      <div class="card focuscard"><div class="fspt">⏱ 집중 기록</div>${focusListHTML()}</div>
+      <div class="card focuscard"><div class="fspt">🍅 뽀모도로</div>${focusPomoHTML(c,true)}</div>
     </div>`;
   }else{
     main.innerHTML=`<div class="card focuscard">
@@ -2738,8 +2804,18 @@ function renderPlannerBody(){
   // 메모·소재(통합) / 여행 (기타에서 플래너로 이동)
   if(plannerType==="memo"){ box.innerHTML=notesBodyHTML(); bindNotesBody(); return; }
   if(plannerType==="trip"){ box.innerHTML=tripBodyHTML(); bindTripBody(); return; }
+  // 가로가 넓으면 할 일과 작업을 한 화면에 (탭 순서대로 할 일이 왼쪽)
+  if(isWide()&&(plannerType==="todos"||plannerType==="work")){
+    box.innerHTML=`<div class="psplit">
+      <section><div class="psec-h">✓ 할 일</div>${plannerTypeHTML("todos")}</section>
+      <section><div class="psec-h">🎨 작업</div>${plannerTypeHTML("work")}</section></div>`;
+    bindPlannerForms(); return;
+  }
+  box.innerHTML=plannerTypeHTML(plannerType);
+  bindPlannerForms();
+}
+function plannerTypeHTML(t){
   let h="";
-  const t=plannerType;
   if(t==="appts"){
     h+=`<div class="pform"><div class="row"><input id="aDate" type="date"><input id="aTime" type="time"></div>
       <div class="row"><input id="aTitle" placeholder="약속 제목"><input id="aWho" placeholder="상대"><input id="aPlace" placeholder="장소"></div>
@@ -2850,8 +2926,7 @@ function renderPlannerBody(){
       h+=`<div style="font-size:11px;color:var(--muted);margin-top:6px;">◀ ▶ 로 주를 옮겨 아무 날짜나 체크할 수 있어요 · 숫자는 누적 실천일</div>`;
     }else h+=emptyP("매일 반복할 습관을 추가해보세요");
   }
-  box.innerHTML=h;
-  bindPlannerForms();
+  return h;
 }
 function plCard(type,a,meta){
   const editable=(type==="appts"||type==="todos");
@@ -4131,16 +4206,24 @@ function notesBodyHTML(){
   const mats=[...data.materials].sort((a,b)=>{
     if(!!a.archived!==!!b.archived)return a.archived?1:-1; return (b.ts||0)-(a.ts||0);
   });
+  const memoRows=memos.map(m=>noteRow("memo",m)).join("");
+  const matRows=[...mats].sort((a,b)=>(a.archived?1:0)-(b.archived?1:0)).map(m=>noteRow("mat",m)).join("");
+  const empty=t=>`<div class="empty">${t}</div>`;
+  if(isWide()){
+    // 넓은 화면: 메모 왼쪽 · 소재 오른쪽
+    return `<div class="nsplit">
+      <section><div class="psec-h">📝 메모 <button class="btn sm" id="memoAdd">＋ 메모</button></div>
+        ${memoRows?`<div class="notelist one">${memoRows}</div>`:empty("메모가 없어요")}</section>
+      <section><div class="psec-h">✧ 소재 <button class="btn sm" id="matAdd">＋ 소재</button></div>
+        ${matRows?`<div class="notelist one">${matRows}</div>`:empty("소재가 없어요")}</section>
+    </div>`;
+  }
   let h='<div class="notesadd">'
     +'<button class="btn" id="memoAdd">＋ 메모</button>'
     +'<button class="btn" id="matAdd">＋ 소재</button></div>';
-  const rows=[
-    ...memos.map(m=>({arch:0, html:noteRow("memo",m)})),
-    ...mats.map(m=>({arch:m.archived?1:0, html:noteRow("mat",m)}))
-  ].sort((a,b)=>a.arch-b.arch);   // 보관한 소재는 뒤로
   if(!memos.length && !mats.length)
     h+=`<div class="empty">메모·소재가 없어요<small>기록·아이디어·창작 소재를 자유롭게 남겨보세요</small></div>`;
-  else h+='<div class="notelist">'+rows.map(c=>c.html).join("")+'</div>';
+  else h+='<div class="notelist">'+memoRows+matRows+'</div>';
   return h;
 }
 // 목록 한 줄 — 제목만 보여주고 내용은 열람 팝업(openNoteView)에서
@@ -4383,6 +4466,30 @@ function applyTheme(key){
   r.setProperty("--bg-grad",t.grad);
   const meta=document.querySelector('meta[name=theme-color]'); if(meta)meta.setAttribute("content",t.tc);
 }
+/* ---- 다크모드 ----
+   테마 색(applyTheme)은 인라인 변수로 들어가므로, 다크도 같은 방식으로 덮어써야 이긴다.
+   강조색(라벤더·로즈 등)은 테마 것을 그대로 쓰고 배경·글자·선만 어둡게 바꾼다. */
+const DARKV={
+  "--bg":"#1B1620","--bg2":"#241E29",
+  "--ink":"#EBE1EC","--ink-soft":"#CDC0CF","--muted":"#9E90A4","--faint":"#6F6376",
+  "--panel":"rgba(46,38,52,.94)","--panel-2":"rgba(56,46,62,.92)",
+  "--line":"rgba(232,214,238,.18)","--line-2":"rgba(232,214,238,.10)",
+  "--shadow":"0 12px 38px rgba(0,0,0,.5)","--shadow-sm":"0 4px 15px rgba(0,0,0,.38)",
+  "--bg-grad":"#2B2233 0%,#261F2E 35%,#221C29 70%,#1C1722 100%",
+};
+function isDark(){return jload("panur_dark",false);}
+function applyDark(on){
+  const r=document.documentElement.style;
+  if(on){ Object.entries(DARKV).forEach(([k,v])=>r.setProperty(k,v));
+    document.documentElement.setAttribute("data-dark","1"); }
+  else { Object.keys(DARKV).forEach(k=>r.removeProperty(k));
+    document.documentElement.removeAttribute("data-dark");
+    applyTheme(jload("panur_theme","rose")); }   // 테마의 밝은 배경 복구
+  const meta=document.querySelector('meta[name=theme-color]');
+  if(meta&&on)meta.setAttribute("content","#241E29");
+  const b=document.getElementById("darkBtn"); if(b)b.textContent=on?"☀️":"🌙";
+}
+function toggleDark(){ const v=!isDark(); jsave("panur_dark",v); applyDark(v); toast(v?"다크모드 🌙":"라이트모드 ☀️"); }
 function applyFont(key){
   const f=FONTS[key]||FONTS.dodum; const r=document.documentElement.style;
   r.setProperty("--disp",f.disp); r.setProperty("--body",f.body);
@@ -4649,7 +4756,7 @@ function fxBodyHTML(){
     <div style="font-size:12px;color:var(--lav-d);font-weight:600;margin:6px 0 4px;font-family:var(--disp);display:flex;justify-content:space-between;align-items:center;">
       <span>기록 <span style="color:var(--muted);font-weight:400;font-size:11px;">시세가 바뀔 때만 쌓여요 · 최대 ${FX_MAX}개</span></span>
       ${hist.length?`<button class="ftbtn" id="fxTidyBtn">중복 정리</button>`:""}</div>
-    <div class="fxhist" id="fxHist">${hist.slice(-12).reverse().map(x=>`<div><span>${x.ts}${x.src&&FX_SOURCES[x.src]?` <em style="font-style:normal;color:var(--faint);">${FX_SOURCES[x.src].name}</em>`:""}</span><span>100엔 ${x.jpy100} · 1달러 ${x.usd1}</span></div>`).join("")||'<div style="color:var(--muted)">기록이 없어요</div>'}</div>
+    <div class="fxhist" id="fxHist">${hist.slice(-8).reverse().map(x=>`<div><span>${x.ts}${x.src&&FX_SOURCES[x.src]?` <em style="font-style:normal;color:var(--faint);">${FX_SOURCES[x.src].name}</em>`:""}</span><span>100엔 ${x.jpy100} · 1달러 ${x.usd1}</span></div>`).join("")||'<div style="color:var(--muted)">기록이 없어요</div>'}</div>
     </div>
     <div class="fxcalc">
       <h3 style="margin-top:16px;">🧮 환율 계산기</h3>
@@ -4824,9 +4931,9 @@ function focusStatsHTML(){
   const byLabel={}; lg.forEach(x=>{const l=x.label||"작업"; byLabel[l]=(byLabel[l]||0)+(x.sec||0);});
   const top=Object.entries(byLabel).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const mxL=Math.max(1,...top.map(e=>e[1]));
-  // 종류별
+  // 종류별 — 종류가 둘 이상일 때만 의미가 있음
   const byKind={}; lg.forEach(x=>{const k=fKind(x); byKind[k]=(byKind[k]||0)+(x.sec||0);});
-  const kindName={app:"🖥 앱",pomo:"🍅 뽀모도로",timer:"⏱ 타이머"};
+  const kinds=Object.entries(byKind).sort((a,b)=>b[1]-a[1]);
   const card=(lbl,val,sub)=>`<div class="fstat"><div class="fstat-l">${lbl}</div><div class="fstat-v">${val}</div>
     ${sub?`<div class="fstat-s">${sub}</div>`:""}</div>`;
   return `<div class="sumsec">
@@ -4842,13 +4949,13 @@ function focusStatsHTML(){
         <span class="ftop-bar"><i style="width:${Math.round(s/mxL*100)}%"></i></span>
         <span class="ftop-v">${fmtDurKo(s)}</span></div>`).join("")}
     </div>
-    <h3 style="margin-top:16px;">종류별</h3>
+    ${kinds.length>1?`<h3 style="margin-top:16px;">종류별</h3>
     <div class="ftop">
-      ${Object.entries(byKind).sort((a,b)=>b[1]-a[1]).map(([k,s])=>`<div class="ftop-row">
-        <span class="ftop-l">${kindName[k]||k}</span>
+      ${kinds.map(([k,s])=>`<div class="ftop-row">
+        <span class="ftop-l">${KIND_NAME[k]||k}</span>
         <span class="ftop-bar"><i style="width:${Math.round(s/Math.max(1,total)*100)}%"></i></span>
         <span class="ftop-v">${Math.round(s/Math.max(1,total)*100)}% · ${fmtDurKo(s)}</span></div>`).join("")}
-    </div>
+    </div>`:""}
   </div>`;
 }
 function bindSummaryBody(){
@@ -4888,7 +4995,7 @@ function bindMaterialBody(){
 }
 /* 환율 소스 — 모두 무료·키 없음. 공통적으로 '시장 중간환율'이라 은행 매매기준율과는 조금 다르다.
    각 소스가 스스로 알려주는 고시일(sdate)을 같이 저장해서 얼마나 최신인지 보이게 한다. */
-const FX_MAX=60;   // 기록 최대 개수 (넘으면 오래된 것부터 삭제)
+const FX_MAX=20;   // 기록 최대 개수 (넘으면 오래된 것부터 삭제). 길면 스크롤이 번거로워 20개로
 const FX_SOURCES={
   erapi:{name:"ER-API", note:"하루 1회 · 다중 소스 종합",
     async get(){
@@ -5492,7 +5599,9 @@ setupPWA();
 
 /* ============ Boot ============ */
 applyTheme(jload("panur_theme","rose"));
+applyDark(isDark());
 applyFont(jload("panur_font","dodum"));
+{const _db=document.getElementById("darkBtn"); if(_db)_db.onclick=toggleDark;}
 buildSwatches();
 setDot(sync.token?"ok":"");
 // 예전에 쌓인 환율 중복 기록 정리 (같은 시세가 반복 저장되던 문제)
