@@ -881,32 +881,40 @@ body{
 /* ================= 다크모드 =================
    토큰(--bg/--ink/--panel …)은 applyDark() 가 인라인으로 덮어씁니다.
    여기서는 토큰을 쓰지 않고 색을 직접 박아둔 곳만 보정합니다. */
-html[data-dark] .top{background:rgba(48,38,54,.72);}
-html[data-dark] .tabs,html[data-dark] .top{background:rgba(40,32,46,.9);}
-html[data-dark] .modal{background:linear-gradient(160deg,#4A4058,#3E364C);border-color:rgba(255,255,255,.14);}
-html[data-dark] .card{background:#2B2437;border-color:rgba(255,255,255,.10);}
-html[data-dark] .cell,html[data-dark] .ycell{background:#372F45;}
-html[data-dark] .cell.other{opacity:.4;}
+/* 배경은 평평하게(그라디언트·별가루 끔) — 면 단차가 보이려면 바닥이 조용해야 함 */
+html[data-dark] body{background:var(--bg);}
+html[data-dark] body::before{display:none;}
+/* 내비게이션이 가장 어둡고 본문이 밝다 (디스코드 구조) */
+html[data-dark] .tabs{background:#1E1B25;backdrop-filter:none;border-bottom-color:rgba(0,0,0,.4);box-shadow:none;}
+html[data-dark] .top{background:#232029;backdrop-filter:none;}
+html[data-dark] .subbar{background:transparent;}
+html[data-dark] .modal{background:#332F3E;border-color:rgba(255,255,255,.08);}
+html[data-dark] .card{background:#332F3E;border-color:rgba(255,255,255,.05);}
+html[data-dark] .cell,html[data-dark] .ycell{background:#3C3849;}
+html[data-dark] .cell:hover,html[data-dark] .ycell:hover{background:#454055;}
+html[data-dark] .cell.other{opacity:.45;}
+/* 세그먼트·토글은 한 단 어둡게 눌러 담는 그릇처럼 */
 html[data-dark] .fseg2,html[data-dark] .ficons,html[data-dark] .focusseg,
-html[data-dark] .seg{background:#241F2E;border-color:rgba(255,255,255,.10);}
+html[data-dark] .seg{background:#272430;border-color:rgba(255,255,255,.05);}
+/* 항목은 테두리 대신 단차 + 호버로 (디스코드처럼) */
+html[data-dark] .pitem:hover,html[data-dark] .ev:hover,html[data-dark] .nrow:hover,
+html[data-dark] .work:hover,html[data-dark] .frow:hover{background:#454055;}
 /* 파스텔 칩은 어두운 면 위에서 흰 글자가 안 읽힌다(2.3:1) → 배경만 진하게 눌러 5:1 이상으로 */
 html[data-dark] .chip,html[data-dark] .spanbar,html[data-dark] .dbadge,
 html[data-dark] .wstatus,html[data-dark] .mmchip{filter:brightness(.62) saturate(1.3);}
-html[data-dark] input,html[data-dark] textarea,html[data-dark] select{background:#241F2E;}
-/* 강조색을 밝게 올렸으므로, 그 색을 '배경'으로 쓰는 요소는 글자를 어둡게 뒤집는다
-   (밝은 라벤더 위 흰 글자는 1.6:1 로 오히려 안 보임) */
+html[data-dark] input,html[data-dark] textarea,html[data-dark] select{background:#413C50;border-color:transparent;}
+/* 채워진 컨트롤은 진하고 선명한 강조색 + 흰 글자 (디스코드 브랜드 버튼 방식) */
 html[data-dark] .btn.primary,html[data-dark] .seg button.on,html[data-dark] .fseg2 button.on,
-html[data-dark] .ficons button.on,html[data-dark] .fseg.on,html[data-dark] .fchip.on,
+html[data-dark] .ptype.on,html[data-dark] .yrbtn.on{background:var(--fill);color:#fff;}
 html[data-dark] .fbtn.primary,html[data-dark] .today-btn,html[data-dark] .saddbtn,
-html[data-dark] .ptype.on,html[data-dark] .tab.active,html[data-dark] .fab,
-html[data-dark] .yrbtn.on,html[data-dark] .mmlg.on,html[data-dark] .fchip.on{color:#241E30;}
-html[data-dark] .tab.active{background:var(--lav-d);}
-/* 지금 보고 있는 곳이 또렷하게 (초점) */
-html[data-dark] .tab.active{box-shadow:0 0 0 1px rgba(255,255,255,.16),0 6px 18px rgba(0,0,0,.45);}
-html[data-dark] .cell.today{background:rgba(133,207,230,.16);border-color:var(--ice);}
-html[data-dark] .ycell.today{box-shadow:0 0 10px rgba(133,207,230,.35);}
-html[data-dark] .pitem,html[data-dark] .ev,html[data-dark] .nrow,html[data-dark] .memo,
-html[data-dark] .work,html[data-dark] .fstat{border:1px solid rgba(255,255,255,.07);}
+html[data-dark] .ficons button.on,html[data-dark] .fseg.on,html[data-dark] .fchip.on,
+html[data-dark] .fab{background:var(--fill-2);color:#fff;border-color:transparent;}
+/* 선택된 탭: 디스코드 채널처럼 옅은 면 + 흰 글자 + 강조 막대 */
+html[data-dark] .tab{background:transparent;border-color:transparent;color:var(--muted);}
+html[data-dark] .tab:hover{background:rgba(255,255,255,.06);color:var(--ink-soft);}
+html[data-dark] .tab.active{background:rgba(255,255,255,.10);color:#fff;box-shadow:none;position:relative;}
+html[data-dark] .cell.today{background:rgba(133,207,230,.14);border-color:var(--ice);}
+html[data-dark] .ycell.today{box-shadow:0 0 9px rgba(133,207,230,.3);}
 html[data-dark] .overlay{background:rgba(0,0,0,.62);}
 html[data-dark] body::before{opacity:.10;}
 html[data-dark] .cell.today{background:rgba(143,199,214,.14);}
@@ -930,6 +938,11 @@ html[data-dark] img.moodimg,html[data-dark] .mbtn img{filter:brightness(.92);}
    ≥900px  : 탭 바 → 왼쪽 세로 사이드바 + 여백 확대
    ≥1250px : 목록·섹션 2단 배치, 월간 칸 확대
    ≥1700px : 본문 최대 폭 제한(중앙 정렬) */
+/* 사이드바 선택 표시(왼쪽 막대)는 세로 배치일 때만 */
+@media (min-width:900px){
+  html[data-dark] .tab.active::before{content:"";position:absolute;left:-9px;top:50%;transform:translateY(-50%);
+    width:4px;height:60%;border-radius:0 4px 4px 0;background:var(--fill-2);}
+}
 @media (min-width:900px){
   .app{padding-left:214px;}
   /* 탭을 왼쪽 고정 레일로. .app 의 왼쪽 패딩이 레일 자리를 비워둡니다 */
@@ -1532,7 +1545,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="150", APP_BUILD="2026.07.31";
+const APP_VERSION="151", APP_BUILD="2026.07.31";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -4496,22 +4509,24 @@ function applyTheme(key){
    강조색(라벤더·로즈 등)은 테마 것을 그대로 쓰고 배경·글자·선만 어둡게 바꾼다. */
 /* 면(배경→카드→항목)이 또렷하게 층지도록 계단을 만들고, 흐린 글자·강조색은 밝게 올린다.
    이전 다크는 면 구분이 1.2:1, 흐린 글자 1.8:1 이라 "눈에 안 들어오는" 상태였다. */
+/* 구조는 디스코드 방식: 내비게이션(사이드바·상단바)이 가장 어둡고 본문이 밝다.
+   테두리 대신 면의 단차로 구분하고, 배경 그라디언트는 끈다. 색조는 파뉴땅의 보라 기운 유지. */
 const DARKV={
-  "--bg":"#12101A","--bg2":"#1A1724",
-  "--ink":"#F5F1F9","--ink-soft":"#DCD3E4","--muted":"#B5ABC4","--faint":"#978DA9",
-  "--panel":"#2B2437","--panel-2":"#3E364C",
-  "--line":"rgba(255,255,255,.14)","--line-2":"rgba(255,255,255,.075)",
-  "--shadow":"0 14px 40px rgba(0,0,0,.55)","--shadow-sm":"0 5px 16px rgba(0,0,0,.42)",
-  "--bg-grad":"#1D1828 0%,#181423 40%,#15121E 75%,#110F18 100%",
+  "--bg":"#2B2833","--bg2":"#232029",
+  "--ink":"#E9E5EE","--ink-soft":"#CCC5D6","--muted":"#A79FB5","--faint":"#8A8299",
+  "--panel":"#332F3E","--panel-2":"#3C3849",
+  "--line":"rgba(255,255,255,.07)","--line-2":"rgba(255,255,255,.04)",
+  "--shadow":"0 8px 26px rgba(0,0,0,.4)","--shadow-sm":"0 2px 9px rgba(0,0,0,.3)",
+  "--bg-grad":"#2B2833 0%,#2B2833 100%",
 };
 // 라이트용 파스텔 강조색은 어두운 면 위에서 힘이 없다. 밝기·채도를 올려 다크용으로 조정
-function _tune(hex,dl,ds){
+function _tune(hex,dl,ds,absL){
   const m=/^#?([0-9a-fA-F]{6})$/.exec(String(hex).trim()); if(!m)return hex;
   const n=parseInt(m[1],16); const r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;
   const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0,l=(mx+mn)/2;
   if(mx!==mn){const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn);
     h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4); h/=6;}
-  l=Math.min(.92,l+dl); s=Math.min(1,s*(1+ds));
+  l=(absL!=null)?absL:Math.min(.92,l+dl); s=Math.min(1,s*(1+ds));
   const q=l<.5?l*(1+s):l+s-l*s, p=2*l-q;
   const hue=t=>{if(t<0)t+=1; if(t>1)t-=1;
     if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p;};
@@ -4529,6 +4544,9 @@ function applyDark(on){
     r.setProperty("--mint",_tune(t.mint,.07,.12));
     r.setProperty("--ice",_tune(t.ice,.06,.12));
     r.setProperty("--gold",_tune(t.gold,.04,.12));
+    // 채워진 버튼용 — 디스코드 브랜드색처럼 한 톤 진하고 선명하게(그 위 글자는 흰색)
+    r.setProperty("--fill",_tune(t.lavd,0,.25,.50));     // 흰 글자 5.0:1
+    r.setProperty("--fill-2",_tune(t.rose,0,0,.52));     // 흰 글자 4.7:1 (너무 쨍하지 않게 채도는 그대로)
     document.documentElement.setAttribute("data-dark","1"); }
   else { Object.keys(DARKV).forEach(k=>r.removeProperty(k));
     document.documentElement.removeAttribute("data-dark");
