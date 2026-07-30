@@ -371,7 +371,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .sh-del{top:-12px;right:-12px;color:var(--rose);}
 .sh-rot{top:-12px;left:-12px;cursor:grab;}
 .sh-size{bottom:-12px;right:-12px;background:var(--lav);cursor:nwse-resize;}
-.cell:not(.other) .num,.cell:not(.other) .dnumrow{position:relative;z-index:6;}
+/* 스티커(.decolayer, z-index:5)가 날짜보다 위에 오게 — 날짜는 칸 안에서만 위로 */
+.cell:not(.other) .num,.cell:not(.other) .dnumrow{position:relative;z-index:1;}
 .decotgt{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);}
 .dtbtn{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:12px;font-family:var(--disp);cursor:pointer;}
 .dtbtn.on{background:var(--lav);color:#fff;border-color:transparent;font-weight:600;}
@@ -1568,7 +1569,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="152", APP_BUILD="2026.07.31";
+const APP_VERSION="153", APP_BUILD="2026.07.31";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
