@@ -883,7 +883,12 @@ body{
    여기서는 토큰을 쓰지 않고 색을 직접 박아둔 곳만 보정합니다. */
 html[data-dark] .top{background:rgba(48,38,54,.72);}
 html[data-dark] .tabs,html[data-dark] .top{background:rgba(40,32,46,.9);}
-html[data-dark] .modal{background:linear-gradient(160deg,#2E2635,#262032);}
+html[data-dark] .modal{background:linear-gradient(160deg,#4A3E55,#3E3448);}
+html[data-dark] .card{background:rgba(72,60,82,.96);}
+html[data-dark] .cell,html[data-dark] .ycell{background:rgba(86,72,97,.92);}
+html[data-dark] .cell.other{opacity:.45;}
+html[data-dark] .fseg2,html[data-dark] .ficons,html[data-dark] .focusseg,
+html[data-dark] .seg{background:rgba(60,50,70,.9);}
 html[data-dark] .overlay{background:rgba(0,0,0,.62);}
 html[data-dark] body::before{opacity:.10;}
 html[data-dark] .cell.today{background:rgba(143,199,214,.14);}
@@ -1509,7 +1514,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="148", APP_BUILD="2026.07.30";
+const APP_VERSION="149", APP_BUILD="2026.07.31";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -4471,9 +4476,10 @@ function applyTheme(key){
    강조색(라벤더·로즈 등)은 테마 것을 그대로 쓰고 배경·글자·선만 어둡게 바꾼다. */
 const DARKV={
   "--bg":"#1B1620","--bg2":"#241E29",
-  "--ink":"#EBE1EC","--ink-soft":"#CDC0CF","--muted":"#9E90A4","--faint":"#6F6376",
-  "--panel":"rgba(46,38,52,.94)","--panel-2":"rgba(56,46,62,.92)",
-  "--line":"rgba(232,214,238,.18)","--line-2":"rgba(232,214,238,.10)",
+  "--ink":"#F1E8F2","--ink-soft":"#D6CAD8","--muted":"#A79AAD","--faint":"#7C6F84",
+  // 배경(레이아웃)은 어둡게 두고 카드·입력칸만 확실히 밝게 — 전부 같은 톤이면 오히려 눈이 피로함
+  "--panel":"rgba(72,60,82,.96)","--panel-2":"rgba(86,72,97,.94)",
+  "--line":"rgba(240,226,245,.22)","--line-2":"rgba(240,226,245,.13)",
   "--shadow":"0 12px 38px rgba(0,0,0,.5)","--shadow-sm":"0 4px 15px rgba(0,0,0,.38)",
   "--bg-grad":"#2B2233 0%,#261F2E 35%,#221C29 70%,#1C1722 100%",
 };
