@@ -157,6 +157,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cell .num{font-family:var(--disp);font-weight:600;font-size:13px;}
 .cell.today .num{color:var(--ice);} .cell.sun .num{color:var(--rose);} .cell.sat .num{color:var(--ice);}
 .chip{font-size:11px;line-height:1.25;padding:2px 7px;border-radius:8px;color:#fff;font-weight:600;
+  text-shadow:0 1px 1.5px rgba(80,50,80,.30);
   word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 .more{font-size:10px;color:var(--muted);padding-left:3px;}
 .spanbar{font-size:11px;line-height:1.3;padding:2px 5px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -357,7 +358,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .decolayer.edit{pointer-events:auto;}
 .sticker{position:absolute;pointer-events:none;}
 .decolayer.edit .sticker{pointer-events:auto;}
-.sticker img{width:100%;height:auto;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+/* 하얀 외곽선 — drop-shadow 를 사방으로 겹쳐 스티커 모양을 따라 그림 (투명 PNG 대응) */
+.sticker img{width:100%;height:auto;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;
+  filter:drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)
+         drop-shadow(1px 1px 0 #fff) drop-shadow(-1px -1px 0 #fff) drop-shadow(1px -1px 0 #fff) drop-shadow(-1px 1px 0 #fff)
+         drop-shadow(0 2px 4px rgba(80,50,80,.28));}
 .decolayer.edit .sticker img{pointer-events:auto;cursor:move;touch-action:none;}
 .sticker.sel{outline:2px dashed var(--lav-d);outline-offset:3px;}
 .sh{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--panel);border:1px solid var(--line);
@@ -888,6 +893,12 @@ html[data-dark] body::before{display:none;}
 html[data-dark] .tabs{background:#1E1B25;backdrop-filter:none;border-bottom-color:rgba(0,0,0,.4);box-shadow:none;}
 html[data-dark] .top{background:#232029;backdrop-filter:none;}
 html[data-dark] .subbar{background:transparent;}
+/* 아이콘 버튼이 흰색(rgba(255,255,255,.7)) 그대로라 다크 상단바에서 따로 놀았음 */
+html[data-dark] .iconbtn{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.08);
+  color:var(--ink-soft);box-shadow:none;backdrop-filter:none;}
+html[data-dark] .iconbtn:hover{background:rgba(255,255,255,.14);border-color:transparent;color:#fff;transform:none;}
+html[data-dark] .today-btn{border-color:transparent;}
+html[data-dark] .period{color:var(--ink);}
 html[data-dark] .modal{background:#332F3E;border-color:rgba(255,255,255,.08);}
 html[data-dark] .card{background:#332F3E;border-color:rgba(255,255,255,.05);}
 html[data-dark] .cell,html[data-dark] .ycell{background:#3C3849;}
@@ -899,9 +910,11 @@ html[data-dark] .seg{background:#272430;border-color:rgba(255,255,255,.05);}
 /* 항목은 테두리 대신 단차 + 호버로 (디스코드처럼) */
 html[data-dark] .pitem:hover,html[data-dark] .ev:hover,html[data-dark] .nrow:hover,
 html[data-dark] .work:hover,html[data-dark] .frow:hover{background:#454055;}
-/* 파스텔 칩은 어두운 면 위에서 흰 글자가 안 읽힌다(2.3:1) → 배경만 진하게 눌러 5:1 이상으로 */
+/* 파스텔 칩 위 흰 글자 확보. filter 를 쓰면 글자까지 같이 어두워져 오히려 흐려지므로
+   inset 그림자로 '배경만' 눌러야 한다(글자는 순백 유지). */
 html[data-dark] .chip,html[data-dark] .spanbar,html[data-dark] .dbadge,
-html[data-dark] .wstatus,html[data-dark] .mmchip{filter:brightness(.62) saturate(1.3);}
+html[data-dark] .wstatus,html[data-dark] .mmchip,html[data-dark] .mcond{
+  box-shadow:inset 0 0 0 999px rgba(0,0,0,.40);color:#fff;}
 html[data-dark] input,html[data-dark] textarea,html[data-dark] select{background:#413C50;border-color:transparent;}
 /* 채워진 컨트롤은 진하고 선명한 강조색 + 흰 글자 (디스코드 브랜드 버튼 방식) */
 html[data-dark] .btn.primary,html[data-dark] .seg button.on,html[data-dark] .fseg2 button.on,
@@ -913,6 +926,11 @@ html[data-dark] .fab{background:var(--fill-2);color:#fff;border-color:transparen
 html[data-dark] .tab{background:transparent;border-color:transparent;color:var(--muted);}
 html[data-dark] .tab:hover{background:rgba(255,255,255,.06);color:var(--ink-soft);}
 html[data-dark] .tab.active{background:rgba(255,255,255,.10);color:#fff;box-shadow:none;position:relative;}
+/* 파스텔로 채워지던 선택 상태(폰트·달력·칩 등)도 다크에서는 진한 강조색으로 */
+html[data-dark] .fontbtn.on,html[data-dark] .acb.on,html[data-dark] .dtbtn.on,
+html[data-dark] .daychips .dc.on,html[data-dark] .mini-d.mini-today,
+html[data-dark] .lecsched,html[data-dark] .linkbtn,html[data-dark] .anemo.on{
+  background:var(--fill);color:#fff;border-color:transparent;}
 html[data-dark] .cell.today{background:rgba(133,207,230,.14);border-color:var(--ice);}
 html[data-dark] .ycell.today{box-shadow:0 0 9px rgba(133,207,230,.3);}
 html[data-dark] .overlay{background:rgba(0,0,0,.62);}
@@ -994,10 +1012,15 @@ html[data-dark] img.moodimg,html[data-dark] .mbtn img{filter:brightness(.92);}
   .ymhrow .ymhead{font-size:14px;height:28px;}
   .ycolfix .yrl{font-size:13.5px;}
   .ycell .ydot i{width:6px;height:6px;}
-  /* 월간 일기 모드 — 기분·제목이 너무 작았음 */
+  /* 월간 일기 모드 — 칸이 큰 PC 에서는 기분·사진도 크게 */
   .cell.diary .mood{font-size:28px;}
   .cell .mood .moodimg{width:28px;height:28px;}
   .cell .thumb{min-height:52px;}
+  .cell .dmood{font-size:30px;}
+  .cell .dmood .moodimg{width:34px;height:34px;}
+  .cell .dbottom{gap:7px;padding-top:5px;}
+  .cell .dbottom .thumb{width:42px;height:42px;border-radius:9px;}
+  .cell .mcond{width:18px;height:18px;font-size:11px;}
   /* 일간 · 기획 항목 */
   .ev .ttl{font-size:15.5px;}
   .ev .mm{font-size:13px;}
@@ -1545,7 +1568,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="151", APP_BUILD="2026.07.31";
+const APP_VERSION="152", APP_BUILD="2026.07.31";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -2224,7 +2247,8 @@ function renderMonth(){
       if(dia){
         if(dia.title){
           const len=[...dia.title].length;
-          const fs = len<=6?13 : len<=12?11.5 : len<=20?10 : len<=34?8.8 : 7.8;
+          let fs = len<=6?13 : len<=12?11.5 : len<=20?10 : len<=34?8.8 : 7.8;
+          if(isWide())fs=Math.round(fs*1.35*10)/10;   // PC 는 칸이 넓으니 제목을 크게
           inner+=`<div class="dtitle" style="font-size:${fs}px">${esc(dia.title)}</div>`;
         }
         let bottom="";
@@ -4546,7 +4570,7 @@ function applyDark(on){
     r.setProperty("--gold",_tune(t.gold,.04,.12));
     // 채워진 버튼용 — 디스코드 브랜드색처럼 한 톤 진하고 선명하게(그 위 글자는 흰색)
     r.setProperty("--fill",_tune(t.lavd,0,.25,.50));     // 흰 글자 5.0:1
-    r.setProperty("--fill-2",_tune(t.rose,0,0,.52));     // 흰 글자 4.7:1 (너무 쨍하지 않게 채도는 그대로)
+    r.setProperty("--fill-2",_tune(t.rose,0,-.18,.50));  // 흰 글자 5:1 · 채도는 낮춰 쨍하지 않게
     document.documentElement.setAttribute("data-dark","1"); }
   else { Object.keys(DARKV).forEach(k=>r.removeProperty(k));
     document.documentElement.removeAttribute("data-dark");
