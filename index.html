@@ -128,7 +128,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .ycell.today{border-color:var(--ice);box-shadow:0 0 8px rgba(197,138,134,.4);}
 .ycell .yn{font-size:8px;color:var(--faint);font-family:var(--disp);line-height:1;}
 .ycell.sun .yn{color:var(--rose);} .ycell.sat .yn{color:var(--ice);}
-.ycell .yk{font-size:8.5px;line-height:1.15;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ycell .yk{font-size:8.5px;line-height:1.15;color:var(--ink);word-break:break-word;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .ycell .ydot{display:flex;gap:2px;flex-wrap:wrap;}
 .ycell .ydot i{width:5px;height:5px;border-radius:50%;display:inline-block;}
 /* 연간 틀고정: 좌측 날짜열 sticky + 상단 월헤더는 세로스크롤 밖(가로 JS동기화) */
@@ -253,6 +254,19 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .mmchip i{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--rose);
   color:#fff;font-size:10px;font-style:normal;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-sm);}
 .memogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;}
+/* 메모·소재: 제목만 나열하는 목록 — 내용은 열람 팝업에서 */
+.notelist{display:flex;flex-direction:column;gap:6px;}
+.nrow{display:flex;align-items:center;gap:8px;background:var(--panel-2);border:1px solid var(--line-2);
+  border-left:4px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer;transition:all .12s;}
+.nrow:hover{border-color:var(--lav);transform:translateY(-1px);}
+.nrow.archived{opacity:.5;}
+.nrow .ntt{flex:1;min-width:0;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nrow .nmeta{font-size:11px;color:var(--muted);white-space:nowrap;}
+.nrow .nedit{border:none;background:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;}
+.noteview .nvbody{white-space:pre-wrap;line-height:1.65;font-size:14px;color:var(--ink-soft);
+  max-height:46vh;overflow:auto;margin-top:6px;}
+.noteview .nvsec{margin-top:12px;}
+#mBody{min-height:150px;}   /* 메모 편집: 내용이 3줄만 보이던 것 넓힘 */
 .memo{background:var(--panel-2);border:1px solid var(--line-2);border-radius:14px;padding:13px 14px;}
 .memohead{display:flex;align-items:center;gap:8px;}
 .memohead .mtt{font-weight:600;font-size:15px;flex:1;}
@@ -369,8 +383,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .sleepempty{font-size:12px;color:var(--muted);padding:2px 2px 6px;}
 .sleephint{font-size:11px;color:var(--faint);margin-top:5px;}
 /* 데스크톱 앱(프레임리스) 창 이동용 드래그 영역 — 브라우저/모바일엔 영향 없음 */
-.brand{-webkit-app-region:drag;}
-.top .iconbtn,.top .today-btn,.top .nav,button,input,select,textarea,a{-webkit-app-region:no-drag;}
+.top,.brand,.brand *,.top .period{-webkit-app-region:drag;}
+.top .iconbtn,.top .today-btn,button,input,select,textarea,a{-webkit-app-region:no-drag;}
 /* 집중 탭 */
 .focuscard{text-align:center;}
 .focusseg{display:flex;gap:6px;background:var(--panel-2);border-radius:12px;padding:4px;margin-bottom:12px;}
@@ -830,7 +844,7 @@ body{
     <button class="tab" data-view="year">연간</button>
     <button class="tab active" data-view="month">월간</button>
     <button class="tab" data-view="day">일간</button>
-    <button class="tab" data-view="planner">플래너</button>
+    <button class="tab" data-view="planner">기획</button>
     <button class="tab" data-view="focus">집중</button>
     <button class="tab" data-view="etc">기타</button>
   </div>
@@ -1121,6 +1135,23 @@ body{
   </div>
 </div>
 
+<!-- 메모·소재 열람 팝업 (목록에서 제목을 누르면 열림) -->
+<div class="overlay" id="noteViewOverlay">
+  <div class="modal noteview">
+    <h2 id="nvTitle">✦ 메모</h2>
+    <div id="nvMeta" class="mdate"></div>
+    <div id="nvBody" class="nvbody"></div>
+    <div id="nvImages" class="cardimgs nvsec"></div>
+    <div id="nvLinks" class="mlinks nvsec"></div>
+    <div id="nvChecks" class="mchecks nvsec"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="nvArch">보관</button>
+      <button class="btn" id="nvEdit">✎ 편집</button>
+      <button class="btn primary" id="nvClose">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- Memo modal -->
 <div class="overlay" id="memoOverlay">
   <div class="modal">
@@ -1220,7 +1251,11 @@ body{
       <div class="field"><label>상대</label><input id="ptWho" placeholder="상대"></div>
       <div class="field"><label>장소</label><input id="ptPlace" placeholder="장소"></div>
     </div>
-    <div class="field" id="ptTodoDateRow"><label>날짜 (선택)</label><input type="date" id="ptTodoDate"></div>
+    <div class="row2" id="ptTodoDateRow">
+      <div class="field"><label>날짜 (선택)</label><input type="date" id="ptTodoDate"></div>
+      <div class="field"><label>시간 (선택)</label><input type="time" id="ptTodoTime"></div>
+    </div>
+    <div class="field" id="ptTodoPlaceRow"><label>장소·상대 (선택)</label><input id="ptTodoPlace" placeholder="장소·상대"></div>
     <div class="field"><label>메모</label><textarea id="ptMemo" placeholder="메모" style="min-height:70px;"></textarea></div>
     <div class="field"><label>🔔 알림</label><select id="ptRemind"></select></div>
     <div class="modal-actions">
@@ -1295,7 +1330,7 @@ const DEFAULT_DATA={
   focus:{ log:[], pomo:{ focusMin:25, breakMin:5, longMin:15, rounds:4 } }  // 집중: log=[{date,sec,label,ts,kind}]
 };
 let data=Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), jload(LS_DATA,{}));
-const APP_VERSION="144", APP_BUILD="2026.07.30";
+const APP_VERSION="145", APP_BUILD="2026.07.30";
 data.planner=Object.assign({appts:[],study:[],todos:[],habits:[],work:[]},data.planner||{});
 if(!data.diary)data.diary={}; if(!data.events)data.events=[]; if(!data.yearNotes)data.yearNotes={}; if(!data.moods)data.moods=[]; if(!data.memos)data.memos=[]; if(!data.fortune)data.fortune={}; if(!data.fx)data.fx={history:[]}; if(!data.materials)data.materials=[];
 if(!Array.isArray(data.affirmations))data.affirmations=[]; if(!Array.isArray(data.videos))data.videos=[]; if(!Array.isArray(data.wxPresets))data.wxPresets=[]; if(!data.deco||typeof data.deco!=="object")data.deco={}; if(!Array.isArray(data.annivs))data.annivs=[]; if(!Array.isArray(data.userHols))data.userHols=[];
@@ -2087,7 +2122,7 @@ function renderDay(){
     h+=`</div>`;
     // 플래너(그 날)
     const pAll=[...appts,...study,...todos,...work];
-    h+=`<div class="section"><h3>플래너</h3>`;
+    h+=`<div class="section"><h3>기획</h3>`;
     if(pAll.length||habits.length){
       appts.forEach(a=>{h+=pRow("appts",a,`${a.time?a.time+" · ":""}${a.who?a.who+" · ":""}${a.place||""}`);});
       study.forEach(a=>{h+=pRow("study",a,`${a.subject||""}${a.amount?" · "+a.amount:""}${a.progress?" · "+a.progress:""}`);});
@@ -2098,7 +2133,7 @@ function renderDay(){
       habits.forEach(hb=>{const on=hb.done&&hb.done[ds];
         h+=`<div class="pitem ${on?"done":""}"><input type="checkbox" data-habit="${hb.id}" ${on?"checked":""}>
           <span class="txt">${esc(hb.name)}</span><span class="meta">습관</span></div>`;});
-    }else h+=`<div class="empty">이 날 계획이 없어요<small>플래너 탭에서 추가할 수 있어요</small></div>`;
+    }else h+=`<div class="empty">이 날 계획이 없어요<small>기획 탭에서 추가할 수 있어요</small></div>`;
     h+=`</div>`;
     // 이 날짜 메모
     const dayMemos=data.memos.filter(mm=>mm.date===ds);
@@ -2419,7 +2454,7 @@ function bindDiary(ds){
 
 /* ---- Planner view ---- */
 function renderPlanner(){
-  periodEl.textContent="플래너";
+  periodEl.textContent="기획";
   let h='<div class="card"><div id="pbody"></div></div>';
   main.innerHTML=h;
   renderPlannerBody();
@@ -2515,12 +2550,8 @@ function renderPlannerBody(){
       h+=`</div>`;
     }
   }else if(t==="todos"){
-    h+=`<div class="pform"><div class="row"><input id="tDate" type="date"><input id="tTime" type="time"></div>
-      <div class="row"><input id="tText" placeholder="할 일 / 약속 (날짜 비우면 미정)"></div>
-      <div class="row"><input id="tPlace" placeholder="장소·상대 (선택)"></div>
-      <div class="row"><textarea id="tMemo" placeholder="메모 (선택)" rows="2"></textarea></div>
-      <div class="row"><label class="rlbl">🔔 알림<select id="tRemind">${remindOptions("",true)}</select></label></div>
-      <button class="btn primary" id="tAdd">추가</button></div>`;
+    h+=`<div class="pform"><button class="btn primary" id="tAdd">＋ 할 일 추가</button>
+      <div style="font-size:11px;color:var(--muted);">날짜·시간·장소·메모·알림은 추가 창에서 함께 입력해요</div></div>`;
     const items=[
       ...data.planner.appts.filter(a=>!pStale(a)).map(a=>({_t:"appts",a})),
       ...data.planner.todos.filter(a=>!pStale(a)).map(a=>({_t:"todos",a}))
@@ -2777,8 +2808,7 @@ function bindPlannerForms(){
         const timeTxt=prog.byTime?` · ${Math.round(prog.doneMin)}/${Math.round(prog.totalMin)}분`:"";
         plat.textContent=(lec.platform?esc(lec.platform)+" · ":"")+`${done}/${total}${unit}`+timeTxt+(lec.field?" · "+esc(lec.field):"");
       }}});
-  if(g("tAdd"))g("tAdd").onclick=()=>{const tx=g("tText").value.trim();if(!tx)return toast("내용을 입력해요");
-    add("todos",{text:tx,date:g("tDate").value||null,time:g("tTime").value||null,place:g("tPlace").value.trim()||null,memo:g("tMemo").value.trim(),remind:g("tRemind").value||null});};
+  if(g("tAdd"))g("tAdd").onclick=()=>openPtEdit("todos",null);   // 상세는 팝업에서 입력
   if(g("hAdd"))g("hAdd").onclick=()=>{const nm=g("hName").value.trim();if(!nm)return toast("습관 이름을 입력해요");
     add("habits",{name:nm,done:{}});};
   document.querySelectorAll(".pitem[data-pid]").forEach(row=>{
@@ -3832,29 +3862,48 @@ function notesBodyHTML(){
   let h='<div class="notesadd">'
     +'<button class="btn" id="memoAdd">＋ 메모</button>'
     +'<button class="btn" id="matAdd">＋ 소재</button></div>';
-  const cards=[
-    ...memos.map(m=>({arch:m.archived?1:0, html:memoCard(m)})),
-    ...mats.map(m=>({arch:m.archived?1:0, html:matCard(m)}))
+  const rows=[
+    ...memos.map(m=>({arch:m.archived?1:0, html:noteRow("memo",m)})),
+    ...mats.map(m=>({arch:m.archived?1:0, html:noteRow("mat",m)}))
   ].sort((a,b)=>a.arch-b.arch);   // 보관은 뒤로
   if(!memos.length && !mats.length)
     h+=`<div class="empty">메모·소재가 없어요<small>기록·아이디어·창작 소재를 자유롭게 남겨보세요</small></div>`;
-  else h+='<div class="memogrid">'+cards.map(c=>c.html).join("")+'</div>';
+  else h+='<div class="notelist">'+rows.map(c=>c.html).join("")+'</div>';
   return h;
+}
+// 목록 한 줄 — 제목만 보여주고 내용은 열람 팝업(openNoteView)에서
+const MAT_KIND_C={"만화":"var(--cat-rose)","소설":"var(--cat-lav)","캐릭터":"var(--cat-gold)",
+  "배경/세계관":"var(--cat-mint)","대사/문장":"var(--cat-ice)","기타":"var(--cat-plum)"};
+function noteRow(kind,m){
+  const isMemo=kind==="memo";
+  const cat=isMemo?CATMAP[m.label]:null;
+  const stripe=isMemo?(cat?cat.c:"var(--line)"):(MAT_KIND_C[m.kind]||"var(--line)");
+  const bits=[];
+  if(isMemo){
+    const total=(m.checks||[]).length, done=(m.checks||[]).filter(x=>x.done).length;
+    if(total)bits.push(`☑ ${done}/${total}`);
+    if((m.links||[]).length)bits.push(`🔗 ${m.links.length}`);
+  }else{
+    if(m.kind)bits.push(esc(m.kind));
+    if(m.tags)bits.push(esc(m.tags));
+  }
+  if((m.images||[]).length)bits.push(`🖼 ${m.images.length}`);
+  return `<div class="nrow${m.archived?" archived":""}" data-nview="${kind}:${m.id}" style="border-left-color:${stripe}">
+    <div class="ntt">${isMemo?"📝":"✧"} ${esc(m.title||"(제목 없음)")}</div>
+    ${isMemo&&m.date?`<span class="dbadge">${dday(m.date)}</span>`:""}
+    ${bits.length?`<span class="nmeta">${bits.join(" · ")}</span>`:""}
+    <button class="nedit" data-nedit="${kind}:${m.id}" title="편집">✎</button></div>`;
 }
 function bindNotesBody(){
   const ma=document.getElementById("memoAdd"); if(ma)ma.onclick=()=>openMemo(null);
   const xa=document.getElementById("matAdd"); if(xa)xa.onclick=()=>openMaterial(null);
-  main.querySelectorAll("[data-memo]").forEach(c=>{
-    c.querySelector(".medit").onclick=()=>openMemo(c.dataset.memo);
-    const arch=c.querySelector("[data-march]");
-    if(arch)arch.onclick=e=>{e.stopPropagation();const mm=data.memos.find(x=>x.id===c.dataset.memo);mm.archived=!mm.archived;persist();refreshCurrent();};
-    c.querySelectorAll("[data-mcheck]").forEach(cb=>cb.onclick=e=>{e.stopPropagation();
-      const mm=data.memos.find(x=>x.id===c.dataset.memo);mm.checks[Number(cb.dataset.mcheck)].done=cb.checked;persist();});
+  main.querySelectorAll("[data-nedit]").forEach(b=>{
+    const [k,id]=b.dataset.nedit.split(":");
+    b.onclick=e=>{e.stopPropagation(); k==="memo"?openMemo(id):openMaterial(id);};
   });
-  main.querySelectorAll("[data-mat]").forEach(c=>{
-    c.querySelector(".medit").onclick=()=>openMaterial(c.dataset.mat);
-    const arch=c.querySelector("[data-matarch]");
-    if(arch)arch.onclick=e=>{e.stopPropagation();const mm=data.materials.find(x=>x.id===c.dataset.mat);mm.archived=!mm.archived;persist();refreshCurrent();};
+  main.querySelectorAll("[data-nview]").forEach(r=>{
+    const [k,id]=r.dataset.nview.split(":");
+    r.onclick=e=>{ if(e.target.closest("[data-nedit]"))return; openNoteView(k,id); };
   });
 }
 function memoBodyHTML(){
@@ -3922,6 +3971,48 @@ function openMemo(id){
   memoOverlay.classList.add("show"); setTimeout(()=>G("mTitle").focus(),50);
 }
 function closeMemo(){memoOverlay.classList.remove("show");}
+
+// ---- 메모·소재 열람 팝업 ----
+const noteViewOverlay=G("noteViewOverlay"); let nvKind=null, nvId=null;
+function nvGet(){return nvKind==="memo"?data.memos.find(x=>x.id===nvId):data.materials.find(x=>x.id===nvId);}
+function openNoteView(kind,id){
+  nvKind=kind; nvId=id; const m=nvGet(); if(!m)return;
+  const isMemo=kind==="memo";
+  G("nvTitle").textContent=(isMemo?"📝 ":"✧ ")+(m.title||"(제목 없음)");
+  const meta=[];
+  if(isMemo){ if(m.date)meta.push(`${m.date} · ${dday(m.date)}`); if(m.label&&CATMAP[m.label])meta.push(CATMAP[m.label].name); }
+  else{ if(m.kind)meta.push(m.kind); if(m.tags)meta.push(m.tags); }
+  if(m.archived)meta.push("보관됨");
+  G("nvMeta").textContent=meta.join(" · "); G("nvMeta").style.display=meta.length?"":"none";
+  G("nvBody").textContent=m.body||"(내용 없음)";
+  const imgs=m.images||[];
+  G("nvImages").innerHTML=imgs.map(src=>`<img class="zoomable" src="${src}">`).join("");
+  G("nvImages").style.display=imgs.length?"":"none";
+  const links=isMemo?(m.links||[]):[];
+  G("nvLinks").innerHTML=links.map(l=>`<a href="${esc(normUrl(l.url))}" target="_blank" rel="noopener">🔗 ${esc(l.name||l.url)}</a>`).join("");
+  G("nvLinks").style.display=links.length?"":"none";
+  const checks=isMemo?(m.checks||[]):[];
+  G("nvChecks").innerHTML=checks.length
+    ? checks.map((c,i)=>`<label class="mcheck"><input type="checkbox" data-nvcheck="${i}" ${c.done?"checked":""}><span>${esc(c.text)}</span></label>`).join("")
+      +`<div class="mprog">${checks.filter(x=>x.done).length}/${checks.length}</div>` : "";
+  G("nvChecks").style.display=checks.length?"":"none";
+  G("nvChecks").querySelectorAll("[data-nvcheck]").forEach(cb=>cb.onchange=()=>{
+    const mm=nvGet(); if(!mm||!mm.checks)return;
+    mm.checks[Number(cb.dataset.nvcheck)].done=cb.checked; persist();
+    const p=G("nvChecks").querySelector(".mprog");
+    if(p)p.textContent=`${mm.checks.filter(x=>x.done).length}/${mm.checks.length}`;
+  });
+  G("nvArch").textContent=m.archived?"복원":"보관";
+  noteViewOverlay.classList.add("show");
+}
+function closeNoteView(){noteViewOverlay.classList.remove("show"); refreshCurrent();}
+G("nvClose").onclick=closeNoteView;
+noteViewOverlay.onclick=e=>{if(e.target===noteViewOverlay)closeNoteView();};
+G("nvEdit").onclick=()=>{const k=nvKind,i=nvId;noteViewOverlay.classList.remove("show");k==="memo"?openMemo(i):openMaterial(i);};
+G("nvArch").onclick=()=>{const m=nvGet(); if(!m)return;
+  m.archived=!m.archived; persist(); G("nvArch").textContent=m.archived?"복원":"보관";
+  toast(m.archived?"보관했어요":"복원했어요");};
+
 G("mLinkAdd").onclick=()=>{const u=G("mLinkUrl").value.trim();if(!u)return toast("링크 주소를 입력해요");
   mLinksArr.push({name:G("mLinkName").value.trim(),url:u});G("mLinkName").value="";G("mLinkUrl").value="";renderMLinks();};
 G("mCheckAdd").onclick=()=>{const t=G("mCheckText").value.trim();if(!t)return;mChecksArr.push({text:t,done:false});G("mCheckText").value="";renderMChecks();};
@@ -4062,7 +4153,7 @@ function optionsBodyHTML(){
     </div>
     <div class="optblk"><div class="optlbl">📚 학습 일정 알림</div>
       <label class="opttoggle"><input type="checkbox" id="optStudyNotify" ${data.studyNotifyOn!==false?"checked":""}> 학습 일정 시작·종료 시각에 알림 받기</label>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">플래너 · 공부에서 만든 학습 일정의 시작/종료 시간에 울려요. 앱이 꺼져 있어도 와요.</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">기획 · 공부에서 만든 학습 일정의 시작/종료 시간에 울려요. 앱이 꺼져 있어도 와요.</div>
     </div>
     <div class="optblk"><div class="optlbl">🤖 AI 강의시간 추정</div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">커리큘럼 편집 화면의 "AI로 강의별 시간 추정" 버튼에서 써요. 강의 제목만 보고 이론/실습 시간을 각각 추정해줘요. Google Gemini API 키가 필요해요(무료 티어로 충분히 쓸 수 있어요). 이 키는 data.json에 실려 기기 간에 동기화돼요 — PanUr-DiaryData가 비공개 저장소인 걸 감안해 일부러 그렇게 해뒀어요.</div>
@@ -4538,30 +4629,43 @@ G("workCancel").onclick=closeWork; workOverlay.onclick=e=>{if(e.target===workOve
 
 /* ============ Appt/Todo edit modal ============ */
 const ptOverlay=G("ptOverlay"); let ptEditType=null, ptEditId=null;
+// id 를 비우면 "새로 추가" 모드 (할 일은 목록 위 ＋ 버튼에서 이 창으로 들어옴)
 function openPtEdit(type,id){
-  const arr=data.planner[type]; const a=arr.find(x=>x.id===id); if(!a)return;
-  ptEditType=type; ptEditId=id;
+  const a=id?(data.planner[type]||[]).find(x=>x.id===id):null;
+  if(id&&!a)return;
+  ptEditType=type; ptEditId=id||null;
   const isAppt=type==="appts";
-  G("ptTitle2").textContent=isAppt?"✦ 약속 편집":"✦ 할 일 편집";
+  G("ptTitle2").textContent=a?(isAppt?"✦ 약속 편집":"✦ 할 일 편집"):(isAppt?"✦ 새 약속":"✦ 새 할 일");
   G("ptLbl").textContent=isAppt?"약속 제목":"할 일";
-  G("ptText").value=a.title||a.text||"";
+  G("ptText").value=a?(a.title||a.text||""):"";
   G("ptApptRow").style.display=isAppt?"":"none";
   G("ptApptRow2").style.display=isAppt?"":"none";
   G("ptTodoDateRow").style.display=isAppt?"none":"";
-  if(isAppt){G("ptDate").value=a.date||"";G("ptTime").value=a.time||"";G("ptWho").value=a.who||"";G("ptPlace").value=a.place||"";}
-  else{G("ptTodoDate").value=a.date||"";}
-  G("ptMemo").value=a.memo||"";
-  G("ptRemind").innerHTML=remindOptions(a.remind??"", !isAppt); G("ptRemind").value=a.remind??"";
+  G("ptTodoPlaceRow").style.display=isAppt?"none":"";
+  if(isAppt){G("ptDate").value=a?(a.date||""):"";G("ptTime").value=a?(a.time||""):"";
+    G("ptWho").value=a?(a.who||""):"";G("ptPlace").value=a?(a.place||""):"";}
+  else{G("ptTodoDate").value=a?(a.date||""):"";G("ptTodoTime").value=a?(a.time||""):"";
+    G("ptTodoPlace").value=a?(a.place||""):"";}
+  G("ptMemo").value=a?(a.memo||""):"";
+  const rm=a?(a.remind??""):"";
+  G("ptRemind").innerHTML=remindOptions(rm, !isAppt); G("ptRemind").value=rm;
+  G("ptDelete").style.display=a?"":"none";
+  G("ptSave").textContent=a?"저장":"추가";
   ptOverlay.classList.add("show");
+  setTimeout(()=>{if(!a)G("ptText").focus();},50);
 }
 function closePtEdit(){ptOverlay.classList.remove("show");}
 G("ptSave").onclick=()=>{
-  const arr=data.planner[ptEditType]; const a=arr.find(x=>x.id===ptEditId); if(!a)return closePtEdit();
+  const arr=data.planner[ptEditType]; if(!arr)return closePtEdit();
   const txt=G("ptText").value.trim(); if(!txt)return toast("내용을 입력해요");
-  if(ptEditType==="appts"){a.title=txt;a.date=G("ptDate").value||a.date;a.time=G("ptTime").value;a.who=G("ptWho").value.trim();a.place=G("ptPlace").value.trim();}
-  else{a.text=txt;a.date=G("ptTodoDate").value||null;}
+  const isAppt=ptEditType==="appts";
+  const a=ptEditId?arr.find(x=>x.id===ptEditId):{id:uid(),done:false};
+  if(!a)return closePtEdit();
+  if(isAppt){a.title=txt;a.date=G("ptDate").value||a.date;a.time=G("ptTime").value;a.who=G("ptWho").value.trim();a.place=G("ptPlace").value.trim();}
+  else{a.text=txt;a.date=G("ptTodoDate").value||null;a.time=G("ptTodoTime").value||null;a.place=G("ptTodoPlace").value.trim()||null;}
   a.memo=G("ptMemo").value.trim(); a.remind=G("ptRemind").value||null;
-  persist(); closePtEdit(); render(); toast("수정했어요 ✦");
+  const isNew=!ptEditId; if(isNew)arr.push(a);
+  persist(); closePtEdit(); render(); toast(isNew?"추가했어요 ✦":"수정했어요 ✦");
 };
 G("ptDelete").onclick=()=>{const arr=data.planner[ptEditType];const i=arr.findIndex(x=>x.id===ptEditId);
   if(i>=0){arr.splice(i,1);persist();closePtEdit();render();toast("삭제했어요");}};
@@ -4627,7 +4731,7 @@ function dayViewerHTML(ds,scope){
     const all=[...pl,...wk];
     if(all.length){
       const dn=all.filter(x=>x.done).length;
-      h+=`<div class="dvsec"><h4>✓ 플래너 <span class="dvprog">${dn}/${all.length}${dn===all.length?" 완료":""}</span></h4>`
+      h+=`<div class="dvsec"><h4>✓ 기획 <span class="dvprog">${dn}/${all.length}${dn===all.length?" 완료":""}</span></h4>`
        +all.map(x=>`<div class="dvrow dvchk ${x.done?"done":""}">${x.done?"☑":"☐"} ${esc(x.title||x.subject||x.text||"")}</div>`).join("")+`</div>`;
     }
   }
