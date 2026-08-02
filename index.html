@@ -278,6 +278,8 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .mdate{font-size:11px;color:var(--muted);margin-top:3px;}
 .mbody{font-size:13px;color:var(--ink-soft);margin-top:8px;white-space:pre-wrap;line-height:1.5;
   max-height:96px;overflow:hidden;}
+/* 본문(학습기록·메모·소재) 안에 자동 인식된 링크 */
+.nbody a,.mbody a,.nvbody a{color:var(--lav-d);text-decoration:underline;word-break:break-all;}
 .mlinks{display:flex;flex-direction:column;gap:4px;margin-top:9px;}
 .mlinks a{font-size:12.5px;color:var(--lav-d);text-decoration:none;word-break:break-all;}
 .mlinks a:hover{text-decoration:underline;}
@@ -1669,6 +1671,14 @@ function occursOn(ev,d){
 }
 function eventsOn(d){return data.events.filter(ev=>occursOn(ev,d)).sort((a,b)=>(a.time||"99").localeCompare(b.time||"99"));}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));}
+// 이미 esc() 처리된 문자열 안의 URL(https://… 또는 www.…)을 클릭 가능한 링크로 변환. 반드시 esc 뒤에만 호출.
+function linkifyEsc(escd){return String(escd).replace(/(https?:\/\/|www\.)[^\s<]+/gi,m=>{
+  let url=m,tail="",t;
+  while((t=url.match(/(&[a-z]+;|[.,!?)\]}'"·…、。]+)$/i))){tail=t[0]+tail;url=url.slice(0,-t[0].length);}   // 후행 문장부호·엔티티는 링크에서 제외
+  if(!url)return m;
+  const href=/^www\./i.test(url)?"https://"+url:url;
+  return `<a href="${href}" target="_blank" rel="noopener">${url}</a>`+tail;
+});}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 const MOOD_EMOJI=["😊","😌","🥰","😐","😔","😢","😤","🤒","✨","🌙"];
 if(!Array.isArray(data.moodEmoji)||!data.moodEmoji.length)data.moodEmoji=MOOD_EMOJI.slice();
@@ -3093,7 +3103,7 @@ function sortNotes(list,mode){
 // 노트·학습기록 본문의 아주 가벼운 서식 지원: **굵게**, 줄 맨 앞 "- "는 불릿으로.
 // (그 외 텍스트는 그대로 이스케이프 + 줄바꿈 유지)
 function renderNoteBody(text){
-  const inline=s=>esc(s).replace(/\*\*([^*\n]+?)\*\*/g,"<b>$1</b>");
+  const inline=s=>linkifyEsc(esc(s).replace(/\*\*([^*\n]+?)\*\*/g,"<b>$1</b>"));
   const lines=String(text||"").split("\n");
   let html="", inList=false;
   lines.forEach(line=>{
@@ -4364,7 +4374,7 @@ function memoCard(m){
       ${m.date?`<span class="dbadge">${dday(m.date)}</span>`:""}
       <button class="medit">✎</button></div>
     ${m.date?`<div class="mdate">${m.date}</div>`:""}
-    ${m.body?`<div class="mbody">${esc(m.body)}</div>`:""}
+    ${m.body?`<div class="mbody">${linkifyEsc(esc(m.body))}</div>`:""}
     ${(m.images&&m.images.length)?`<div class="cardimgs">${m.images.slice(0,3).map(src=>`<img class="zoomable" src="${src}">`).join("")}${m.images.length>3?`<span class="imore">+${m.images.length-3}</span>`:""}</div>`:""}
     ${(m.links&&m.links.length)?`<div class="mlinks">${m.links.map(l=>`<a href="${esc(normUrl(l.url))}" target="_blank" rel="noopener">🔗 ${esc(l.name||l.url)}</a>`).join("")}</div>`:""}
     ${total?`<div class="mchecks">${m.checks.map((c,i)=>`<label class="mcheck"><input type="checkbox" data-mcheck="${i}" ${c.done?"checked":""}><span>${esc(c.text)}</span></label>`).join("")}<div class="mprog">${done}/${total}</div></div>`:""}
@@ -4412,7 +4422,7 @@ function openNoteView(kind,id){
   if(isMemo){ if(m.date)meta.push(`${m.date} · ${dday(m.date)}`); if(m.label&&CATMAP[m.label])meta.push(CATMAP[m.label].name); }
   else{ if(m.kind)meta.push(m.kind); if(m.tags)meta.push(m.tags); if(m.archived)meta.push("보관됨"); }
   G("nvMeta").textContent=meta.join(" · "); G("nvMeta").style.display=meta.length?"":"none";
-  G("nvBody").textContent=m.body||"(내용 없음)";
+  G("nvBody").innerHTML=linkifyEsc(esc(m.body||"(내용 없음)"));
   const imgs=m.images||[];
   G("nvImages").innerHTML=imgs.map(src=>`<img class="zoomable" src="${src}">`).join("");
   G("nvImages").style.display=imgs.length?"":"none";
@@ -5083,7 +5093,7 @@ function matCard(m){
   return `<div class="memo${m.archived?" archived":""}" data-mat="${m.id}" style="border-top:3px solid ${kindColor}">
     <div class="memohead"><div class="mtt">${esc(m.title||"(제목 없음)")}</div>
       <span class="matkind">${esc(m.kind||"")}</span><button class="medit">✎</button></div>
-    ${m.body?`<div class="mbody">${esc(m.body)}</div>`:""}
+    ${m.body?`<div class="mbody">${linkifyEsc(esc(m.body))}</div>`:""}
     ${(m.images&&m.images.length)?`<div class="cardimgs">${m.images.slice(0,3).map(src=>`<img class="zoomable" src="${src}">`).join("")}${m.images.length>3?`<span class="imore">+${m.images.length-3}</span>`:""}</div>`:""}
     ${m.tags?`<div class="mtags">${esc(m.tags)}</div>`:""}
     <div class="mfoot"><button data-matarch="${m.id}">${m.archived?"복원":"보관"}</button></div>
