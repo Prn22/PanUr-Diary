@@ -1285,6 +1285,9 @@ html[data-dark] img.moodimg,html[data-dark] .mbtn img{filter:brightness(.92);}
       <label class="rlbl" style="cursor:pointer;"><input type="checkbox" id="scSkipBusy" checked style="width:16px;height:16px;accent-color:var(--lav);"> 월간 일정 반영 — 저녁 시간대(평일 21시~01시)에 겹치는 일정 있으면 그만큼 줄이고, 종일 일정 있으면 그 날 건너뜀</label>
       <div style="font-size:11px;color:var(--muted);margin-top:4px;">평일(월~금)은 07~21시엔 실습이 불가능하다고 보고 21시~약 01시(취침 0~1시 상정)만 실습 시간으로 써요. 이론은 짬짬이 들을 수 있다고 보고 이 저녁 창의 제약을 안 받아요(단, 하루 총량은 지켜요). 주말은 수면 8~10시간만 빼면 시간 제약이 없다고 보고 하루 학습시간을 그대로 다 써요.</div>
     </div>
+    <div class="field" style="margin-bottom:8px;">
+      <label class="rlbl" style="cursor:pointer;"><input type="checkbox" id="scSkipDone" checked style="width:16px;height:16px;accent-color:var(--lav);"> 완료한 진도는 빼고 남은 분량만 — 진도 체크한 강의는 일정에서 제외하고 안 들은 부분만 배정</label>
+    </div>
     <div id="schedPreview" style="font-size:12px;color:var(--ink-soft);background:var(--panel-2);border-radius:11px;padding:10px 12px;max-height:160px;overflow:auto;line-height:1.6;"></div>
     <div style="font-size:11px;color:var(--muted);margin-top:6px;">기존에 이 강의로 만든 학습 일정은 새로 만들 때 자동으로 정리돼요.</div>
     <div class="modal-actions">
@@ -3667,7 +3670,9 @@ function parseLessonMeta(title){
   if(kind==="thry") return {title:t,min:minOverride,thryMin:minOverride,pracMin:0,explicit:true};
   return {title:t,min:minOverride,thryMin:0,pracMin:0,explicit:true}; // 종류 안 밝히고 총 시간만 지정 → 분류 없이 그 값 그대로
 }
-function lecUnits(lec){
+// skipDone=true 면 이미 진도 체크한(done) 강의는 일정에서 뺌. 번호(n)는 원본 순서를 유지해서
+// 남은 분량만 배정해도 라벨이 "강 06~08"처럼 실제 강 번호로 나오게 함.
+function lecUnits(lec,skipDone){
   const ls=lec.lessons||[]; const hasSec=ls.some(x=>x.sec);
   const isBook=lec&&lec.type==="book"; const itemKind=isBook?"장":"강";
   if(hasSec){
@@ -3675,6 +3680,7 @@ function lecUnits(lec){
     ls.forEach(x=>{
       if(x.sec){ secN++; secTitle=x.t; lesN=0; return; } // 섹션 헤더는 라벨용 메타데이터만 남기고 패킹 대상에서 제외
       lesN++;
+      if(skipDone&&x.done)return; // 완료한 강의는 제외(번호는 세어 유지)
       const meta=parseLessonMeta(x.t);
       u.push({kind:itemKind,n:lesN,secN,secTitle,title:meta.title,items:[meta.title],
         min:meta.min,thryMin:meta.thryMin,pracMin:meta.pracMin});
@@ -3682,8 +3688,9 @@ function lecUnits(lec){
     return u;
   }
   return ls.map((x,i)=>{const meta=parseLessonMeta(x.t);
-    return {kind:itemKind,n:i+1,title:meta.title.replace(/^\d{1,3}\.\s*/,""),items:[meta.title],
-      min:meta.min,thryMin:meta.thryMin,pracMin:meta.pracMin};});
+    return {kind:itemKind,n:i+1,done:!!x.done,title:meta.title.replace(/^\d{1,3}\.\s*/,""),items:[meta.title],
+      min:meta.min,thryMin:meta.thryMin,pracMin:meta.pracMin};})
+    .filter(u=>!(skipDone&&u.done));
 }
 function schedDaysSelected(){return [...document.querySelectorAll("#scDays .dc.on")].map(el=>Number(el.dataset.wd)).sort((a,b)=>a-b);}
 
@@ -3797,6 +3804,7 @@ function buildScheduleEvents(lec){
   const effCapFor=d=>isWeekendDate(d)?effCapWE:effCapWD;
   const insertBuffer=G("scReview").checked;
   const skipBusyEl=G("scSkipBusy"); const skipBusy=skipBusyEl?skipBusyEl.checked:true;
+  const skipDoneEl=G("scSkipDone"); const skipDone=skipDoneEl?skipDoneEl.checked:true;
 
   // 그 날의 실제 배정 가능한 시작시각·여유시간을 계산(스킵 기능 꺼져 있으면 늘 원래 시작시각 그대로)
   const slotFor=(dd)=>{
@@ -3819,7 +3827,7 @@ function buildScheduleEvents(lec){
     return {date:dd,slot:slotFor(dd),skipped};
   };
 
-  const units=lecUnits(lec);
+  const units=lecUnits(lec,skipDone);
   if(!units.length)return [];
 
   let d=nextSelectedDay(startVal?parseYmd(startVal):new Date(),dayset);
@@ -3850,7 +3858,7 @@ function buildScheduleEvents(lec){
     if(!cur.length){ const u=units[qi]; cur=[u]; curMin=u.min||15; curThry=u.thryMin||0; curPrac=u.pracMin||0; qi++; }
     const s={units:cur,min:curMin,thryMin:curThry,pracMin:curPrac};
     const startTime=addMinutesToTime("00:00",slot.allDay?timeStrToMin(timeFor(d)):slot.startMin);
-    evs.push({date:ds,time:startTime,endTime:addMinutesToTime(startTime,s.min),title:sessionTitle(s,lec),memo:sessionMemo(s),review:false});
+    evs.push({date:ds,time:startTime,endTime:addMinutesToTime(startTime,s.min),title:sessionTitle(s,lec),titles:cur.map(u=>u.title),memo:sessionMemo(s),review:false});
     sessionCount++; stuckAt=-1; stuckStreak=0;
     d=nextSelectedDay(new Date(d.getFullYear(),d.getMonth(),d.getDate()+1),dayset);
     if(insertBuffer&&sessionCount%SCHED_BUFFER_EVERY===0){
@@ -3877,31 +3885,43 @@ function renderSchedPreview(){
   const days=schedDaysSelected();
   const dnames=days.map(d=>WD_LABEL[d]).join("·")||"(요일 선택)";
   const {capMinWD,capMinWE,bufferPct,effCapWD,effCapWE}=schedCapInfo();
+  const skipDoneEl=G("scSkipDone"); const skipDone=skipDoneEl?skipDoneEl.checked:true;
   const evs=buildScheduleEvents(lec);
   const contentCount=evs.filter(e=>!e.review).length, bufferCount=evs.length-contentCount;
-  const units=lecUnits(lec);
+  const units=lecUnits(lec,skipDone);
   const maxUnitMin=units.length?Math.max(...units.map(u=>u.min||0)):0;
+  const unitWord=lec.type==="book"?"장":"강";
+  const doneCount=(lec.lessons||[]).filter(x=>!x.sec&&x.done).length;
+  if(!units.length){
+    G("schedPreview").innerHTML=`<div style="color:var(--muted);">`+(skipDone&&doneCount
+      ?`완료한 진도를 빼니 남은 분량이 없어요. 아직 안 들은 ${unitWord}이 없거나, 위 “완료한 진도는 빼고” 옵션을 꺼 보세요.`
+      :`만들 일정이 없어요. 커리큘럼을 먼저 확인해 주세요.`)+`</div>`;
+    return;
+  }
   const minEffCap=Math.min(effCapWD,effCapWE);
   const warn=maxUnitMin>minEffCap
     ?`<div style="margin-top:4px;color:var(--rose);">⚠️ 강의 하나(최대 ${maxUnitMin}분)가 하루 학습시간보다 길어서, 하루 학습시간을 늘려도 하루 1개씩만 배정될 수 있어요.</div>`:"";
   const skipNote=evs._skippedBusy?`<div style="margin-top:2px;color:var(--muted);">📅 이미 다른 일정이 있어 건너뛴 날: ${evs._skippedBusy}일</div>`:"";
+  const doneNote=(skipDone&&doneCount)?`<div style="margin-top:2px;color:var(--muted);">✅ 이미 완료한 ${doneCount}${unitWord}은 빼고 남은 분량만 배정했어요</div>`:"";
   G("schedPreview").innerHTML=evs.map(e=>{
-    const rangeLabel=e.review?"":(e.memo||"").split("\n")[0];
-    return `<div>${e.date} ${e.time}~${e.endTime} · ${rangeLabel?esc(rangeLabel)+" — ":""}${esc(e.title)}</div>`;
+    if(e.review)return `<div>${e.date} ${e.time}~${e.endTime} · ${esc(e.title)}</div>`;
+    const rangeLabel=(e.memo||"").split("\n")[0];
+    const body=(e.titles&&e.titles.length)?e.titles.join(", "):e.title; // 강의명이 아니라 실제 목차(강 제목)를 보여줌
+    return `<div>${e.date} ${e.time}~${e.endTime} · ${rangeLabel?esc(rangeLabel)+" — ":""}${esc(body)}</div>`;
   }).join("")
     +`<div style="margin-top:6px;color:var(--muted);">→ 평일 ${capMinWD}분(실제 ${effCapWD}분) · 주말 ${capMinWE}분(실제 ${effCapWE}분) · 여유 ${bufferPct}% · ${dnames} · 학습 ${contentCount}일 + 여유 ${bufferCount}일 · 총 ${evs.length}개 일정</div>`
-    +skipNote+warn;
+    +doneNote+skipNote+warn;
 }
 function openSchedModal(lecId){
   schedLecId=lecId; const lec=data.planner.study.find(x=>x.id===lecId); if(!lec)return;
   if(!(lec.lessons||[]).length)return toast("먼저 커리큘럼을 불러와요");
   G("schedLecName").textContent=lec.name+(lec.platform?" · "+lec.platform:"");
   G("scStart").value=ymd(new Date());
-  G("scDailyMin").value="120"; G("scStartTime").value="21:00"; G("scWeekendTime").value="10:00"; G("scWeekendDailyMin").value="250"; G("scBuffer").value="25"; G("scReview").checked=true; G("scSkipBusy").checked=true;
+  G("scDailyMin").value="120"; G("scStartTime").value="21:00"; G("scWeekendTime").value="10:00"; G("scWeekendDailyMin").value="250"; G("scBuffer").value="25"; G("scReview").checked=true; G("scSkipBusy").checked=true; G("scSkipDone").checked=true;
   const def=[0,1,2,3,4,5,6];
   G("scDays").innerHTML=WD_LABEL.map((w,i)=>`<div class="dc${def.includes(i)?" on":""}" data-wd="${i}">${w}</div>`).join("");
   document.querySelectorAll("#scDays .dc").forEach(el=>el.onclick=()=>{el.classList.toggle("on");renderSchedPreview();});
-  ["scStart","scDailyMin","scStartTime","scWeekendTime","scWeekendDailyMin","scBuffer","scReview","scSkipBusy"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
+  ["scStart","scDailyMin","scStartTime","scWeekendTime","scWeekendDailyMin","scBuffer","scReview","scSkipBusy","scSkipDone"].forEach(id=>{G(id).oninput=renderSchedPreview;G(id).onchange=renderSchedPreview;});
   renderSchedPreview(); schedOverlay.classList.add("show");
 }
 function closeSched(){schedOverlay.classList.remove("show");}
