@@ -620,6 +620,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .logboxhd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
 .logboxhd .ssort{margin-left:0;}
 .logboxhd .saddbtn{margin-left:auto;}
+/* 학습 기록 강(챕터) 그룹: 강별로 접이식 묶음 */
+.chapgrp{margin-bottom:4px;}
+.chaphd{display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer;user-select:none;}
+.chaphd:hover{opacity:.82;}
+.chaphd .ccaret{flex:none;width:12px;font-size:11px;color:var(--muted);}
+.chaphd .chlabel{font-weight:700;font-size:13px;color:var(--lav);font-family:var(--disp);}
+.chaphd .chcount{flex:none;font-size:11px;color:var(--muted);background:var(--panel-2);border-radius:8px;padding:1px 7px;}
+.chapbody{padding-left:6px;}
 /* 노트·학습기록: 게시판형 (제목 한 줄 → 클릭 시 본문 펼침) */
 .noteitem{background:var(--panel-2);border:1px solid var(--line);border-radius:11px;margin-bottom:6px;overflow:hidden;}
 .noterow{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;}
@@ -1653,6 +1661,8 @@ let studySort=jload("panur_studysort","added"); // 자료 정렬
 let studyFold=jload("panur_studyfold",{}); // 섹션 접힘 {src,note,log}
 let noteSort=jload("panur_notesort","new"); // 노트·학습기록 정렬
 let studyLogOpen=new Set(); // 학습 기록: 지금 펼쳐져 있는 강의 id들 (강의 카드마다 개별 토글)
+let studyChapOpen=new Set(); // 학습 기록 강(챕터) 그룹: 펼쳐진 그룹 키 "lecId::Ch5"
+let studyChapSeen=new Set(); // 학습 기록 그룹을 한 번이라도 렌더한 강의 id (기본 펼침 1회 시드용)
 let yearRange=jload("panur_yearrange","h1"); // all | h1 | h2
 const isToday=d=>ymd(d)===ymd(new Date());
 
@@ -3088,7 +3098,7 @@ function sourceCard(lec){
         </select>
         <button class="saddbtn" data-addnote="log" data-addnotelec="${lec.id}">＋ 학습 기록</button>
       </div>
-      ${logNotes.length?logNotes.map(n=>noteCard(n)).join(""):emptyP("이 강의로 공부한 내용을 기록으로 남겨보세요")}
+      ${renderLogNotes(lec,logNotes)}
     </div>
   </div>`;
 }
@@ -3122,15 +3132,16 @@ function renderNoteBody(text){
   if(inList)html+="</ul>";
   return html;
 }
-function noteCard(n){
+function noteCard(n,dispTitle){
   let ds="";
   if(n.date){const d=parseYmd(n.date);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())} (${WEEK[d.getDay()]})`;}
   else if(n.ts){const d=new Date(n.ts);ds=`${d.getFullYear()}.${pad2(d.getMonth()+1)}.${pad2(d.getDate())}`;}
   const hasBody=!!(n.body||(n.images&&n.images.length));
+  const shown=(dispTitle!=null&&String(dispTitle).trim()!=="")?dispTitle:(n.title||"(제목 없음)");
   return `<div class="noteitem" data-noteid="${n.id}">
     <div class="noterow" data-notetoggle="${n.id}">
       <span class="ncaret">${hasBody?"▸":"·"}</span>
-      <span class="nrtitle">${esc(n.title||"(제목 없음)")}</span>
+      <span class="nrtitle">${esc(shown)}</span>
       ${n.field?`<span class="fbadge">${esc(n.field)}</span>`:""}
       ${ds?`<span class="ndate">${ds}</span>`:""}
       <button class="nedit" data-noteedit="${n.id}">✎</button>
@@ -3140,6 +3151,45 @@ function noteCard(n){
       ${(n.images&&n.images.length)?`<div class="cardimgs">${n.images.map(src=>`<img class="zoomable" src="${src}">`).join("")}</div>`:""}
     </div>
   </div>`;
+}
+// 학습 기록 제목에서 강(챕터) 묶음 추출: "Ch5-4. TTS…" → {key:"ch5", label:"Ch5", num:5, rest:"4. TTS…"}
+// 접두어(Ch/챕터/섹션 등) + 숫자 뒤에 "-"나 "."가 오는 형태만 챕터로 인정. 안 맞으면 null(→ 기타 그룹).
+function chapKey(title){
+  const m=String(title||"").match(/^\s*([A-Za-z가-힣]*)\s*(\d+)\s*[-.·]\s*(.*)$/);
+  if(!m)return null;
+  const pre=(m[1]||"").trim(), num=parseInt(m[2],10), rest=(m[3]||"").trim();
+  if(!isFinite(num))return null;
+  return {key:(pre.toLowerCase()+num), label:(pre||"Ch")+num, num, rest};
+}
+// 학습 기록을 강 그룹으로 묶음. 그룹은 강 번호순(old=오름차·그 외=내림차), 기타는 항상 끝. 그룹 안은 기존 정렬.
+function groupLogNotes(list,mode){
+  const map=new Map(), other={key:"__other",label:"기타",num:-1,notes:[]};
+  list.forEach(n=>{const c=chapKey(n.title);
+    if(!c){other.notes.push(n);return;}
+    let g=map.get(c.key); if(!g){g={key:c.key,label:c.label,num:c.num,notes:[]};map.set(c.key,g);}
+    g.notes.push(n);});
+  const arr=[...map.values()].sort((a,b)=>mode==="old"?a.num-b.num:b.num-a.num);
+  if(other.notes.length)arr.push(other);
+  arr.forEach(g=>{g.notes=sortNotes(g.notes,mode);});
+  return arr;
+}
+// 강의 학습 기록 렌더: 강 그룹이 2개 이상이면 접이식 그룹, 아니면 예전처럼 평면.
+function renderLogNotes(lec,list){
+  if(!list.length)return emptyP("이 강의로 공부한 내용을 기록으로 남겨보세요");
+  const groups=groupLogNotes(list,noteSort);
+  const realGroups=groups.filter(g=>g.key!=="__other").length;
+  if(realGroups<2)return list.map(n=>noteCard(n)).join("");
+  const unit=lec.type==="book"?"장":"강";
+  if(!studyChapSeen.has(lec.id)){studyChapSeen.add(lec.id); if(groups[0])studyChapOpen.add(lec.id+"::"+groups[0].key);}
+  return groups.map(g=>{
+    const gk=lec.id+"::"+g.key, open=studyChapOpen.has(gk);
+    const cnt=g.key==="__other"?g.notes.length+"건":g.notes.length+unit;
+    const inner=g.notes.map(n=>{const c=chapKey(n.title);return noteCard(n,c?c.rest:null);}).join("");
+    return `<div class="chapgrp">
+      <div class="chaphd" data-chaptog="${esc(gk)}"><span class="ccaret">${open?"▾":"▸"}</span><span class="chlabel">${esc(g.label)}</span><span class="chcount">${cnt}</span></div>
+      <div class="chapbody" style="display:${open?"block":"none"};">${inner}</div>
+    </div>`;
+  }).join("");
 }
 function addStudyField(){
   const name=(window.prompt("새 학습 분야 이름 (예: 3D · 블렌더)")||"").trim();
@@ -3191,6 +3241,14 @@ function bindPlannerForms(){
     const item=row.closest(".noteitem"), body=item.querySelector(".notebody"), car=row.querySelector(".ncaret");
     if(!body||car.textContent==="·")return; // 본문 없으면 펼칠 것 없음
     const open=body.style.display==="none"; body.style.display=open?"block":"none"; car.textContent=open?"▾":"▸";
+  });
+  document.querySelectorAll("[data-chaptog]").forEach(hd=>hd.onclick=()=>{
+    const gk=hd.dataset.chaptog, grp=hd.closest(".chapgrp");
+    const body=grp&&grp.querySelector(".chapbody"), car=hd.querySelector(".ccaret");
+    if(!body)return;
+    const open=body.style.display==="none";
+    body.style.display=open?"block":"none"; if(car)car.textContent=open?"▾":"▸";
+    if(open)studyChapOpen.add(gk); else studyChapOpen.delete(gk);
   });
   document.querySelectorAll("[data-noteedit]").forEach(b=>b.onclick=e=>{e.stopPropagation();openNoteModal(b.dataset.noteedit);});
   document.querySelectorAll("[data-notesort]").forEach(sel=>{sel.onchange=()=>{noteSort=sel.value;jsave("panur_notesort",noteSort);renderPlannerBody();};});
