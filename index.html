@@ -310,6 +310,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .msum-m{font-family:var(--disp);font-weight:700;color:var(--lav-d);font-size:13px;margin-bottom:6px;}
 .msum-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);padding:2px 0;}
 .msum-row b{color:var(--ink);font-weight:600;}
+.msum-row b .msum-sub{color:var(--muted);font-weight:500;font-size:10px;margin-left:1px;}
 .sumtabs{margin-bottom:14px;}
 /* 다꾸 스티커 */
 .decobar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
@@ -5029,20 +5030,23 @@ function summaryBodyHTML(){
   // (1) 월별 요약
   let monthSec=`<div class="sumsec"><div class="monthsum">`;
   for(let m=0;m<12;m++){
-    let evDays=0,diaDays=0,slSum=0,slDays=0;
+    let evDays=0,diaDays=0,slSum=0,slDays=0,dCondSum=0,dCondDays=0;
     const dim=new Date(y,m+1,0).getDate();
     for(let dnum=1;dnum<=dim;dnum++){
       const d=new Date(y,m,dnum), ds=ymd(d);
       if(eventsOn(d).length)evDays++;
       const di=data.diary[ds]; if(diaryHasContent(di))diaDays++;
       if(di&&di.mm){const s=sleepTotal(di.mm);if(s){slSum+=s;slDays++;}}
+      if(di&&di.cond){dCondSum+=di.cond;dCondDays++;} // 하루 마무리 컨디션(일기)
     }
     const ps=planStatsInMonth(y,m);
     const pr=ps.total?Math.round(ps.done/ps.total*100):0;
     const slAvg=slDays?sleepFmt(Math.round(slSum/slDays)):"-";
+    const dCondAvg=dCondDays?(dCondSum/dCondDays).toFixed(1):"-";
     monthSec+=`<div class="msum"><div class="msum-m">${m+1}월</div>
       <div class="msum-row"><span>📅 일정</span><b>${evDays}</b></div>
       <div class="msum-row"><span>✎ 일기</span><b>${diaDays}</b></div>
+      <div class="msum-row"><span>🌙 컨디션</span><b>${dCondAvg}${dCondDays?`<small class="msum-sub">/5</small>`:""}</b></div>
       <div class="msum-row"><span>✓ 플랜</span><b>${ps.done}/${ps.total} (${pr}%)</b></div>
       <div class="msum-row"><span>😴 수면</span><b>${slAvg}</b></div></div>`;
   }
