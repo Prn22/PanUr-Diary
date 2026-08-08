@@ -1862,6 +1862,7 @@ function ensureFocus(){
   if(!data.focus||typeof data.focus!=="object")data.focus={log:[],pomo:null};
   if(!Array.isArray(data.focus.log))data.focus.log=[];
   if(!data.focus.pomo||typeof data.focus.pomo!=="object")data.focus.pomo={focusMin:25,breakMin:5,longMin:15,rounds:4};
+  if(!Array.isArray(data.focusDel))data.focusDel=[];  // 삭제한 집중 기록 tombstone(ts). 병합 시 부활 방지
   return data.focus;
 }
 function poCfg(){
@@ -1893,7 +1894,15 @@ function focusByDay(n){ const out=[], now=new Date(); const lg=focusVisibleLog()
     const sec=lg.filter(x=>x.date===ds).reduce((a,x)=>a+(x.sec||0),0);
     out.push({ds,sec,wd:WEEK[d.getDay()]}); } return out; }
 // ts 하나 또는 쉼표로 이어진 여러 개(합쳐진 행)를 받아 해당 항목들을 지움
-function deleteFocusLog(ts){ ensureFocus(); const kill=new Set(String(ts).split(",")); data.focus.log=data.focus.log.filter(x=>!kill.has(String(x.ts))); persist(); }
+function pruneFocusDel(){ // tombstone 중복 제거 + 최근 1000개만 유지(무한 증가 방지)
+  if(!Array.isArray(data.focusDel))data.focusDel=[];
+  data.focusDel=[...new Set(data.focusDel.map(String))];
+  if(data.focusDel.length>1000)data.focusDel=data.focusDel.slice(-1000);
+}
+function deleteFocusLog(ts){ ensureFocus(); const kill=new Set(String(ts).split(","));
+  data.focus.log=data.focus.log.filter(x=>!kill.has(String(x.ts)));
+  kill.forEach(k=>data.focusDel.push(String(k)));  // 삭제 표식 → 다음 병합에서 부활 안 됨
+  pruneFocusDel(); persist(); }
 function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   return h>0?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`; }
 function fmtDurKo(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
@@ -2105,7 +2114,7 @@ function bindFocus(){
   const wide=isWide();
   if(wide||focusSub==="list"){
     main.querySelectorAll("[data-flogdel]").forEach(b=>b.onclick=()=>{deleteFocusLog(b.dataset.flogdel);renderFocus();});
-    const cl=G("focusClear"); if(cl)cl.onclick=()=>{ if(window.confirm("집중 기록을 모두 지울까요?")){data.focus.log=[];persist();renderFocus();toast("기록을 비웠어요");} };
+    const cl=G("focusClear"); if(cl)cl.onclick=()=>{ if(window.confirm("집중 기록을 모두 지울까요?")){ensureFocus();focusLogAll().forEach(x=>data.focusDel.push(String(x.ts)));pruneFocusDel();data.focus.log=[];persist();renderFocus();toast("기록을 비웠어요");} };
     // 필터·기간·그래프 종류
     main.querySelectorAll("[data-fkind]").forEach(b=>b.onclick=()=>{focusKind=b.dataset.fkind;jsave("panur_fkind",focusKind);renderFocus();});
     main.querySelectorAll("[data-frange]").forEach(b=>b.onclick=()=>{focusRange=b.dataset.frange;jsave("panur_frange",focusRange);renderFocus();});
@@ -5613,8 +5622,16 @@ function mergeExternalAdditions(local,remote){
   if(remote&&remote.focus&&Array.isArray(remote.focus.log)){
     local.focus=local.focus&&typeof local.focus==="object"?local.focus:{log:[],pomo:null};
     if(!Array.isArray(local.focus.log))local.focus.log=[];
+    // 삭제 표식(tombstone) 합치기: 어느 기기에서 지웠든 그 ts는 되살리지 않는다
+    local.focusDel=Array.isArray(local.focusDel)?local.focusDel:[];
+    if(Array.isArray(remote.focusDel))local.focusDel=local.focusDel.concat(remote.focusDel);
+    local.focusDel=[...new Set(local.focusDel.map(String))];
+    if(local.focusDel.length>1000)local.focusDel=local.focusDel.slice(-1000);
+    const del=new Set(local.focusDel);
+    // 이미 삭제된 ts가 로컬에 남아 있으면 제거(다른 기기의 삭제 반영)
+    local.focus.log=local.focus.log.filter(x=>!del.has(String(x.ts)));
     const seen=new Set(local.focus.log.map(x=>`${x.ts}|${x.label}|${x.sec}`));
-    remote.focus.log.forEach(r=>{ const k=`${r.ts}|${r.label}|${r.sec}`; if(!seen.has(k)){ local.focus.log.push(r); seen.add(k); } });
+    remote.focus.log.forEach(r=>{ const k=`${r.ts}|${r.label}|${r.sec}`; if(!seen.has(k)&&!del.has(String(r.ts))){ local.focus.log.push(r); seen.add(k); } });
   }
   ["eventNotified","studyNotified"].forEach(key=>{
     if(remote&&Array.isArray(remote[key])){
