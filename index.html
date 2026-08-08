@@ -3156,7 +3156,7 @@ function noteCard(n,dispTitle){
 // 학습 기록 제목에서 강(챕터) 묶음 추출: "Ch5-4. TTS…" → {key:"ch5", label:"Ch5", num:5, rest:"4. TTS…"}
 // 접두어(Ch/챕터/섹션 등) + 숫자 뒤에 "-"나 "."가 오는 형태만 챕터로 인정. 안 맞으면 null(→ 기타 그룹).
 function chapKey(title){
-  const m=String(title||"").match(/^\s*([A-Za-z가-힣]*)\s*(\d+)\s*[-.·]\s*(.*)$/);
+  const m=String(title||"").match(/^\s*([A-Za-z가-힣]*)\s*\.?\s*(\d+)\s*[-.·]\s*(.*)$/);
   if(!m)return null;
   const pre=(m[1]||"").trim(), num=parseInt(m[2],10), rest=(m[3]||"").trim();
   if(!isFinite(num))return null;
