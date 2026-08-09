@@ -2511,7 +2511,7 @@ function countPlannerOn(ds){
   n+=data.planner.appts.filter(a=>a.date===ds).length;
   n+=data.planner.study.filter(a=>a.date===ds).length;
   n+=data.planner.todos.filter(a=>a.date===ds).length;
-  n+=(data.planner.work||[]).filter(w=>w.due===ds&&!workStale(w)).length;
+  n+=(data.planner.work||[]).filter(w=>workOnDay(w,ds)).length;
   return n;
 }
 // 그 날 플래너 체크리스트 완료/전체 (습관 제외)
@@ -2520,7 +2520,7 @@ function plannerStatOn(ds){
   data.planner.appts.filter(a=>a.date===ds).forEach(chk);
   data.planner.study.filter(a=>a.date===ds).forEach(chk);
   data.planner.todos.filter(a=>a.date===ds).forEach(chk);
-  (data.planner.work||[]).filter(w=>w.due===ds&&!workStale(w)).forEach(w=>{total++;if(w.status==="완료")done++;});
+  (data.planner.work||[]).filter(w=>workOnDay(w,ds)).forEach(w=>{total++;if(w.status==="완료")done++;});
   return {total,done};
 }
 // 완료 체크한 "다음날부터" 리스트에서 숨김 (완료일이 오늘보다 이전이면 숨김)
@@ -2534,6 +2534,12 @@ function staleBy(done, doneDate, ownDate){
 }
 function pStale(a){ return staleBy(a.done, a.doneDate, a.date); }
 function workStale(w){ return staleBy(w.status==="완료", w.doneDate, w.due); }
+// 작업(커미션)이 그 날짜에 걸리는지: 마감일이 있으면 시작일~마감일 "기간 내내"(시작일 없으면 마감일 당일). 마감일 없으면 달력 표시 대상 아님.
+function workOnDay(w,ds){
+  if(!w||!w.due||workStale(w))return false;
+  if(w.start&&w.start<=w.due)return ds>=w.start&&ds<=w.due;
+  return ds===w.due;
+}
 
 /* ---- Day (diary body) ---- */
 function renderDay(){
@@ -2543,7 +2549,7 @@ function renderDay(){
   const appts=data.planner.appts.filter(a=>(a.date===ds||!a.date)&&!pStale(a));
   const study=data.planner.study.filter(a=>a.date===ds&&!pStale(a));
   const todos=data.planner.todos.filter(a=>(a.date===ds||!a.date)&&!pStale(a));
-  const work=(data.planner.work||[]).filter(w=>(w.due===ds||!w.due)&&!workStale(w));
+  const work=(data.planner.work||[]).filter(w=>workOnDay(w,ds)||(!w.due&&!workStale(w)));
   const habits=data.planner.habits;
   const dia=data.diary[ds]||{mood:"",title:"",body:"",photos:[],cond:0};
 
@@ -5437,7 +5443,7 @@ function dayViewerHTML(ds,scope){
   if(showPlan&&evs.length)h+=`<div class="dvsec"><h4>📅 일정</h4>${evs.map(e=>`<div class="dvrow"><b>${e.time?esc(e.time):"종일"}</b> ${esc(e.title)}${e.memo?`<div class="dvmemo">${esc(e.memo)}</div>`:""}</div>`).join("")}</div>`;
   if(showPlan){
     const pl=[...data.planner.appts.filter(a=>a.date===ds),...data.planner.study.filter(a=>a.date===ds),...data.planner.todos.filter(a=>a.date===ds)];
-    const wk=(data.planner.work||[]).filter(w=>w.due===ds&&!workStale(w)).map(w=>({title:w.nick||w.content||"작업",done:w.status==="완료"}));
+    const wk=(data.planner.work||[]).filter(w=>workOnDay(w,ds)).map(w=>({title:w.nick||w.content||"작업",done:w.status==="완료"}));
     const all=[...pl,...wk];
     if(all.length){
       const dn=all.filter(x=>x.done).length;
